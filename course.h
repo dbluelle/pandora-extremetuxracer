@@ -23,9 +23,15 @@ GNU General Public License for more details.
 #include <map>
 
 #define FLOATVAL(i) (*(GLfloat*)(vnc_array+idx+(i)*sizeof(GLfloat)))
+#ifdef USE_GLES1
+#define BYTEVAL(i) (*(GLubyte*)(vnc_array+idx+10*sizeof(GLfloat) +\
+    i*sizeof(GLubyte)))
+#define STRIDE_GL_ARRAY (10 * sizeof(GLfloat) + 4 * sizeof(GLubyte))
+#else
 #define BYTEVAL(i) (*(GLubyte*)(vnc_array+idx+8*sizeof(GLfloat) +\
     i*sizeof(GLubyte)))
 #define STRIDE_GL_ARRAY (8 * sizeof(GLfloat) + 4 * sizeof(GLubyte))
+#endif
 #define ELEV(x,y) (elevation[(x) + nx*(y)] )
 #define NORM_INTERPOL 0.05
 #define XCD(x) ((ETR_DOUBLE)(x) / (nx-1.0) * curr_course->width)

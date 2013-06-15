@@ -103,16 +103,25 @@ TVector2 calc_new_fan_pt (ETR_DOUBLE angle) {
 
 void start_tri_fan() {
     glBegin (GL_TRIANGLE_FAN);
-    glVertex2f (ENERGY_GAUGE_CENTER_X,
+#ifdef USE_GLES1
+    glVertex2f (ENERGY_GAUGE_CENTER_X, 
 		ENERGY_GAUGE_CENTER_Y);
-    TVector2 pt = calc_new_fan_pt (SPEEDBAR_BASE_ANGLE);
+    glTexCoord2f(ENERGY_GAUGE_CENTER_X/GAUGE_IMG_SIZE, ENERGY_GAUGE_CENTER_Y/GAUGE_IMG_SIZE);
+    TVector2 pt = calc_new_fan_pt (SPEEDBAR_BASE_ANGLE); 
     glVertex2f (pt.x, pt.y);
+    glTexCoord2f(pt.x/GAUGE_IMG_SIZE, pt.y/GAUGE_IMG_SIZE);
+#else
+    glVertex2f (ENERGY_GAUGE_CENTER_X, 
+		ENERGY_GAUGE_CENTER_Y);
+    TVector2 pt = calc_new_fan_pt (SPEEDBAR_BASE_ANGLE); 
+    glVertex2f (pt.x, pt.y);
+#endif
 }
 
 void draw_partial_tri_fan (ETR_DOUBLE fraction) {
     bool trifan = false;
 
-	ETR_DOUBLE angle = SPEEDBAR_BASE_ANGLE +
+	ETR_DOUBLE angle = SPEEDBAR_BASE_ANGLE + 
 		(SPEEDBAR_MAX_ANGLE - SPEEDBAR_BASE_ANGLE) * fraction;
 
     int divs = (int)((SPEEDBAR_BASE_ANGLE - angle) * CIRCLE_DIVISIONS / 360.0);
@@ -127,6 +136,9 @@ void draw_partial_tri_fan (ETR_DOUBLE fraction) {
 		cur_angle -= angle_incr;
 		TVector2 pt = calc_new_fan_pt (cur_angle);
 		glVertex2f (pt.x, pt.y);
+#ifdef USE_GLES1
+		glTexCoord2f(pt.x/GAUGE_IMG_SIZE, pt.y/GAUGE_IMG_SIZE);
+#endif
     }
 
     if  (cur_angle > angle + EPS) {
@@ -137,6 +149,9 @@ void draw_partial_tri_fan (ETR_DOUBLE fraction) {
 		}
 		TVector2 pt = calc_new_fan_pt (cur_angle);
 		glVertex2f (pt.x, pt.y);
+#ifdef USE_GLES1
+		glTexCoord2f(pt.x/GAUGE_IMG_SIZE, pt.y/GAUGE_IMG_SIZE);
+#endif
     }
 
     if  (trifan) {
@@ -146,9 +161,10 @@ void draw_partial_tri_fan (ETR_DOUBLE fraction) {
 }
 
 void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
+#ifndef USE_GLES1
     GLfloat xplane[4] = {1.0 / GAUGE_IMG_SIZE, 0.0, 0.0, 0.0 };
     GLfloat yplane[4] = {0.0, 1.0 / GAUGE_IMG_SIZE, 0.0, 0.0 };
-
+#endif
     set_gl_options (GAUGE_BARS);
 
 	if (Tex.GetTexture (GAUGE_ENERGY) == NULL) return;
@@ -156,35 +172,58 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 	if (Tex.GetTexture (GAUGE_OUTLINE) == NULL) return;
 
 	Tex.BindTex (GAUGE_ENERGY);
+#ifndef USE_GLES1
     glTexGenfv (GL_S, GL_OBJECT_PLANE, xplane);
     glTexGenfv (GL_T, GL_OBJECT_PLANE, yplane);
-
+#endif
     glPushMatrix();
 	glTranslatef (param.x_resolution - GAUGE_WIDTH, 0, 0);
 	Tex.BindTex (GAUGE_ENERGY);
 	ETR_DOUBLE y = ENERGY_GAUGE_BOTTOM + energy * ENERGY_GAUGE_HEIGHT;
-
+	glColor4fv (energy_background_color);
 	glColor4fv (energy_background_color);
 	glBegin (GL_QUADS);
+#ifdef USE_GLES1
+	    glVertex2f (0.0, y);
+	    glTexCoord2f(0.0, y/GAUGE_IMG_SIZE);
+	    glVertex2f (GAUGE_IMG_SIZE, y);
+	    glTexCoord2f(1.0, y/GAUGE_IMG_SIZE);
+	    glVertex2f (GAUGE_IMG_SIZE, GAUGE_IMG_SIZE);
+	    glTexCoord2f(1.0, 1.0f);
+	    glVertex2f (0.0, GAUGE_IMG_SIZE);
+	    glTexCoord2f(0.0, 1.0f);
+#else
 	    glVertex2f (0.0, y);
 	    glVertex2f (GAUGE_IMG_SIZE, y);
 	    glVertex2f (GAUGE_IMG_SIZE, GAUGE_IMG_SIZE);
 	    glVertex2f (0.0, GAUGE_IMG_SIZE);
+#endif
 	glEnd ();
 
 	glColor4fv (energy_foreground_color);
 	glBegin (GL_QUADS);
+#ifdef USE_GLES1
+	    glVertex2f (0.0, 0.0);
+	    glTexCoord2f(0.0, 0.0f);
+	    glVertex2f (GAUGE_IMG_SIZE, 0.0);
+	    glTexCoord2f(1.0, 0.0f);
+	    glVertex2f (GAUGE_IMG_SIZE, y);
+	    glTexCoord2f(1.0, y/GAUGE_IMG_SIZE);
+	    glVertex2f (0.0, y);
+	    glTexCoord2f(0.0, y/GAUGE_IMG_SIZE);
+#else
 	    glVertex2f (0.0, 0.0);
 	    glVertex2f (GAUGE_IMG_SIZE, 0.0);
 	    glVertex2f (GAUGE_IMG_SIZE, y);
 	    glVertex2f (0.0, y);
+#endif
 	glEnd ();
 
 	ETR_DOUBLE speedbar_frac = 0.0;
 
 	if  (speed > SPEEDBAR_GREEN_MAX_SPEED) {
 	    speedbar_frac = SPEEDBAR_GREEN_FRACTION;
-
+	    
 	    if  (speed > SPEEDBAR_YELLOW_MAX_SPEED) {
 			speedbar_frac += SPEEDBAR_YELLOW_FRACTION;
 			if  (speed > SPEEDBAR_RED_MAX_SPEED) {
@@ -196,7 +235,7 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 	    } else {
 			speedbar_frac += (speed - SPEEDBAR_GREEN_MAX_SPEED) /
 				(SPEEDBAR_YELLOW_MAX_SPEED - SPEEDBAR_GREEN_MAX_SPEED) * SPEEDBAR_YELLOW_FRACTION;
-	    }
+	    }	    
 	} else {
 	    speedbar_frac +=  speed/SPEEDBAR_GREEN_MAX_SPEED * SPEEDBAR_GREEN_FRACTION;
 	}
@@ -210,10 +249,21 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 	glColor4fv (hud_white);
 	Tex.BindTex (GAUGE_OUTLINE);
 	glBegin (GL_QUADS);
+#ifdef USE_GLES1
+	    glVertex2f (0.0f, 0.0f);
+	    glTexCoord2f(0.0f, 0.0f);
+	    glVertex2f (GAUGE_IMG_SIZE, 0.0f);
+	    glTexCoord2f(1.0f, 0.0f);
+	    glVertex2f (GAUGE_IMG_SIZE, GAUGE_IMG_SIZE);
+	    glTexCoord2f(1.0f, 1.0f);
+	    glVertex2f (0.0f, GAUGE_IMG_SIZE);
+	    glTexCoord2f(0.0f, 1.0f);
+#else
 	    glVertex2f (0.0, 0.0);
 	    glVertex2f (GAUGE_IMG_SIZE, 0.0);
 	    glVertex2f (GAUGE_IMG_SIZE, GAUGE_IMG_SIZE);
 	    glVertex2f (0.0, GAUGE_IMG_SIZE);
+#endif
 	glEnd();
     glPopMatrix();
 }
@@ -221,7 +271,7 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 void DrawSpeed (ETR_DOUBLE speed) {
 	string speedstr = Int_StrN ((int)speed, 3);
 	if (param.use_papercut_font < 2) {
-		Tex.DrawNumStr (speedstr.c_str(),
+		Tex.DrawNumStr (speedstr.c_str(), 
 			param.x_resolution - 85, param.y_resolution-74, 1, colWhite);
 	} else {
 		FT.SetColor (colDDYell);
@@ -233,7 +283,7 @@ void DrawWind (ETR_DOUBLE dir, ETR_DOUBLE speed) {
 	Tex.Draw (SPEEDMETER, 10, param.y_resolution - 150, 1.0);
 	glPushMatrix ();
     glDisable (GL_TEXTURE_2D );
-
+	
 	glColor4f (1, 0, 0, 0.5);
 	glTranslatef (82, 77, 0);
 	glRotatef (dir, 0, 0, 1);

@@ -251,9 +251,11 @@ void CCourse::MakeCourseNormals () {
 void CCourse::FillGlArrays() {
     TVector3 *normals = nmls;
 
+#ifndef USE_GLES1
     glDisableClientState (GL_VERTEX_ARRAY);
     glDisableClientState (GL_NORMAL_ARRAY);
     glDisableClientState (GL_COLOR_ARRAY);
+#endif
 
 	if(vnc_array == NULL)
 		vnc_array = new GLubyte[STRIDE_GL_ARRAY * nx * ny];
@@ -265,13 +267,21 @@ void CCourse::FillGlArrays() {
 			FLOATVAL(0) = (GLfloat)x / (nx-1.0) * curr_course->width;
 			FLOATVAL(1) = elevation[(x) + nx*(y)];
 			FLOATVAL(2) = -(GLfloat)y / (ny-1.0) * curr_course->length;
-
+#ifdef USE_GLES1
+			FLOATVAL(3) = ((GLfloat)x / (nx-1.0) * curr_course->width)/6.0f;
+			FLOATVAL(4) = (-(GLfloat)y / (ny-1.0) * curr_course->length)/6.0f;
+			const TVector3& nml = normals[ x + y * nx ];
+			FLOATVAL(6) = nml.x;
+			FLOATVAL(7) = nml.y;
+			FLOATVAL(8) = nml.z;
+			FLOATVAL(9) = 1.0f;
+#else
 			const TVector3& nml = normals[ x + y * nx ];
 			FLOATVAL(4) = nml.x;
 			FLOATVAL(5) = nml.y;
 			FLOATVAL(6) = nml.z;
 			FLOATVAL(7) = 1.0f;
-
+#endif
 			BYTEVAL(0) = 255;
 			BYTEVAL(1) = 255;
 			BYTEVAL(2) = 255;
@@ -279,6 +289,7 @@ void CCourse::FillGlArrays() {
 		}
     }
 
+#ifndef USE_GLES1
     glEnableClientState (GL_VERTEX_ARRAY);
     glVertexPointer (3, GL_FLOAT, STRIDE_GL_ARRAY, vnc_array);
 
@@ -289,6 +300,7 @@ void CCourse::FillGlArrays() {
     glEnableClientState (GL_COLOR_ARRAY);
     glColorPointer (4, GL_UNSIGNED_BYTE, STRIDE_GL_ARRAY,
 		    vnc_array + 8*sizeof(GLfloat));
+#endif
 }
 
 void CCourse::MakeStandardPolyhedrons () {
