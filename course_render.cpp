@@ -29,10 +29,12 @@ GNU General Public License for more details.
 static const bool clip_course = true;
 
 void setup_course_tex_gen () {
+#ifndef USE_GLES1
     static GLfloat xplane[4] = {1.0 / TEX_SCALE, 0.0, 0.0, 0.0 };
     static GLfloat zplane[4] = {0.0, 0.0, 1.0 / TEX_SCALE, 0.0 };
     glTexGenfv (GL_S, GL_OBJECT_PLANE, xplane);
     glTexGenfv (GL_T, GL_OBJECT_PLANE, zplane);
+#endif
 }
 
 // --------------------------------------------------------------------

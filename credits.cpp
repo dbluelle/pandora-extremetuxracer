@@ -116,8 +116,10 @@ static void DrawBackLogo (int x, int y, ETR_DOUBLE size) {
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	Tex.GetTexture(T_TITLE)->Bind();
 
+#ifndef USE_GLES1
 	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
 	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+#endif
 
 	width  = w * size;
 	height = h * size;
