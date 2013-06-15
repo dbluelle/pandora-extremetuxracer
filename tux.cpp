@@ -395,6 +395,9 @@ void CCharShape::DrawCharSphere (int num_divisions) {
 }
 
 GLuint CCharShape::GetDisplayList (int divisions) {
+#ifdef USE_GLES1
+  return 0;
+#else
 	static GLuint display_lists[MAX_SPHERE_DIV - MIN_SPHERE_DIV + 1] = {0};
 
     int idx = divisions - MIN_SPHERE_DIV;
@@ -405,6 +408,7 @@ GLuint CCharShape::GetDisplayList (int divisions) {
 		glEndList ();
     }
     return display_lists[idx];
+#endif
 }
 
 void CCharShape::DrawNodes (TCharNode *node) {
