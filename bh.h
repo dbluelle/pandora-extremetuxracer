@@ -50,8 +50,45 @@ GNU General Public License for more details.
 #include <cstdlib>
 #include <cstring>
 
+#ifdef PANDORA
+#include "eglport.h"
+#endif
+#ifdef USE_GLES1
+#define ETR_DOUBLE float
+#include <GLES/gl.h>
+#include <GL/glu.h>
+#define GL_INT     GL_SHORT
+#define GL_UNSIGNED_INT GL_UNSIGNED_SHORT
+#define GL_QUADS GL_TRIANGLE_FAN
+#define GL_QUAD_STRIP GL_TRIANGLE_STRIP
+#define GLdouble     GLfloat
+#define GLclampd     GLclampf
+#define glOrtho      glOrthof
+#define glDepthRange glDepthRangef
+#define glClearDepth glClearDepthf
+#define glMultMatrixd glMultMatrixf
+#define glFogi glFogf
+void glPopAttrib();
+void glPushAttrib(int t);
+void glBegin(GLenum mode);
+void glEnd();
+void glVertex2f(GLfloat x, GLfloat y);
+void glVertex3f(GLfloat x, GLfloat y, GLfloat z);
+void glTexCoord2f(GLfloat s, GLfloat t);
+void glColor4fv(const GLfloat *v);
+void glRectf(GLfloat x, GLfloat y, GLfloat w, GLfloat h);
+inline void glColor4dv(const GLfloat* c) { glColor4f(c[0], c[1], c[2], c[3]); }
+
+int glesGetGlobalVertexBufferCurPos();
+void glesSetGlobalVertexBufferCurPos(int pos);
+GLfloat* glesGetGlobalVertexBuffer(int minsize);
+void glesCleanUp();
+#else
+#define ETR_DOUBLE double
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
+
 #include "SDL/SDL.h"
 #include "SDL/SDL_joystick.h"
 #include "SDL/SDL_image.h"

@@ -6,9 +6,14 @@
 # OS_WIN32_NATIVE - Windows, for native windows compilers like visual c++
 # OS_MAC
 
+# ----------------- Pandora ---------------------------------------------
+CFLAGS = -mcpu=cortex-a8 -mtune=cortex-a8 -mfloat-abi=softfp -ffast-math -mfpu=neon -Wall -O2  -DPANDORA -DUSE_GLES1 -fsingle-precision-constant -I/usr/local/oecore-x86_64/sysroots/armv7a-angstrom-linux-gnueabi/usr/include/freetype2
+LDFLAGS = -lGLES_CM -lGLUES_CM -lEGL -lX11 -lSDL -lSDL_image -lSDL_mixer -lfreetype -lm -lstdc++
+CC = arm-angstrom-linux-gnueabi-gcc
+
 # ----------------- Linux ---------------------------------------------
-CFLAGS = -Wall -O2 -DOS_LINUX -I/usr/include/freetype2
-LDFLAGS = -lGL -lGLU -lSDL -lSDL_image -lSDL_mixer -lfreetype 
+#CFLAGS = -Wall -O2 -DOS_LINUX -I/usr/include/freetype2
+#LDFLAGS = -lGL -lGLU -lSDL -lSDL_image -lSDL_mixer -lfreetype 
 
 # ----------------- Windows with mingw --------------------------------
 # CFLAGS = -Wall -O2 -DOS_WIN32_MINGW -mwindows -I/usr/include/freetype2
@@ -31,7 +36,7 @@ LDFLAGS = -lGL -lGLU -lSDL -lSDL_image -lSDL_mixer -lfreetype
 # CFLAGS = -Wall -O2 -DOS_MAC .....
 # LDFLAGS = .....
 
-CC = g++
+# CC = g++
 BIN = etr
 OBJ = main.o game_config.o ogl.o tux.o audio.o winsys.o \
 particles.o mathlib.o splash_screen.o intro.o racing.o \
@@ -40,10 +45,12 @@ race_select.o credits.o loading.o course.o keyframe.o env.o event.o \
 spx.o common.o course_render.o game_ctrl.o physics.o \
 track_marks.o hud.o view.o gui.o translation.o tools.o \
 quadtree.o font.o ft_font.o textures.o help.o regist.o tool_frame.o \
-tool_char.o newplayer.o score.o ogl_test.o
+tool_char.o newplayer.o score.o ogl_test.o \
+config_screen.o states.o \
+eglport.o opengles.o
 
 $(BIN) : $(OBJ)
-	g++ -o $(BIN) $(OBJ) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o $(BIN) $(OBJ) $(LDFLAGS) $(CFLAGS)
 
 # use this template and rename it if you want to add a module
 
@@ -181,6 +188,19 @@ ogl.o : ogl.cpp ogl.h
 
 game_config.o : game_config.cpp game_config.h
 	$(CC) -c game_config.cpp $(CFLAGS)
+
+config_screen.o : config_screen.cpp config_screen.h
+	$(CC) -c config_screen.cpp $(CFLAGS)
+
+states.o : states.cpp states.h
+	$(CC) -c states.cpp $(CFLAGS)
+
+eglport.o : eglport.cpp eglport.h
+	$(CC) -c eglport.cpp $(CFLAGS)
+
+opengles.o : opengles.cpp 
+	$(CC) -c opengles.cpp $(CFLAGS)
+
 
 main.o : main.cpp bh.h etr_types.h
 	$(CC) -c main.cpp $(CFLAGS)
