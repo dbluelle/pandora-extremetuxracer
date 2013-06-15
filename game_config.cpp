@@ -301,8 +301,12 @@ void InitConfig (char *arg0) {
 	param.prog_dir = buff;
 #endif
 
+#ifdef PANDORA
+	param.config_dir = getenv("HOME");
+#else
 	struct passwd *pwent = getpwuid (getuid ());
 	param.config_dir = pwent->pw_dir;
+#endif
 	param.config_dir += SEP;
 	param.config_dir += CONFIG_DIR;
 	// or: param.config_dir = param.prog_dir + SEP + "config";
