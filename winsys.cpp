@@ -38,7 +38,11 @@ CWinsys::CWinsys () {
 	joystick_active = false;
 
  	resolution[0] = MakeRes (0, 0);
+#ifdef PANDORA
+	resolution[1] = MakeRes (800, 480);
+#else
 	resolution[1] = MakeRes (800, 600);
+#endif
 	resolution[2] = MakeRes (1024, 768);
 	resolution[3] = MakeRes (1152, 864);
 	resolution[4] = MakeRes (1280, 960);
@@ -49,7 +53,11 @@ CWinsys::CWinsys () {
 	resolution[9] = MakeRes (1680, 1050);
 
 	auto_x_resolution = 800;
+#ifdef PANDORA
+	auto_y_resolution = 480;
+#else
 	auto_y_resolution = 600;
+#endif
 
 	elapsed_time = 0;
 }
@@ -62,12 +70,20 @@ TScreenRes CWinsys::MakeRes (int width, int height) {
 }
 
 TScreenRes CWinsys::GetResolution (size_t idx) {
+#ifdef PANDORA
+	if (idx >= NUM_RESOLUTIONS) return MakeRes (800, 480);
+#else
 	if (idx >= NUM_RESOLUTIONS) return MakeRes (800, 600);
+#endif
 	return resolution[idx];
 }
 
 string CWinsys::GetResName (size_t idx) {
+#ifdef PANDORA
+	if (idx >= NUM_RESOLUTIONS) return "800 x 480";
+#else
 	if (idx >= NUM_RESOLUTIONS) return "800 x 600";
+#endif
 	if (idx == 0) return ("auto");
 	string line = Int_StrN (resolution[idx].width);
 	line += " x " + Int_StrN (resolution[idx].height);
@@ -83,7 +99,11 @@ ETR_DOUBLE CWinsys::CalcScreenScale () {
 
 void CWinsys::SetupVideoMode (TScreenRes resolution) {
     int bpp = 0;
+#ifdef PANDORA
+    Uint32 video_flags = 0;
+#else
     Uint32 video_flags = SDL_OPENGL;
+#endif
     if (param.fullscreen) video_flags |= SDL_FULLSCREEN;
 	switch (param.bpp_mode ) {
 		case 0:	bpp = 0; break;
@@ -94,11 +114,19 @@ void CWinsys::SetupVideoMode (TScreenRes resolution) {
 	if ((screen = SDL_SetVideoMode
 	(resolution.width, resolution.height, bpp, video_flags)) == NULL) {
 		Message ("couldn't initialize video",  SDL_GetError());
+#ifdef PANDORA
+		Message ("set to 800 x 480");
+		screen = SDL_SetVideoMode (800, 480, bpp, video_flags);
+#else
 		Message ("set to 800 x 600");
 		screen = SDL_SetVideoMode (800, 600, bpp, video_flags);
+#endif
 		param.res_type = 1;
 		SaveConfigFile ();
 	}
+#ifdef PANDORA
+	EGL_Open( resolution.width, resolution.height );
+#endif
 	SDL_Surface *surf = SDL_GetVideoSurface ();
 	param.x_resolution = surf->w;
 	param.y_resolution = surf->h;
@@ -111,7 +139,11 @@ void CWinsys::SetupVideoMode (TScreenRes resolution) {
 }
 
 void CWinsys::SetupVideoMode (size_t idx) {
+#ifdef PANDORA
+	if (idx >= NUM_RESOLUTIONS) SetupVideoMode (MakeRes (800, 480));
+#else
 	if (idx >= NUM_RESOLUTIONS) SetupVideoMode (MakeRes (800, 600));
+#endif
 	else SetupVideoMode (resolution[idx]);
 }
 
@@ -141,8 +173,9 @@ void CWinsys::InitJoystick () {
 void CWinsys::Init () {
 	Uint32 sdl_flags = SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE | SDL_INIT_TIMER;
     if (SDL_Init (sdl_flags) < 0) Message ("Could not initialize SDL");
+#ifndef PANDORA
     SDL_GL_SetAttribute (SDL_GL_DOUBLEBUFFER, 1);
-
+#endif
 	#if defined (USE_STENCIL_BUFFER)
 	    SDL_GL_SetAttribute (SDL_GL_STENCIL_SIZE, 8);
 	#endif
@@ -181,6 +214,9 @@ void CWinsys::Quit () {
 	Audio.Close ();		// frees music and sound as well
 	FT.Clear ();
 	if (g_game.argument < 1) Players.SavePlayers ();
+#ifdef PANDORA
+	EGL_Close();
+#endif
 	SDL_Quit ();
 }
 

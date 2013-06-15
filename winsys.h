@@ -53,7 +53,11 @@ public:
 	void SetFonttype ();
 	void PrintJoystickInfo ();
 	void ShowCursor (bool visible) {SDL_ShowCursor (visible);}
+#ifdef PANDORA
+	void SwapBuffers () {EGL_SwapBuffers ();}
+#else
 	void SwapBuffers () {SDL_GL_SwapBuffers ();}
+#endif
 	void Quit ();
 	void Terminate ();
 	void InitJoystick ();
