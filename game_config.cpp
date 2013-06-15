@@ -308,9 +308,14 @@ void InitConfig (char *arg0) {
 	// or: param.config_dir = param.prog_dir + SEP + "config";
     if (!DirExists (param.config_dir.c_str()))
 		mkdir (param.config_dir.c_str(), 0775);
+#ifdef PANDORA
+        param.data_dir = "./data";
+        param.data_dir += SEP;
+#else
         param.data_dir = ETR_DATA_DIR;
         param.data_dir += SEP;
         param.data_dir += "etr";
+#endif
 	// param.data_dir = param.prog_dir + SEP + "data";
 	param.configfile = param.config_dir + SEP + "options";
 #endif
