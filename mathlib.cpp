@@ -638,7 +638,18 @@ TVector3 MakeNormal (const TPolygon& p, TVector3 *v) {
 TPolyhedron CopyPolyhedron (const TPolyhedron& ph) {
 	TPolyhedron newph = ph;
 	newph.vertices = new TVector3[ph.num_vertices];
+#ifdef PANDORA
+	TVector3* pnew =newph.vertices;
+	TVector3* p =ph.vertices;
+	if (ph.num_vertices > 0) {
+		*pnew++ = *p;
+		for (size_t i = 1; i < ph.num_vertices; ++i) {
+			*pnew++ = *++p;
+		}
+	}
+#else
 	copy_n(ph.vertices, ph.num_vertices, newph.vertices);
+#endif
 	return newph;
 }
 
