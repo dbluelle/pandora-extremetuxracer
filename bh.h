@@ -40,7 +40,9 @@ GNU General Public License for more details.
 //			includes
 // --------------------------------------------------------------------
 
+#ifndef PANDORA
 #include <cstdint>
+#endif
 #include <climits>
 #include <cstddef>
 #include <string>
