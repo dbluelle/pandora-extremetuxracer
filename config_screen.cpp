@@ -95,10 +95,15 @@ void SetConfig () {
 	if (mus_vol->GetValue() != param.music_volume ||
 		sound_vol->GetValue() != param.sound_volume ||
 		language->GetValue() != param.language ||
-		resolution->GetValue() != param.res_type ||
-		detail_level->GetValue() != param.perf_level ||
-		fullscreen->checked != param.fullscreen) {
+		detail_level->GetValue() != param.perf_level 
+#ifndef PANDORA
+		|| resolution->GetValue() != param.res_type 
+		|| fullscreen->checked != param.fullscreen
+#endif
+		) 
+		{
 
+#ifndef PANDORA
 		if (resolution->GetValue() != param.res_type || fullscreen->checked != param.fullscreen) {
 			// these changes require a new VideoMode
 			param.res_type = resolution->GetValue();
@@ -116,7 +121,7 @@ void SetConfig () {
 				}
 			#endif
 		}
-
+#endif
 		// the followind config params don't require a new VideoMode
 		// they only must stored in the param structure (and saved)
 		param.music_volume = mus_vol->GetValue();
@@ -197,10 +202,12 @@ void CGameConfig::Enter() {
 	rightpos = area.right -48;
 
 	ResetGUI ();
+#ifndef PANDORA
 	fullscreen = AddCheckbox (area.left, area.top, framewidth-16, Trans.Text(31));
 	fullscreen->checked = param.fullscreen;
 
 	resolution = AddUpDown(rightpos, area.top+dd*1, 0, NUM_RESOLUTIONS-1, (int)param.res_type);
+#endif
 	mus_vol = AddUpDown(rightpos, area.top+dd*2, 0, 120, param.music_volume);
 	sound_vol = AddUpDown(rightpos, area.top+dd*3, 0, 120, param.sound_volume);
 	detail_level = AddUpDown(rightpos, area.top+dd*4, 1, 3, param.perf_level);
@@ -242,8 +249,10 @@ void CGameConfig::Loop (ETR_DOUBLE time_step) {
 
 	FT.AutoSizeN (4);
 
+#ifndef PANDORA
 	if (resolution->focussed()) FT.SetColor (colDYell); else FT.SetColor (colWhite);
 	FT.DrawString (area.left, area.top + dd, Trans.Text(32));
+#endif
 	if (mus_vol->focussed()) FT.SetColor (colDYell); else FT.SetColor (colWhite);
 	FT.DrawString (area.left, area.top + dd*2, Trans.Text(33));
 	if (sound_vol->focussed()) FT.SetColor (colDYell); else FT.SetColor (colWhite);
@@ -254,7 +263,9 @@ void CGameConfig::Loop (ETR_DOUBLE time_step) {
 	FT.DrawString (area.left, area.top + dd*5, Trans.Text(35));
 
 	FT.SetColor (colWhite);
+#ifndef PANDORA
 	FT.DrawString (area.left+240, area.top + dd, res_names[resolution->GetValue()]);
+#endif
 	FT.DrawString (area.left+240, area.top + dd*2, Int_StrN (mus_vol->GetValue()));
 	FT.DrawString (area.left+240, area.top + dd*3, Int_StrN (sound_vol->GetValue()));
 	FT.DrawString (area.left+240, area.top + dd*4, Int_StrN (detail_level->GetValue()));
@@ -274,10 +285,12 @@ void CGameConfig::Loop (ETR_DOUBLE time_step) {
 			FT.DrawString (CENTER, AutoYPosN (72), Trans.Text(42));
 		}
 	#else
+#ifndef PANDORA
 		FT.SetColor (colWhite);
 		FT.AutoSizeN (3);
 		FT.DrawString (CENTER, AutoYPosN (68), Trans.Text(41));
 		FT.DrawString (CENTER, AutoYPosN (72), Trans.Text(42));
+#endif
 	#endif
 
 	DrawGUI();
