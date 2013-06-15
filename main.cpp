@@ -100,6 +100,8 @@ int main( int argc, char **argv ) {
 	}
 
 	Winsys.Quit();
-
+#ifdef USE_GLES1
+	glesCleanUp();
+#endif
     return 0;
 }
