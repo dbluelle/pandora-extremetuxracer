@@ -34,7 +34,7 @@ GNU General Public License for more details.
 
 CReset Reset;
 
-static double reset_start_time;
+static ETR_DOUBLE reset_start_time;
 static bool position_reset;
 
 
@@ -44,11 +44,11 @@ void CReset::Enter() {
     position_reset = false;
 }
 
-void CReset::Loop(double time_step) {
+void CReset::Loop(ETR_DOUBLE time_step) {
     int width, height;
 	CControl *ctrl = Players.GetCtrl (g_game.player_id);
-    double elapsed_time = Winsys.ClockTime () - reset_start_time;
-    double course_width, course_length;
+    ETR_DOUBLE elapsed_time = Winsys.ClockTime () - reset_start_time;
+    ETR_DOUBLE course_width, course_length;
     static bool tux_visible = true;
     static int tux_visible_count = 0;
 	TObjectType	*object_types;

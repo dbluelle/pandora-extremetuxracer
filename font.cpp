@@ -217,7 +217,7 @@ void CFont::SetFont (const string& fontname) {
 // -------------------- auto ------------------------------------------
 
 int CFont::AutoSizeN (int rel_val) {
-	double size = (rel_val + 2) * 4;
+	ETR_DOUBLE size = (rel_val + 2) * 4;
 	size *= curr_fact;
 	size *= param.scale;
 	SetSize (size);
@@ -225,8 +225,8 @@ int CFont::AutoSizeN (int rel_val) {
 }
 
 int CFont::AutoDistanceN (int rel_val) {
-	double fact = (rel_val + 5) * 0.2;
-	double dist = curr_size * fact;
+	ETR_DOUBLE fact = (rel_val + 5) * 0.2;
+	ETR_DOUBLE dist = curr_size * fact;
 	return (int) dist;
 }
 

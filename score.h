@@ -27,7 +27,7 @@ struct TScore {
 	string player;
 	int points;
 	int herrings;
-	double time;
+	ETR_DOUBLE time;
 };
 
 struct TScoreList {
@@ -42,7 +42,7 @@ private:
 	TScore TempScore;
 
 	void Enter();
-	void Loop(double time_step);
+	void Loop(ETR_DOUBLE time_step);
 	void Keyb(unsigned int key, bool special, bool release, int x, int y);
 	void Mouse(int button, int state, int x, int y);
 	void Motion(int x, int y);

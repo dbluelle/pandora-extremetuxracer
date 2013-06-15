@@ -437,7 +437,7 @@ void TTexture::Draw(int x, int y, float width, float height, Orientation orienta
 	glEnd();
 }
 
-void TTexture::DrawFrame(int x, int y, double w, double h, int frame, const TColor& col) {
+void TTexture::DrawFrame(int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col) {
 	if (id < 1)
 		return;
 
@@ -569,11 +569,11 @@ void CTexture::Draw (const string& name, int x, int y, int width, int height) {
 	Index[name]->Draw (x, y, width, height, forientation);
 }
 
-void CTexture::DrawFrame (size_t idx, int x, int y, double w, double h, int frame, const TColor& col) {
+void CTexture::DrawFrame (size_t idx, int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col) {
 	CommonTex[idx]->DrawFrame (x, y, w, h, frame, col);
 }
 
-void CTexture::DrawFrame (const string& name, int x, int y, double w, double h, int frame, const TColor& col) {
+void CTexture::DrawFrame (const string& name, int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col) {
 	Index[name]->DrawFrame (x, y, w, h, frame, col);
 }
 

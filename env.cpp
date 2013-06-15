@@ -200,7 +200,7 @@ void CEnvironment::LoadLight () {
 
 void CEnvironment::DrawSkybox (const TVector3& pos) {
 	set_gl_options (SKY);
-	double aa, bb;
+	ETR_DOUBLE aa, bb;
 
 #if defined (OS_LINUX)
 	aa = 0.0;

@@ -207,7 +207,7 @@ void CGameOver::Enter() {
 }
 
 
-void CGameOver::Loop(double time_step) {
+void CGameOver::Loop(ETR_DOUBLE time_step) {
     CControl *ctrl = Players.GetCtrl (g_game.player_id);
     int width, height;
     width = param.x_resolution;

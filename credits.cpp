@@ -33,7 +33,7 @@ CCredits Credits;
 
 
 static TVector2 cursor_pos(0, 0);
-static double y_offset = 0;
+static ETR_DOUBLE y_offset = 0;
 static bool moving = true;
 
 void CCredits::LoadCreditList () {
@@ -49,7 +49,7 @@ void CCredits::LoadCreditList () {
 		TCredits credit;
 		credit.text = SPStrN (line, "text", "");
 
-		double offset = SPFloatN (line, "offs", 0) * OFFS_SCALE_FACTOR * param.scale;
+		ETR_DOUBLE offset = SPFloatN (line, "offs", 0) * OFFS_SCALE_FACTOR * param.scale;
 		if (i>0) credit.offs = CreditList.back().offs + (int)offset;
 		else credit.offs = offset;
 
@@ -59,10 +59,10 @@ void CCredits::LoadCreditList () {
 	}
 }
 
-void CCredits::DrawCreditsText (double time_step) {
-    double w = (double)param.x_resolution;
-    double h = (double)param.y_resolution;
-	double offs = 0.0;
+void CCredits::DrawCreditsText (ETR_DOUBLE time_step) {
+    ETR_DOUBLE w = (ETR_DOUBLE)param.x_resolution;
+    ETR_DOUBLE h = (ETR_DOUBLE)param.y_resolution;
+	ETR_DOUBLE offs = 0.0;
 	if (moving) y_offset += time_step * 30;
 
 
@@ -81,7 +81,7 @@ void CCredits::DrawCreditsText (double time_step) {
 
 
     glDisable (GL_TEXTURE_2D);
-	glColor4dv ((double*)&colBackgr);
+	glColor4dv ((ETR_DOUBLE*)&colBackgr);
     glRectf (0, 0, w, BOTT_Y);
 
     glBegin( GL_QUADS );
@@ -92,7 +92,7 @@ void CCredits::DrawCreditsText (double time_step) {
 		glVertex2f (0, BOTT_Y + 30 );
     glEnd();
 
-    glColor4dv ((double*)&colBackgr);
+    glColor4dv ((ETR_DOUBLE*)&colBackgr);
     glRectf (0, h - TOP_Y, w, h );
 
 	glBegin( GL_QUADS );
@@ -108,7 +108,7 @@ void CCredits::DrawCreditsText (double time_step) {
 	if (offs < TOP_Y) y_offset = 0;
 }
 
-static void DrawBackLogo (int x, int y, double size) {
+static void DrawBackLogo (int x, int y, ETR_DOUBLE size) {
 	GLint w, h;
 	GLfloat width, height, top, bott, left, right;
 
@@ -166,7 +166,7 @@ void CCredits::Enter() {
 	moving = true;
 }
 
-void CCredits::Loop(double time_step) {
+void CCredits::Loop(ETR_DOUBLE time_step) {
 	int ww = param.x_resolution;
 	int hh = param.y_resolution;
 

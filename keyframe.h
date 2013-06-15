@@ -26,7 +26,7 @@ GNU General Public License for more details.
 class CCharShape;
 
 struct TKeyframe {
-	double val[MAX_FRAME_VALUES];
+	ETR_DOUBLE val[MAX_FRAME_VALUES];
 };
 
 class CKeyframe {
@@ -35,12 +35,12 @@ private:
 	TVector3 refpos;
 	string loadedfile;
 	TKeyframe clipboard;
-	double keytime;
-	double heightcorr;
+	ETR_DOUBLE keytime;
+	ETR_DOUBLE heightcorr;
 	size_t keyidx;
 
-	double interp (double frac, double v1, double v2);
-	void InterpolateKeyframe (size_t idx, double frac, CCharShape *shape);
+	ETR_DOUBLE interp (ETR_DOUBLE frac, ETR_DOUBLE v1, ETR_DOUBLE v2);
+	void InterpolateKeyframe (size_t idx, ETR_DOUBLE frac, CCharShape *shape);
 
 	// test and editing
 	void ResetFrame2 (TKeyframe *frame);
@@ -49,12 +49,12 @@ public:
 	bool loaded;
 	bool active;
 
-	void Init (const TVector3& ref_position, double height_correction);
-	void Init (const TVector3& ref_position, double height_correction, CCharShape *shape);
+	void Init (const TVector3& ref_position, ETR_DOUBLE height_correction);
+	void Init (const TVector3& ref_position, ETR_DOUBLE height_correction, CCharShape *shape);
 	void InitTest (const TVector3& ref_position, CCharShape *shape);
 	void Reset ();
-	void Update (double timestep, CControl *ctrl);
-	void UpdateTest (double timestep, CCharShape *shape);
+	void Update (ETR_DOUBLE timestep, CControl *ctrl);
+	void UpdateTest (ETR_DOUBLE timestep, CCharShape *shape);
 	bool Load (const string& dir, const string& filename);
 	void CalcKeyframe (size_t idx, CCharShape *shape, const TVector3& refpos);
 

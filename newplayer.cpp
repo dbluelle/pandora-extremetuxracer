@@ -98,13 +98,13 @@ void CNewPlayer::Enter() {
 	avatar = AddUpDown (area.left + prevwidth + prevoffs + 8, prevtop, 0, (int)Players.numAvatars() - 1, 0, prevwidth - 34);
 	int siz = FT.AutoSizeN (5);
 	textbuttons[0] = AddTextButton (Trans.Text(8), area.left+50, AutoYPosN (70), siz);
-	double len = FT.GetTextWidth (Trans.Text(15));
+	ETR_DOUBLE len = FT.GetTextWidth (Trans.Text(15));
 	textbuttons[1] = AddTextButton (Trans.Text(15), area.right-len-50, AutoYPosN (70), siz);
 
 	textfield = AddTextField("", area.left, frametop, framewidth, frameheight);
 }
 
-void CNewPlayer::Loop(double timestep) {
+void CNewPlayer::Loop(ETR_DOUBLE timestep) {
 	int ww = param.x_resolution;
 	int hh = param.y_resolution;
 	TColor col;

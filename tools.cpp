@@ -97,13 +97,13 @@ CGluCamera::CGluCamera () {
 	farther = false;
 }
 
-void CGluCamera::Update (double timestep) {
+void CGluCamera::Update (ETR_DOUBLE timestep) {
 	if (turnright) angle += timestep * 2000;
 	if (turnleft) angle -= timestep * 2000;
 	if (nearer) distance -= timestep * 100;
 	if (farther) distance += timestep * 100;
-	double xx = distance * sin (angle * M_PI / 180);
-	double zz = distance * sin ((90 - angle) * M_PI / 180);
+	ETR_DOUBLE xx = distance * sin (angle * M_PI / 180);
+	ETR_DOUBLE zz = distance * sin ((90 - angle) * M_PI / 180);
 	glLoadIdentity ();
 	gluLookAt (xx, 0, zz, 0, 0, 0, 0, 1, 0);
 }
@@ -263,7 +263,7 @@ void CTools::Motion(int x, int y) {
 	}
 }
 
-void CTools::Loop(double timestep) {
+void CTools::Loop(ETR_DOUBLE timestep) {
 	switch (tool_mode) {
 		case 0: RenderChar (timestep); break;
 		case 1: RenderSingleFrame (timestep); break;

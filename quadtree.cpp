@@ -900,13 +900,13 @@ clip_result_t quadsquare::ClipSquare (const quadcornerdata& cd)
 	max.y = MaxY;
 	max.z = (cd.zorg + whole) * ScaleZ;
 	if  (min.x > max.x ) {
-		double tmp = min.x;
+		ETR_DOUBLE tmp = min.x;
 		min.x = max.x;
 		max.x = tmp;
 	}
 
 	if  (min.z > max.z ) {
-		double tmp = min.z;
+		ETR_DOUBLE tmp = min.z;
 		min.z = max.z;
 		max.z = tmp;
 	}
@@ -1141,9 +1141,9 @@ void quadsquare::AddHeightMap(const quadcornerdata& cd, const HeightMapInfo& hm)
 	if (Dirty) SetStatic(cd);
 }
 
-double quadsquare::ScaleX;
-double quadsquare::ScaleZ;
-void quadsquare::SetScale(double x, double z)
+ETR_DOUBLE quadsquare::ScaleX;
+ETR_DOUBLE quadsquare::ScaleZ;
+void quadsquare::SetScale(ETR_DOUBLE x, ETR_DOUBLE z)
 {
 	ScaleX = x;
 	ScaleZ = z;
@@ -1205,8 +1205,8 @@ static void TVector3o_float_array (float dest[3], const TVector3& src)
 }
 
 
-void InitQuadtree (double *elevation, int nx, int nz,
-				   double scalex, double scalez, const TVector3& view_pos, double detail){
+void InitQuadtree (ETR_DOUBLE *elevation, int nx, int nz,
+				   ETR_DOUBLE scalex, ETR_DOUBLE scalez, const TVector3& view_pos, ETR_DOUBLE detail){
 	HeightMapInfo hm;
 
 	hm.Data = elevation;

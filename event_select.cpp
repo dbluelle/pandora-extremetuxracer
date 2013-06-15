@@ -101,7 +101,7 @@ void CEventSelect::Enter () {
 
 	int siz = FT.AutoSizeN (5);
 
-	double len = FT.GetTextWidth (Trans.Text(9));
+	ETR_DOUBLE len = FT.GetTextWidth (Trans.Text(9));
 	textbuttons[0] = AddTextButton (Trans.Text(9), area.right-len-50, AutoYPosN (70), siz);
 	textbuttons[1] = AddTextButton (Trans.Text(8), area.left+50, AutoYPosN (70), siz);
 	SetFocus(textbuttons[1]);
@@ -111,7 +111,7 @@ void CEventSelect::Enter () {
 	g_game.loopdelay = 20;
 }
 
-void CEventSelect::Loop (double timestep) {
+void CEventSelect::Loop (ETR_DOUBLE timestep) {
 	int ww = param.x_resolution;
 	int hh = param.y_resolution;
 	TColor col;

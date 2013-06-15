@@ -58,8 +58,8 @@ void DrawTrees() {
 	CControl*		ctrl = Players.GetCtrl (g_game.player_id);
 
 	set_gl_options (TREES);
-    double fwd_clip_limit = param.forward_clip_distance;
-    double bwd_clip_limit = param.backward_clip_distance;
+    ETR_DOUBLE fwd_clip_limit = param.forward_clip_distance;
+    ETR_DOUBLE bwd_clip_limit = param.backward_clip_distance;
 
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     set_material (colWhite, colBlack, 1.0);
@@ -84,8 +84,8 @@ void DrawTrees() {
         glTranslatef (treeLocs[i].pt.x, treeLocs[i].pt.y, treeLocs[i].pt.z);
 		if (param.perf_level > 1) glRotatef (1, 0, 1, 0);
 
-        double treeRadius = treeLocs[i].diam / 2.0;
-        double treeHeight = treeLocs[i].height;
+        ETR_DOUBLE treeRadius = treeLocs[i].diam / 2.0;
+        ETR_DOUBLE treeHeight = treeLocs[i].height;
 		TVector3 normal(0, 0, 1);
 		glNormal3f (normal.x, normal.y, normal.z);
 /*		// slower but better method of setting the normals
@@ -135,8 +135,8 @@ void DrawTrees() {
 
 		glPushMatrix();
 		    glTranslatef (itemLocs[i].pt.x, itemLocs[i].pt.y,  itemLocs[i].pt.z);
-		    double itemRadius = itemLocs[i].diam / 2;
-		    double itemHeight = itemLocs[i].height;
+		    ETR_DOUBLE itemRadius = itemLocs[i].diam / 2;
+		    ETR_DOUBLE itemHeight = itemLocs[i].height;
 
 			TVector3 normal;
 		    if (object_types[item_type].use_normal) {

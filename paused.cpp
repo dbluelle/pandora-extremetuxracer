@@ -52,7 +52,7 @@ void CPaused::Mouse (int button, int state, int x, int y){
 }
 
 void PausedSetupDisplay () {
-    double offset = 0.0;
+    ETR_DOUBLE offset = 0.0;
 
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity();
@@ -65,7 +65,7 @@ void PausedSetupDisplay () {
 
 // ====================================================================
 
-void CPaused::Loop (double time_step) {
+void CPaused::Loop (ETR_DOUBLE time_step) {
     CControl *ctrl = Players.GetCtrl (g_game.player_id);
     int width = param.x_resolution;
     int height = param.y_resolution;

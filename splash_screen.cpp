@@ -50,7 +50,7 @@ void CSplashScreen::Enter() {
 	g_game.loopdelay = 10;
 }
 
-void CSplashScreen::Loop(double timestep) {
+void CSplashScreen::Loop(ETR_DOUBLE timestep) {
 	Music.Update ();
 	check_gl_error();
     ClearRenderContext ();

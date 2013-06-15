@@ -35,7 +35,7 @@ enum vertex_loc_t {
 };
 
 struct HeightMapInfo {
-    double *Data;
+    ETR_DOUBLE *Data;
     int	XOrigin, ZOrigin;
     int	XSize, ZSize;
     int	RowWidth;
@@ -70,7 +70,7 @@ struct quadsquare {
     bool ForceEastVert;
     bool ForceSouthVert;
 
-    static double ScaleX, ScaleZ;
+    static ETR_DOUBLE ScaleX, ScaleZ;
     static int RowSize, NumRows;
     static char *Terrain;
     static TTexture* EnvmapTexture;
@@ -99,7 +99,7 @@ struct quadsquare {
 			const float ViewerLocation[3], float Detail);
     void	Render(const quadcornerdata& cd, GLubyte *vnc_array);
     float	GetHeight(const quadcornerdata& cd, float x, float z);
-    void	SetScale(double x, double z);
+    void	SetScale(ETR_DOUBLE x, ETR_DOUBLE z);
     void	SetTerrain (char *terrain);
 
 private:
@@ -135,9 +135,9 @@ private:
 // --------------------------------------------------------------------
 
 void ResetQuadtree();
-void InitQuadtree (double *elevation, int nx, int nz,
-			   double scalex, double scalez,
-			   const TVector3& view_pos, double detail );
+void InitQuadtree (ETR_DOUBLE *elevation, int nx, int nz,
+			   ETR_DOUBLE scalex, ETR_DOUBLE scalez,
+			   const TVector3& view_pos, ETR_DOUBLE detail );
 
 void UpdateQuadtree (const TVector3& view_pos, float detail );
 void RenderQuadtree();

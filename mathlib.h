@@ -28,43 +28,43 @@ static const TVector3 GravVec(0.0, -1.0, 0.0);
 //			vector and matrix
 // --------------------------------------------------------------------
 
-double		VectorLength (const TVector3 &v);
+ETR_DOUBLE		VectorLength (const TVector3 &v);
 
-TVector3	ScaleVector (double s, const TVector3& v);
+TVector3	ScaleVector (ETR_DOUBLE s, const TVector3& v);
 TVector3	AddVectors (const TVector3& v1, const TVector3& v2);
 TVector3	SubtractVectors (const TVector3& v1, const TVector3& v2);
-double		NormVector (TVector3 &v);
+ETR_DOUBLE		NormVector (TVector3 &v);
 
-double		DotProduct (const TVector3& v1, const TVector3& v2);
+ETR_DOUBLE		DotProduct (const TVector3& v1, const TVector3& v2);
 TVector3	CrossProduct (const TVector3& u, const TVector3& v);
 
 TVector3	ProjectToPlane (const TVector3& nml, const TVector3& v);
 TVector3	TransformVector (TMatrix mat, const TVector3& v);
 TVector3	TransformNormal (const TVector3& n, TMatrix mat);	// not used ?
 TVector3	TransformPoint (TMatrix mat, const TVector3& p);
-TPlane		MakePlane (double nx, double ny, double nz, double d);
+TPlane		MakePlane (ETR_DOUBLE nx, ETR_DOUBLE ny, ETR_DOUBLE nz, ETR_DOUBLE d);
 bool		IntersectPlanes (const TPlane& s1, const TPlane& s2, const TPlane& s3, TVector3 *p);
-double		DistanceToPlane (const TPlane& plane, const TVector3& pt);
+ETR_DOUBLE		DistanceToPlane (const TPlane& plane, const TVector3& pt);
 
 void MakeIdentityMatrix (TMatrix h);
-void MakeRotationMatrix (TMatrix mat, double angle, char axis);
-void MakeTranslationMatrix (TMatrix mat, double x, double y, double z);
-void MakeScalingMatrix (TMatrix mat, double x, double y, double z);
+void MakeRotationMatrix (TMatrix mat, ETR_DOUBLE angle, char axis);
+void MakeTranslationMatrix (TMatrix mat, ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z);
+void MakeScalingMatrix (TMatrix mat, ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z);
 
 void MultiplyMatrices (TMatrix ret, TMatrix mat1, TMatrix mat2);
 void TransposeMatrix (TMatrix mat, TMatrix trans);
 void MakeBasisMat (TMatrix mat,	const TVector3& w1, const TVector3& w2, const TVector3& w3);
 void MakeBasismatrix_Inv (TMatrix mat, TMatrix invMat, const TVector3& w1, const TVector3& w2, const TVector3& w3);
-void RotateAboutVectorMatrix (TMatrix mat, const TVector3& u, double angle);
+void RotateAboutVectorMatrix (TMatrix mat, const TVector3& u, ETR_DOUBLE angle);
 
 TQuaternion AddQuaternions (const TQuaternion& q, const TQuaternion& r);		// not used?
 TQuaternion MultiplyQuaternions (const TQuaternion& q, const TQuaternion& r);
-TQuaternion ScaleQuaternion (double s, const TQuaternion& q);
+TQuaternion ScaleQuaternion (ETR_DOUBLE s, const TQuaternion& q);
 TQuaternion ConjugateQuaternion (const TQuaternion& q);
 void		MakeMatrixFromQuaternion (TMatrix mat, const TQuaternion& q);
 TQuaternion MakeQuaternionFromMatrix (TMatrix mat);
 TQuaternion MakeRotationQuaternion (const TVector3& s, const TVector3& t);
-TQuaternion InterpolateQuaternions (const TQuaternion& q, TQuaternion r, double t);
+TQuaternion InterpolateQuaternions (const TQuaternion& q, TQuaternion r, ETR_DOUBLE t);
 TVector3	RotateVector (const TQuaternion& q, const TVector3& v);
 
 bool		IntersectPolygon (const TPolygon& p, TVector3 *v);
@@ -79,19 +79,19 @@ void		TransPolyhedron (TMatrix mat, const TPolyhedron& ph);
 // --------------------------------------------------------------------
 
 struct TOdeData {
-    double k[4];
-    double init_val;
-    double h;
+    ETR_DOUBLE k[4];
+    ETR_DOUBLE init_val;
+    ETR_DOUBLE h;
 };
 
 typedef int			(*PNumEstimates) ();
-typedef void		(*PInitOdeData) (TOdeData *, double init_val, double h);
-typedef double		(*PNextTime) (TOdeData *, int step);
-typedef double		(*PNextValue) (TOdeData *, int step);
-typedef void		(*PUpdateEstimate) (TOdeData *, int step, double val);
-typedef double		(*PFinalEstimate) (TOdeData *);
-typedef double		(*PEstimateError) (TOdeData *);
-typedef double		(*PTimestepExponent) ();
+typedef void		(*PInitOdeData) (TOdeData *, ETR_DOUBLE init_val, ETR_DOUBLE h);
+typedef ETR_DOUBLE		(*PNextTime) (TOdeData *, int step);
+typedef ETR_DOUBLE		(*PNextValue) (TOdeData *, int step);
+typedef void		(*PUpdateEstimate) (TOdeData *, int step, ETR_DOUBLE val);
+typedef ETR_DOUBLE		(*PFinalEstimate) (TOdeData *);
+typedef ETR_DOUBLE		(*PEstimateError) (TOdeData *);
+typedef ETR_DOUBLE		(*PTimestepExponent) ();
 
 struct TOdeSolver {
     PNumEstimates		NumEstimates;
@@ -110,11 +110,11 @@ TOdeSolver NewOdeSolver23 ();
 //			special
 // --------------------------------------------------------------------
 
-int Gauss (double *matrix, int n, double *soln);
-double LinearInterp (const double x[], const double y[], double val, int n);
+int Gauss (ETR_DOUBLE *matrix, int n, ETR_DOUBLE *soln);
+ETR_DOUBLE LinearInterp (const ETR_DOUBLE x[], const ETR_DOUBLE y[], ETR_DOUBLE val, int n);
 
-double	XRandom (float min, float max);
-double	FRandom ();
+ETR_DOUBLE	XRandom (float min, float max);
+ETR_DOUBLE	FRandom ();
 int		IRandom (int min, int max);
 int		ITrunc (int val, int base);
 int		IFrac (int val, int base);

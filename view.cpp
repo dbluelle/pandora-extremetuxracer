@@ -47,21 +47,21 @@ void SetStationaryCamera (bool stat) {
 	}
 }
 
-static double camera_distance = 4.0;
-void IncCameraDistance (double timestep) {
+static ETR_DOUBLE camera_distance = 4.0;
+void IncCameraDistance (ETR_DOUBLE timestep) {
 	camera_distance += timestep * CAMERA_DISTANCE_INCREMENT;
 }
 
-void SetCameraDistance (double val) {camera_distance = val;}
+void SetCameraDistance (ETR_DOUBLE val) {camera_distance = val;}
 
 
 void set_view_mode (CControl *ctrl, TViewMode mode) {ctrl->viewmode = mode;}
 
 TVector3 interpolate_view_pos (TVector3 ctrl_pos1, TVector3 ctrl_pos2,
-			      double max_vec_angle,
+			      ETR_DOUBLE max_vec_angle,
 			      TVector3 pos1, TVector3 pos2,
-			      double dist, double dt,
-			      double time_constant)
+			      ETR_DOUBLE dist, ETR_DOUBLE dt,
+			      ETR_DOUBLE time_constant)
 {
     static TVector3 y_vec(0.0, 1.0, 0.0);
 
@@ -73,11 +73,11 @@ TVector3 interpolate_view_pos (TVector3 ctrl_pos1, TVector3 ctrl_pos2,
 
     TQuaternion q1 = MakeRotationQuaternion (y_vec, vec1);
     TQuaternion q2 = MakeRotationQuaternion (y_vec, vec2);
-    double alpha = min (MAX_INTERPOLATION_VALUE, 1.0 - exp  (-dt / time_constant));
+    ETR_DOUBLE alpha = min (MAX_INTERPOLATION_VALUE, 1.0 - exp  (-dt / time_constant));
     q2 = InterpolateQuaternions (q1, q2, alpha);
 
     vec2 = RotateVector (q2, y_vec);
-    double theta = RADIANS_TO_ANGLES (M_PI/2 - acos (DotProduct (vec2, y_vec)));
+    ETR_DOUBLE theta = RADIANS_TO_ANGLES (M_PI/2 - acos (DotProduct (vec2, y_vec)));
     if (theta > max_vec_angle) {
 		TVector3 axis = CrossProduct (y_vec, vec2);
 		NormVector (axis);
@@ -90,7 +90,7 @@ TVector3 interpolate_view_pos (TVector3 ctrl_pos1, TVector3 ctrl_pos2,
 
 void interpolate_view_frame (TVector3 up1, TVector3 dir1,
 			     TVector3 *p_up2, TVector3 *p_dir2,
-			     double dt, double time_constant)
+			     ETR_DOUBLE dt, ETR_DOUBLE time_constant)
 {
     TMatrix cob_mat1, inv_cob_mat1;
     TMatrix cob_mat2, inv_cob_mat2;
@@ -111,7 +111,7 @@ void interpolate_view_frame (TVector3 up1, TVector3 dir1,
 
     MakeBasismatrix_Inv (cob_mat2, inv_cob_mat2, x2, y2, z2);
     TQuaternion q2 = MakeQuaternionFromMatrix (cob_mat2);
-    double alpha = min (MAX_INTERPOLATION_VALUE, 1.0 - exp (-dt / time_constant));
+    ETR_DOUBLE alpha = min (MAX_INTERPOLATION_VALUE, 1.0 - exp (-dt / time_constant));
     q2 = InterpolateQuaternions (q1, q2, alpha);
     MakeMatrixFromQuaternion (cob_mat2, q2);
 
@@ -169,12 +169,12 @@ void setup_view_matrix (CControl *ctrl, bool save_mat) {
 		memcpy(stationary_matrix, view_mat, 16*sizeof(**view_mat));
 	}
     glLoadIdentity();
-	glMultMatrixd ((double*) view_mat);
+	glMultMatrixd ((ETR_DOUBLE*) view_mat);
 }
 
 TVector3 MakeViewVector () {
-    double course_angle = Course.GetCourseAngle();
-	double rad = ANGLES_TO_RADIANS (
+    ETR_DOUBLE course_angle = Course.GetCourseAngle();
+	ETR_DOUBLE rad = ANGLES_TO_RADIANS (
 			    course_angle -
 			    CAMERA_ANGLE_ABOVE_SLOPE +
 			    PLAYER_ANGLE_IN_CAMERA);
@@ -182,10 +182,10 @@ TVector3 MakeViewVector () {
 	return ScaleVector (camera_distance, res);
 }
 
-void update_view (CControl *ctrl, double dt) {
+void update_view (CControl *ctrl, ETR_DOUBLE dt) {
 	if (is_stationary) {
 		glLoadIdentity();
-		glMultMatrixd ((double*) stationary_matrix);
+		glMultMatrixd ((ETR_DOUBLE*) stationary_matrix);
 		return;
 	}
 
@@ -197,15 +197,15 @@ void update_view (CControl *ctrl, double dt) {
 	static const TVector3 mz_vec(0.0, 0.0, -1.0);
 
     TVector3 vel_cpy = ctrl->cvel;
-    double speed = NormVector (vel_cpy);
-    double time_constant_mult = 1.0 /
+    ETR_DOUBLE speed = NormVector (vel_cpy);
+    ETR_DOUBLE time_constant_mult = 1.0 /
 		min (1.0, max (0.0,
 			(speed - NO_INTERPOLATION_SPEED) /
 			(BASELINE_INTERPOLATION_SPEED - NO_INTERPOLATION_SPEED)));
 
     TVector3 vel_dir = ctrl->cvel;
     NormVector (vel_dir);
-    double course_angle = Course.GetCourseAngle();
+    ETR_DOUBLE course_angle = Course.GetCourseAngle();
 
     switch (ctrl->viewmode) {
     case BEHIND: {
@@ -216,7 +216,7 @@ void update_view (CControl *ctrl, double dt) {
 		TQuaternion rot_quat = MakeRotationQuaternion (mz_vec, vel_proj);
 		view_vec = RotateVector (rot_quat, view_vec);
 		view_pt = AddVectors (ctrl->cpos, view_vec);
-        double ycoord = Course.FindYCoord (view_pt.x, view_pt.z);
+        ETR_DOUBLE ycoord = Course.FindYCoord (view_pt.x, view_pt.z);
 
         if (view_pt.y < ycoord + MIN_CAMERA_HEIGHT) {
             view_pt.y = ycoord + MIN_CAMERA_HEIGHT;
@@ -262,7 +262,7 @@ void update_view (CControl *ctrl, double dt) {
 		TQuaternion rot_quat = MakeRotationQuaternion (mz_vec, vel_proj);
 		view_vec = RotateVector (rot_quat, view_vec);
 		view_pt = AddVectors (ctrl->cpos, view_vec);
-        double ycoord = Course.FindYCoord (view_pt.x, view_pt.z);
+        ETR_DOUBLE ycoord = Course.FindYCoord (view_pt.x, view_pt.z);
         if (view_pt.y < ycoord + MIN_CAMERA_HEIGHT) {
             view_pt.y = ycoord + MIN_CAMERA_HEIGHT;
 		}
@@ -303,7 +303,7 @@ void update_view (CControl *ctrl, double dt) {
     case ABOVE: {
 		TVector3 view_vec = MakeViewVector ();
 		view_pt = AddVectors (ctrl->cpos, view_vec);
-        double ycoord = Course.FindYCoord (view_pt.x, view_pt.z);
+        ETR_DOUBLE ycoord = Course.FindYCoord (view_pt.x, view_pt.z);
         if (view_pt.y < ycoord + MIN_CAMERA_HEIGHT) {
             view_pt.y = ycoord + MIN_CAMERA_HEIGHT;
 		}
@@ -343,13 +343,13 @@ static char p_vertex_code[6];
 
 
 void SetupViewFrustum (CControl *ctrl) {
-    double aspect = (double) param.x_resolution /param.y_resolution;
+    ETR_DOUBLE aspect = (ETR_DOUBLE) param.x_resolution /param.y_resolution;
 
-	double near_dist = NEAR_CLIP_DIST;
-	double far_dist = param.forward_clip_distance;
+	ETR_DOUBLE near_dist = NEAR_CLIP_DIST;
+	ETR_DOUBLE far_dist = param.forward_clip_distance;
     TVector3 origin(0., 0., 0.);
-    double half_fov = ANGLES_TO_RADIANS (param.fov * 0.5);
-    double half_fov_horiz = atan (tan (half_fov) * aspect);
+    ETR_DOUBLE half_fov = ANGLES_TO_RADIANS (param.fov * 0.5);
+    ETR_DOUBLE half_fov_horiz = atan (tan (half_fov) * aspect);
 
     frustum_planes[0] = MakePlane (0, 0, 1, near_dist);
     frustum_planes[1] = MakePlane (0, 0, -1, -far_dist);

@@ -57,14 +57,14 @@ void TWidget::MouseMove(int x, int y) {
 	focus = active && visible && Inside(x, y, mouseRect);
 }
 
-TTextButton::TTextButton(int x, int y, const string& text_, double ftsize_)
+TTextButton::TTextButton(int x, int y, const string& text_, ETR_DOUBLE ftsize_)
 	: TWidget(x, y, 0, 0)
 	, text(text_)
 	, ftsize(ftsize_)
 {
 	if (ftsize < 0) ftsize = FT.AutoSizeN (4);
 
-	double len = FT.GetTextWidth (text);
+	ETR_DOUBLE len = FT.GetTextWidth (text);
 	if (x == CENTER) position.x = (int)((param.x_resolution - len) / 2);
 	int offs = (int)(ftsize / 5);
 	mouseRect.left = position.x-20;
@@ -82,13 +82,13 @@ void TTextButton::Draw() const {
 	FT.DrawString (position.x, position.y, text);
 }
 
-TTextButton* AddTextButton (const string& text, int x, int y, double ftsize) {
+TTextButton* AddTextButton (const string& text, int x, int y, ETR_DOUBLE ftsize) {
 	Widgets.push_back(new TTextButton(x, y, text, ftsize));
 	return static_cast<TTextButton*>(Widgets.back());
 }
 
 TTextButton* AddTextButtonN (const string& text, int x, int y, int rel_ftsize) {
-	double siz = FT.AutoSizeN (rel_ftsize);
+	ETR_DOUBLE siz = FT.AutoSizeN (rel_ftsize);
 	return AddTextButton (text, x, y, siz);
 }
 
@@ -111,14 +111,14 @@ void TTextField::Draw() const {
 	FT.DrawString (mouseRect.left+20, mouseRect.top, text);
 
 	if (cursor && focus) {
-		double x = mouseRect.left+20+1;
+		ETR_DOUBLE x = mouseRect.left+20+1;
 		if (cursorPos != 0) {
 			string temp = text.substr (0, cursorPos);
 			x += FT.GetTextWidth (temp);
 		}
-		double w = 3;
-		double h = 26*param.scale;
-		double scrheight = param.y_resolution;
+		ETR_DOUBLE w = 3;
+		ETR_DOUBLE h = 26*param.scale;
+		ETR_DOUBLE scrheight = param.y_resolution;
 
 		glDisable (GL_TEXTURE_2D);
 		glColor4f (colYellow.r, colYellow.g, colYellow.b, colYellow.a);
@@ -157,7 +157,7 @@ void TTextField::Key(unsigned int key, unsigned int mod, bool released) {
 	}
 }
 
-void TTextField::UpdateCursor(double timestep) {
+void TTextField::UpdateCursor(ETR_DOUBLE timestep) {
 	time += timestep;
 	if (time > CRSR_PERIODE) {
 		time = 0;
@@ -275,16 +275,16 @@ void TIconButton::Key(unsigned int key, unsigned int mod, bool released) {
 	}
 }
 
-TIconButton* AddIconButton(int x, int y, TTexture* texture, double size, int maximum, int value) {
+TIconButton* AddIconButton(int x, int y, TTexture* texture, ETR_DOUBLE size, int maximum, int value) {
 	Widgets.push_back(new TIconButton(x, y, texture, size, maximum, value));
 	return static_cast<TIconButton*>(Widgets.back());
 }
 
 void TArrow::Draw() const {
-	static const double textl[6] = {0.5, 0.0, 0.5, 0.5, 0.0, 0.5};
-	static const double textr[6] = {1.0, 0.5, 1.0, 1.0, 0.5, 1.0};
-	static const double texbl[6] = {0.25, 0.25, 0.75, 0.00, 0.00, 0.50};
-	static const double texbr[6] = {0.50, 0.50, 1.00, 0.25, 0.25, 0.75};
+	static const ETR_DOUBLE textl[6] = {0.5, 0.0, 0.5, 0.5, 0.0, 0.5};
+	static const ETR_DOUBLE textr[6] = {1.0, 0.5, 1.0, 1.0, 0.5, 1.0};
+	static const ETR_DOUBLE texbl[6] = {0.25, 0.25, 0.75, 0.00, 0.00, 0.50};
+	static const ETR_DOUBLE texbr[6] = {0.50, 0.50, 1.00, 0.25, 0.25, 0.75};
     TVector2 bl, tr;
 
 	int type = 0;
@@ -300,10 +300,10 @@ void TArrow::Draw() const {
 	tr.x = position.x + 32;
 	tr.y = param.y_resolution - position.y;
 
-	double texleft = textl[type];
-	double texright = textr[type];
-	double texbottom = texbl[type];
-	double textop = texbr[type];
+	ETR_DOUBLE texleft = textl[type];
+	ETR_DOUBLE texright = textr[type];
+	ETR_DOUBLE texbottom = texbl[type];
+	ETR_DOUBLE textop = texbr[type];
 
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable (GL_TEXTURE_2D );
@@ -413,8 +413,8 @@ TUpDown* AddUpDown(int x, int y, int minimum, int maximum, int value, int distan
 // ------------------ Elementary drawing ---------------------------------------------
 
 void DrawFrameX (int x, int y, int w, int h, int line,
-		const TColor& backcol, const TColor& framecol, double transp) {
-	double yy = param.y_resolution - y - h;
+		const TColor& backcol, const TColor& framecol, ETR_DOUBLE transp) {
+	ETR_DOUBLE yy = param.y_resolution - y - h;
 
 	if (x < 0) x = (param.x_resolution -w) / 2;
 	glPushMatrix();
@@ -441,17 +441,17 @@ void DrawFrameX (int x, int y, int w, int h, int line,
     glPopMatrix();
 }
 
-void DrawLevel (int x, int y, int level, double fact) {
+void DrawLevel (int x, int y, int level, ETR_DOUBLE fact) {
     TVector2 bl, tr;
-	static const double lev[4] = {0.0, 0.75, 0.5, 0.25};
+	static const ETR_DOUBLE lev[4] = {0.0, 0.75, 0.5, 0.25};
 
 	bl.x = x;
 	bl.y = param.y_resolution - y - 32;
 	tr.x = x + 95;
 	tr.y = param.y_resolution - y;
 
-	double bott = lev[level];
-	double top = bott + 0.25;
+	ETR_DOUBLE bott = lev[level];
+	ETR_DOUBLE top = bott + 0.25;
 
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable (GL_TEXTURE_2D);
@@ -485,9 +485,9 @@ void DrawBonus (int x, int y, size_t max, size_t num) {
 		bl.x = x + i * 40;
 		tr.x = bl.x + 32;
 
-		double bott = 0.0;
+		ETR_DOUBLE bott = 0.0;
 		if (i<num) bott = 0.5;
-		double top = bott + 0.5;
+		ETR_DOUBLE top = bott + 0.5;
 
 		glBegin( GL_QUADS );
 		    glTexCoord2f (0, bott);
@@ -545,8 +545,8 @@ void DrawBonusExt (int y, size_t numraces, size_t num) {
 		// if (i<num) bott = 0.5; else bott = 0.0;
 		// top = bott + 0.5;
 		if (i<num) {
-			double bott = 0.5;
-			double top = 1.0;
+			ETR_DOUBLE bott = 0.5;
+			ETR_DOUBLE top = 1.0;
 			glBegin (GL_QUADS);
 				glTexCoord2f (0, bott); glVertex2f (bl.x, bl.y);
 				glTexCoord2f (1, bott); glVertex2f (tr.x, bl.y);
@@ -559,7 +559,7 @@ void DrawBonusExt (int y, size_t numraces, size_t num) {
 
 void DrawCursor () {
 	Tex.Draw (MOUSECURSOR, cursor_x, cursor_y,
-		CURSOR_SIZE  * (double)param.x_resolution / 14000);
+		CURSOR_SIZE  * (ETR_DOUBLE)param.x_resolution / 14000);
 }
 
 
@@ -680,18 +680,18 @@ void ResetGUI () {
 
 // ------------------ new ---------------------------------------------
 
-int AutoYPosN (double percent) {
-	double hh = (double)param.y_resolution;
-	double po = hh * percent / 100;
+int AutoYPosN (ETR_DOUBLE percent) {
+	ETR_DOUBLE hh = (ETR_DOUBLE)param.y_resolution;
+	ETR_DOUBLE po = hh * percent / 100;
 	return (int)(po);
 }
 
-TArea AutoAreaN (double top_perc, double bott_perc, int w) {
+TArea AutoAreaN (ETR_DOUBLE top_perc, ETR_DOUBLE bott_perc, int w) {
 	TArea res;
 	res.top = AutoYPosN (top_perc);
 	res.bottom = AutoYPosN (bott_perc);
 	if (w > param.x_resolution) w = param.x_resolution;
-	double left = (param.x_resolution - w) / 2;
+	ETR_DOUBLE left = (param.x_resolution - w) / 2;
 	res.left = (int) left;
 	res.right = param.x_resolution - res.left;
 	return res;

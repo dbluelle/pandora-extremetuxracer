@@ -111,7 +111,7 @@ void CGameTypeSelect::Enter () {
 	g_game.loopdelay = 10;
 }
 
-void CGameTypeSelect::Loop (double time_step) {
+void CGameTypeSelect::Loop (ETR_DOUBLE time_step) {
 	int ww = param.x_resolution;
 	int hh = param.y_resolution;
 

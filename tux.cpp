@@ -176,7 +176,7 @@ bool CCharShape::CreateCharNode
     return true;
 }
 
-void CCharShape::AddAction (size_t node_name, int type, const TVector3& vec, double val) {
+void CCharShape::AddAction (size_t node_name, int type, const TVector3& vec, ETR_DOUBLE val) {
 	size_t idx = GetNodeIdx (node_name);
 	TCharAction *act = Nodes[idx]->action;
 	act->type[act->num] = type;
@@ -199,7 +199,7 @@ bool CCharShape::TranslateNode (size_t node_name, const TVector3& vec) {
     return true;
 }
 
-bool CCharShape::RotateNode (size_t node_name, int axis, double angle) {
+bool CCharShape::RotateNode (size_t node_name, int axis, ETR_DOUBLE angle) {
 	TCharNode *node;
     TMatrix rotMatrix;
 	char caxis = '0';
@@ -222,7 +222,7 @@ bool CCharShape::RotateNode (size_t node_name, int axis, double angle) {
     return true;
 }
 
-bool CCharShape::RotateNode (const string& node_trivialname, int axis, double angle) {
+bool CCharShape::RotateNode (const string& node_trivialname, int axis, ETR_DOUBLE angle) {
 	map<string, size_t>::const_iterator i = NodeIndex.find(node_trivialname);
 	if (i == NodeIndex.end()) return false;
 	return RotateNode (i->second, axis, angle);
@@ -409,7 +409,7 @@ GLuint CCharShape::GetDisplayList (int divisions) {
 
 void CCharShape::DrawNodes (TCharNode *node) {
     glPushMatrix();
-    glMultMatrixd ((double *) node->trans);
+    glMultMatrixd ((ETR_DOUBLE *) node->trans);
 
 	if (node->node_name == highlight_node) highlighted = true;
 	const TCharMaterial *mat;
@@ -482,7 +482,7 @@ bool CCharShape::Load (const string& dir, const string& filename, bool with_acti
 		if (SPIntN (line, "material", 0) > 0) {
 			CreateMaterial (line);
 		} else {
-			double visible = SPFloatN (line, "vis", -1.0);
+			ETR_DOUBLE visible = SPFloatN (line, "vis", -1.0);
 			bool shadow = SPBoolN (line, "shad", false);
 			string order = SPStrN (line, "order", "");
  			CreateCharNode (parent_name, node_name, name, fullname, order, shadow);
@@ -527,8 +527,8 @@ TVector3 CCharShape::AdjustRollvector (CControl *ctrl, TVector3 vel, const TVect
     return TransformVector (rot_mat, zvec);
 }
 
-void CCharShape::AdjustOrientation (CControl *ctrl, double dtime,
-		 double dist_from_surface, const TVector3& surf_nml) {
+void CCharShape::AdjustOrientation (CControl *ctrl, ETR_DOUBLE dtime,
+		 ETR_DOUBLE dist_from_surface, const TVector3& surf_nml) {
     TVector3 new_y, new_z;
     TMatrix cob_mat, inv_cob_mat;
     TMatrix rot_mat;
@@ -557,7 +557,7 @@ void CCharShape::AdjustOrientation (CControl *ctrl, double dtime,
 		ctrl->corientation = new_orient;
     }
 
-    double time_constant = dist_from_surface > 0 ? TO_AIR_TIME : TO_TIME;
+    ETR_DOUBLE time_constant = dist_from_surface > 0 ? TO_AIR_TIME : TO_TIME;
 
     ctrl->corientation = InterpolateQuaternions (
 			ctrl->corientation, new_orient,
@@ -579,17 +579,17 @@ void CCharShape::AdjustOrientation (CControl *ctrl, double dtime,
 	TransformNode (0, cob_mat, inv_cob_mat);
 }
 
-void CCharShape::AdjustJoints (double turnFact, bool isBraking,
-			double paddling_factor, double speed,
-			const TVector3& net_force, double flap_factor) {
-    double turning_angle[2] = {0, 0};
-    double paddling_angle = 0;
-    double ext_paddling_angle = 0;
-    double kick_paddling_angle = 0;
-    double braking_angle = 0;
-    double force_angle = 0;
-    double turn_leg_angle = 0;
-    double flap_angle = 0;
+void CCharShape::AdjustJoints (ETR_DOUBLE turnFact, bool isBraking,
+			ETR_DOUBLE paddling_factor, ETR_DOUBLE speed,
+			const TVector3& net_force, ETR_DOUBLE flap_factor) {
+    ETR_DOUBLE turning_angle[2] = {0, 0};
+    ETR_DOUBLE paddling_angle = 0;
+    ETR_DOUBLE ext_paddling_angle = 0;
+    ETR_DOUBLE kick_paddling_angle = 0;
+    ETR_DOUBLE braking_angle = 0;
+    ETR_DOUBLE force_angle = 0;
+    ETR_DOUBLE turn_leg_angle = 0;
+    ETR_DOUBLE flap_angle = 0;
 
     if (isBraking) braking_angle = MAX_ARM_ANGLE2;
 
@@ -679,10 +679,10 @@ bool CCharShape::Collision (const TVector3& pos, const TPolyhedron& ph) {
 //				shadow
 // --------------------------------------------------------------------
 
-void CCharShape::DrawShadowVertex (double x, double y, double z, TMatrix mat) {
+void CCharShape::DrawShadowVertex (ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z, TMatrix mat) {
     TVector3 pt(x, y, z);
     pt = TransformPoint (mat, pt);
-    double old_y = pt.y;
+    ETR_DOUBLE old_y = pt.y;
     TVector3 nml = Course.FindCourseNormal (pt.x, pt.z);
     pt.y = Course.FindYCoord (pt.x, pt.z) + SHADOW_HEIGHT;
     if  (pt.y > old_y) pt.y = old_y;
@@ -691,8 +691,8 @@ void CCharShape::DrawShadowVertex (double x, double y, double z, TMatrix mat) {
 }
 
 void CCharShape::DrawShadowSphere (TMatrix mat) {
-    double theta, phi, d_theta, d_phi, eps, twopi;
-    double x, y, z;
+    ETR_DOUBLE theta, phi, d_theta, d_phi, eps, twopi;
+    ETR_DOUBLE x, y, z;
     int div = param.tux_shadow_sphere_divisions;
 
     eps = 1e-15;
@@ -700,9 +700,9 @@ void CCharShape::DrawShadowSphere (TMatrix mat) {
     d_theta = d_phi = M_PI / div;
 
     for  (phi = 0.0; phi + eps < M_PI; phi += d_phi) {
-		double cos_theta, sin_theta;
-		double sin_phi, cos_phi;
-		double sin_phi_d_phi, cos_phi_d_phi;
+		ETR_DOUBLE cos_theta, sin_theta;
+		ETR_DOUBLE sin_phi, cos_phi;
+		ETR_DOUBLE sin_phi_d_phi, cos_phi_d_phi;
 
 		sin_phi = sin (phi);
 		cos_phi = cos (phi);
@@ -829,7 +829,7 @@ void CCharShape::RefreshNode (size_t idx) {
 	if (idx >= numNodes) return;
     TMatrix TempMatrix;
 	char caxis;
-	double angle;
+	ETR_DOUBLE angle;
 
 	TCharNode *node = Nodes[idx];
 	TCharAction *act = node->action;
@@ -842,7 +842,7 @@ void CCharShape::RefreshNode (size_t idx) {
 	for (size_t i=0; i<act->num; i++) {
 		int type = act->type[i];
 		TVector3 vec = act->vec[i];
-		double dval = act->dval[i];
+		ETR_DOUBLE dval = act->dval[i];
 
 		switch (type) {
 			case 0:

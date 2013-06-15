@@ -58,9 +58,9 @@ class CGluCamera {
 private:
 public:
 	CGluCamera ();
-	double distance;
-	double angle;
-	void Update (double timestep);
+	ETR_DOUBLE distance;
+	ETR_DOUBLE angle;
+	void Update (ETR_DOUBLE timestep);
 
 	bool turnright;
 	bool turnleft;
@@ -87,7 +87,7 @@ void DrawChanged ();
 
 
 class CTools : public State {
-	void Loop(double time_step);
+	void Loop(ETR_DOUBLE time_step);
 	void Keyb(unsigned int key, bool special, bool release, int x, int y);
 	void Mouse(int button, int state, int x, int y);
 	void Motion(int x, int y);

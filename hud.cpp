@@ -94,7 +94,7 @@ static void draw_herring_count (int herring_count){
 	}
 }
 
-TVector2 calc_new_fan_pt (double angle) {
+TVector2 calc_new_fan_pt (ETR_DOUBLE angle) {
     TVector2 pt;
     pt.x = ENERGY_GAUGE_CENTER_X + cos (ANGLES_TO_RADIANS (angle)) * SPEEDBAR_OUTER_RADIUS;
     pt.y = ENERGY_GAUGE_CENTER_Y + sin (ANGLES_TO_RADIANS (angle)) * SPEEDBAR_OUTER_RADIUS;
@@ -109,15 +109,15 @@ void start_tri_fan() {
     glVertex2f (pt.x, pt.y);
 }
 
-void draw_partial_tri_fan (double fraction) {
+void draw_partial_tri_fan (ETR_DOUBLE fraction) {
     bool trifan = false;
 
-	double angle = SPEEDBAR_BASE_ANGLE +
+	ETR_DOUBLE angle = SPEEDBAR_BASE_ANGLE +
 		(SPEEDBAR_MAX_ANGLE - SPEEDBAR_BASE_ANGLE) * fraction;
 
     int divs = (int)((SPEEDBAR_BASE_ANGLE - angle) * CIRCLE_DIVISIONS / 360.0);
-    double cur_angle = SPEEDBAR_BASE_ANGLE;
-    double angle_incr = 360.0 / CIRCLE_DIVISIONS;
+    ETR_DOUBLE cur_angle = SPEEDBAR_BASE_ANGLE;
+    ETR_DOUBLE angle_incr = 360.0 / CIRCLE_DIVISIONS;
 
     for (int i=0; i<divs; i++) {
 		if  (!trifan) {
@@ -145,7 +145,7 @@ void draw_partial_tri_fan (double fraction) {
     }
 }
 
-void draw_gauge (double speed, double energy) {
+void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
     GLfloat xplane[4] = {1.0 / GAUGE_IMG_SIZE, 0.0, 0.0, 0.0 };
     GLfloat yplane[4] = {0.0, 1.0 / GAUGE_IMG_SIZE, 0.0, 0.0 };
 
@@ -162,7 +162,7 @@ void draw_gauge (double speed, double energy) {
     glPushMatrix();
 	glTranslatef (param.x_resolution - GAUGE_WIDTH, 0, 0);
 	Tex.BindTex (GAUGE_ENERGY);
-	double y = ENERGY_GAUGE_BOTTOM + energy * ENERGY_GAUGE_HEIGHT;
+	ETR_DOUBLE y = ENERGY_GAUGE_BOTTOM + energy * ENERGY_GAUGE_HEIGHT;
 
 	glColor4fv (energy_background_color);
 	glBegin (GL_QUADS);
@@ -180,7 +180,7 @@ void draw_gauge (double speed, double energy) {
 	    glVertex2f (0.0, y);
 	glEnd ();
 
-	double speedbar_frac = 0.0;
+	ETR_DOUBLE speedbar_frac = 0.0;
 
 	if  (speed > SPEEDBAR_GREEN_MAX_SPEED) {
 	    speedbar_frac = SPEEDBAR_GREEN_FRACTION;
@@ -218,7 +218,7 @@ void draw_gauge (double speed, double energy) {
     glPopMatrix();
 }
 
-void DrawSpeed (double speed) {
+void DrawSpeed (ETR_DOUBLE speed) {
 	string speedstr = Int_StrN ((int)speed, 3);
 	if (param.use_papercut_font < 2) {
 		Tex.DrawNumStr (speedstr.c_str(),
@@ -229,7 +229,7 @@ void DrawSpeed (double speed) {
 	}
 }
 
-void DrawWind (double dir, double speed) {
+void DrawWind (ETR_DOUBLE dir, ETR_DOUBLE speed) {
 	Tex.Draw (SPEEDMETER, 10, param.y_resolution - 150, 1.0);
 	glPushMatrix ();
     glDisable (GL_TEXTURE_2D );
@@ -348,9 +348,9 @@ void DrawPercentBar (float fact, float x, float y) {
 }
 
 void DrawCoursePosition (CControl *ctrl) {
-	double pl, pw;
+	ETR_DOUBLE pl, pw;
 	Course.GetPlayDimensions (&pw, &pl);
-	double fact = ctrl->cpos.z / pl;
+	ETR_DOUBLE fact = ctrl->cpos.z / pl;
 	if (fact > 1.0) fact = 1.0;
     glEnable (GL_TEXTURE_2D );
 	DrawPercentBar (-fact, param.x_resolution - 48, 280-128);
@@ -363,7 +363,7 @@ void DrawHud (CControl *ctrl) {
 		return;
 
 	TVector3 vel = ctrl->cvel;
-	double speed = NormVector (vel);
+	ETR_DOUBLE speed = NormVector (vel);
     SetupGuiDisplay ();
 
     draw_gauge (speed * 3.6, ctrl->jump_amt);

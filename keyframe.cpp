@@ -50,11 +50,11 @@ CKeyframe::CKeyframe () {
 	keyidx = 0;
 }
 
-double CKeyframe::interp (double frac, double v1, double v2) {
+ETR_DOUBLE CKeyframe::interp (ETR_DOUBLE frac, ETR_DOUBLE v1, ETR_DOUBLE v2) {
     return frac * v1 + (1.0 - frac) * v2;
 }
 
-void CKeyframe::Init (const TVector3& ref_position, double height_correction) {
+void CKeyframe::Init (const TVector3& ref_position, ETR_DOUBLE height_correction) {
 	if (!loaded) return;
 	CCharShape *shape = Char.GetShape (g_game.char_id);
     shape->ResetNode ("head");
@@ -66,7 +66,7 @@ void CKeyframe::Init (const TVector3& ref_position, double height_correction) {
 	keytime = 0;
 }
 
-void CKeyframe::Init (const TVector3& ref_position, double height_correction, CCharShape *shape) {
+void CKeyframe::Init (const TVector3& ref_position, ETR_DOUBLE height_correction, CCharShape *shape) {
 	if (!loaded) return;
     shape->ResetNode ("head");
     shape->ResetNode ("neck");
@@ -144,8 +144,8 @@ bool CKeyframe::Load (const string& dir, const string& filename) {
 // there are more possibilities for rotating the parts of the body,
 // that will be implemented later
 
-void CKeyframe::InterpolateKeyframe (size_t idx, double frac, CCharShape *shape) {
-	double vv;
+void CKeyframe::InterpolateKeyframe (size_t idx, ETR_DOUBLE frac, CCharShape *shape) {
+	ETR_DOUBLE vv;
     vv = interp (frac, frames[idx].val[4], frames[idx+1].val[4]);
     shape->RotateNode ("root", 2, vv);
 
@@ -193,7 +193,7 @@ void CKeyframe::InterpolateKeyframe (size_t idx, double frac, CCharShape *shape)
 }
 
 void CKeyframe::CalcKeyframe (size_t idx, CCharShape *shape, const TVector3& refpos) {
-	double vv;
+	ETR_DOUBLE vv;
 	TVector3 pos;
 
     pos.x = frames[idx].val[1] + refpos.x;
@@ -250,7 +250,7 @@ void CKeyframe::CalcKeyframe (size_t idx, CCharShape *shape, const TVector3& ref
     shape->RotateNode ("right_ankle", 3, vv);
 }
 
-void CKeyframe::Update (double timestep, CControl *ctrl) {
+void CKeyframe::Update (ETR_DOUBLE timestep, CControl *ctrl) {
 	if (!loaded) return;
 	if (!active) return;
 
@@ -265,7 +265,7 @@ void CKeyframe::Update (double timestep, CControl *ctrl) {
         return;
     }
 
-    double frac;
+    ETR_DOUBLE frac;
     TVector3 pos;
 	CCharShape *shape = Char.GetShape (g_game.char_id);
 
@@ -281,13 +281,13 @@ void CKeyframe::Update (double timestep, CControl *ctrl) {
 	shape->ResetJoints ();
 
     Players.GetCtrl (g_game.player_id)->cpos = pos;
-    double disp_y = pos.y + TUX_Y_CORR + heightcorr;
+    ETR_DOUBLE disp_y = pos.y + TUX_Y_CORR + heightcorr;
     shape->ResetNode (0);
     shape->TranslateNode (0, TVector3(pos.x, disp_y, pos.z));
 	InterpolateKeyframe (keyidx, frac, shape);
 }
 
-void CKeyframe::UpdateTest (double timestep, CCharShape *shape) {
+void CKeyframe::UpdateTest (ETR_DOUBLE timestep, CCharShape *shape) {
 	if (!active) return;
 
     keytime += timestep;
@@ -301,7 +301,7 @@ void CKeyframe::UpdateTest (double timestep, CCharShape *shape) {
         return;
     }
 
-    double frac;
+    ETR_DOUBLE frac;
     TVector3 pos;
 
     if  (fabs (frames[keyidx].val[0]) < 0.0001) frac = 1.0;
@@ -356,8 +356,8 @@ void CKeyframe::SaveTest (const string& dir, const string& filename) {
 		if (frame->val[7] != 0) line += " [neck] " + Float_StrN (frame->val[7], 0);
 		if (frame->val[8] != 0) line += " [head] " + Float_StrN (frame->val[8], 0);
 
-		double ll = frame->val[9];
-		double rr = frame->val[10];
+		ETR_DOUBLE ll = frame->val[9];
+		ETR_DOUBLE rr = frame->val[10];
 		if (ll != 0 || rr != 0)
 			line += " [sh] " + Float_StrN (ll, 0) + " " + Float_StrN (rr, 0);
 

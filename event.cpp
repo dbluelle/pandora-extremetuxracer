@@ -155,7 +155,7 @@ void CEvent::Enter () {
 	ResetGUI ();
 	int siz = FT.AutoSizeN (5);
 	textbuttons[1] = AddTextButton (Trans.Text(8), area.left + 100, AutoYPosN (80), siz);
-	double len = FT.GetTextWidth (Trans.Text(13));
+	ETR_DOUBLE len = FT.GetTextWidth (Trans.Text(13));
 	textbuttons[0] = AddTextButton (Trans.Text(13), area.right -len - 100, AutoYPosN (80), siz);
 	textbuttons[2] = AddTextButton (Trans.Text(15), CENTER, AutoYPosN (80), siz);
 
@@ -170,7 +170,7 @@ int resultlevel (size_t num, size_t numraces) {
 	return q + 1;
 }
 
-void CEvent::Loop (double timestep) {
+void CEvent::Loop (ETR_DOUBLE timestep) {
 	int ww = param.x_resolution;
 	int hh = param.y_resolution;
 

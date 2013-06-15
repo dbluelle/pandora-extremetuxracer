@@ -47,7 +47,7 @@ static bool control = false;
 static bool alt = false;
 static TCharAction Undo;
 static int startx, starty;
-static double startrotx, startroty, startposx, startposy;
+static ETR_DOUBLE startrotx, startroty, startposx, startposy;
 static bool rotactive = false;
 static bool moveactive = false;
 static int comp = 0;
@@ -77,7 +77,7 @@ void RecallAction (TCharAction *act) {
 	}
 }
 
-void ChangeValue (int type, double fact) {
+void ChangeValue (int type, ETR_DOUBLE fact) {
 	if (type == 0 || type == 4) {
 		if (comp == 0) {
 			action->vec[curr_act].x += 0.02 * fact;
@@ -109,7 +109,7 @@ void ChangeNode (int steps) {
 	}
 }
 
-void SetRotation (double x, double y, double z) {
+void SetRotation (ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z) {
 	xrotation = x;
 	yrotation = y;
 	zrotation = z;
@@ -239,8 +239,8 @@ void CharMotion (int x, int y) {
 		xrotation = startrotx + diffy;
 	}
 	if (moveactive) {
-		diffposx = (double)(x - startx) / 200;
-		diffposy = (double)(y - starty) / 200;
+		diffposx = (ETR_DOUBLE)(x - startx) / 200;
+		diffposy = (ETR_DOUBLE)(y - starty) / 200;
 		yposition = startposy - diffposy;
 		xposition = startposx + diffposx;
 	}
@@ -277,7 +277,7 @@ void DrawActionFloat (size_t nr, const string& s, int y, float f) {
 	FT.DrawString (100, y, Float_StrN (f, 2));
 }
 
-void RenderChar (double timestep) {
+void RenderChar (ETR_DOUBLE timestep) {
 	if (!must_render) return;
 	bool is_visible = false;
 	check_gl_error();

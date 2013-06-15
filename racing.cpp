@@ -42,14 +42,14 @@ CRacing Racing;
 static bool right_turn;
 static bool left_turn;
 static bool stick_turn;
-static double stick_turnfact;
+static ETR_DOUBLE stick_turnfact;
 static bool key_paddling;
 static bool stick_paddling;
 static bool key_charging;
 static bool stick_charging;
 static bool key_braking;
 static bool stick_braking;
-static double charge_start_time;
+static ETR_DOUBLE charge_start_time;
 static bool trick_modifier;
 
 static bool sky = true;
@@ -103,7 +103,7 @@ void CRacing::Keyb (unsigned int key, bool special, bool release, int x, int y) 
 	}
 }
 
-void CRacing::Jaxis (int axis, double value) {
+void CRacing::Jaxis (int axis, ETR_DOUBLE value) {
 	if (axis == 0) { 	// left and right
 		stick_turn = ((value < -0.2) || (value > 0.2));
 		if (stick_turn) stick_turnfact = value; else stick_turnfact = 0.0;
@@ -121,7 +121,7 @@ void CRacing::Jbutt (int button, int state) {
 	}
 }
 
-void CalcJumpEnergy (double time_step){
+void CalcJumpEnergy (ETR_DOUBLE time_step){
     CControl *ctrl = Players.GetCtrl (g_game.player_id);
 
 	if  (ctrl->jump_charging) {
@@ -134,8 +134,8 @@ void CalcJumpEnergy (double time_step){
 	}
 }
 
-int CalcSoundVol (double fact) {
-	double vv = (double) param.sound_volume * fact;
+int CalcSoundVol (ETR_DOUBLE fact) {
+	ETR_DOUBLE vv = (ETR_DOUBLE) param.sound_volume * fact;
 	if (vv > 120) vv = 120;
 	return (int) vv;
 }
@@ -181,7 +181,7 @@ void CRacing::Enter (void) {
 // -------------------- sound -----------------------------------------
 
 // this function is not used yet.
-int SlideVolume (CControl *ctrl, double speed, int typ) {
+int SlideVolume (CControl *ctrl, ETR_DOUBLE speed, int typ) {
 	if (typ == 1) {	// only at paddling or braking
 	return (int)(MIN ((((pow(ctrl->turn_fact, 2) * 128)) +
 		 (ctrl->is_braking ? 128:0) +
@@ -209,7 +209,7 @@ void PlayTerrainSound (CControl *ctrl, bool airborne) {
 }
 
 // ----------------------- controls -----------------------------------
-void CalcSteeringControls (CControl *ctrl, double time_step) {
+void CalcSteeringControls (CControl *ctrl, ETR_DOUBLE time_step) {
 	if (stick_turn) {
 		ctrl->turn_fact = stick_turnfact;
 		ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
@@ -250,10 +250,10 @@ void CalcSteeringControls (CControl *ctrl, double time_step) {
     }
 }
 
-void CalcFinishControls (CControl *ctrl, double timestep, bool airborne) {
+void CalcFinishControls (CControl *ctrl, ETR_DOUBLE timestep, bool airborne) {
 	TVector3 movdir = ctrl->cvel;
-	double speed = NormVector (movdir);
-	double dir_angle = atan (movdir.x / movdir.z) * 57.3;
+	ETR_DOUBLE speed = NormVector (movdir);
+	ETR_DOUBLE dir_angle = atan (movdir.x / movdir.z) * 57.3;
 
 	if (fabs (dir_angle) > 5 && speed > 5) {
 		ctrl->turn_fact = dir_angle / 20;
@@ -270,7 +270,7 @@ void CalcFinishControls (CControl *ctrl, double timestep, bool airborne) {
 
 // ----------------------- trick --------------------------------------
 
-void CalcTrickControls (CControl *ctrl, double time_step, bool airborne) {
+void CalcTrickControls (CControl *ctrl, ETR_DOUBLE time_step, bool airborne) {
 	if (airborne && trick_modifier) {
 		if (left_turn) ctrl->roll_left = true;
 		if (right_turn) ctrl->roll_right = true;
@@ -298,9 +298,9 @@ void CalcTrickControls (CControl *ctrl, double time_step, bool airborne) {
 //					loop
 // ====================================================================
 
-void CRacing::Loop (double time_step){
+void CRacing::Loop (ETR_DOUBLE time_step){
     CControl *ctrl = Players.GetCtrl (g_game.player_id);
-	double ycoord = Course.FindYCoord (ctrl->cpos.x, ctrl->cpos.z);
+	ETR_DOUBLE ycoord = Course.FindYCoord (ctrl->cpos.x, ctrl->cpos.z);
 	bool airborne = (bool) (ctrl->cpos.y > (ycoord + JUMP_MAX_START_HEIGHT));
 
     check_gl_error();

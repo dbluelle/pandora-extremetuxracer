@@ -50,25 +50,25 @@ public:
 
 class TTextButton : public TWidget {
 	string text;
-	double ftsize;	// font height
+	ETR_DOUBLE ftsize;	// font height
 public:
-	TTextButton(int x, int y, const string& text_, double ftsize_);
+	TTextButton(int x, int y, const string& text_, ETR_DOUBLE ftsize_);
 	void Draw() const;
 };
-TTextButton* AddTextButton (const string& text, int x, int y, double ftsize);
+TTextButton* AddTextButton (const string& text, int x, int y, ETR_DOUBLE ftsize);
 TTextButton* AddTextButtonN (const string& text, int x, int y, int rel_ftsize);
 
 class TTextField : public TWidget {
 	string text;
 	size_t cursorPos;
 	size_t maxLng;
-	double time;
+	ETR_DOUBLE time;
 	bool cursor;
 public:
 	TTextField(int x, int y, int width, int height, const string& text_);
 	void Draw() const;
 	void Key(unsigned int key, unsigned int mod, bool released);
-	void UpdateCursor(double timestep);
+	void UpdateCursor(ETR_DOUBLE timestep);
 	const string& Text() const { return text; }
 };
 TTextField* AddTextField(const string& text, int x, int y, int width, int height);
@@ -94,12 +94,12 @@ public:
 TCheckbox* AddCheckbox (int x, int y, int width, const string& tag);
 
 class TIconButton : public TWidget {
-	double size;
+	ETR_DOUBLE size;
 	TTexture* texture;
 	int maximum;
 	int value;
 public:
-	TIconButton(int x, int y, TTexture* texture_, double size_, int max_, int value_)
+	TIconButton(int x, int y, TTexture* texture_, ETR_DOUBLE size_, int max_, int value_)
 		: TWidget(x, y, 32, 32)
 		, size(size_)
 		, texture(texture_)
@@ -111,7 +111,7 @@ public:
 	bool Click(int x, int y);
 	void Key(unsigned int key, unsigned int mod, bool released);
 };
-TIconButton* AddIconButton (int x, int y, TTexture* texture, double size, int maximum, int value);
+TIconButton* AddIconButton (int x, int y, TTexture* texture, ETR_DOUBLE size, int maximum, int value);
 
 class TArrow : public TWidget {
 public:
@@ -157,15 +157,15 @@ void ResetGUI();
 // --------------------------------------------------------------------
 
 void DrawFrameX (int x, int y, int w, int h, int line,
-			const TColor& backcol, const TColor& framecol, double transp);
-void DrawLevel (int x, int y, int level, double fact);
+			const TColor& backcol, const TColor& framecol, ETR_DOUBLE transp);
+void DrawLevel (int x, int y, int level, ETR_DOUBLE fact);
 void DrawBonus (int x, int y, size_t max, size_t num);
 void DrawBonusExt (int y, size_t numraces, size_t num);
 void DrawCursor ();
 
 // --------------------------------------------------------------------
 
-int AutoYPosN (double percent);
-TArea AutoAreaN (double top_perc, double bott_perc, int w);
+int AutoYPosN (ETR_DOUBLE percent);
+TArea AutoAreaN (ETR_DOUBLE top_perc, ETR_DOUBLE bott_perc, int w);
 
 #endif

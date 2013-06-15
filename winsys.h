@@ -38,7 +38,7 @@ private:
 	int auto_y_resolution;
 	SDL_Surface *screen;
 	TScreenRes MakeRes (int width, int height);
-	double CalcScreenScale ();
+	ETR_DOUBLE CalcScreenScale ();
 public:
 	CWinsys ();
 
@@ -59,7 +59,7 @@ public:
 	void InitJoystick ();
 	void CloseJoystick ();
 	bool joystick_isActive() const { return joystick_active; }
-	double ClockTime () {return SDL_GetTicks() * 1.e-3; }
+	ETR_DOUBLE ClockTime () {return SDL_GetTicks() * 1.e-3; }
 //	SDL_Surface *GetSurfaceData ();
 	unsigned char *GetSurfaceData ();
 };

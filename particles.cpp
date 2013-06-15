@@ -46,29 +46,29 @@ GNU General Public License for more details.
 
 struct TGuiParticle {
     TVector2 pt;
-    double size;
+    ETR_DOUBLE size;
     TVector2 vel;
     TVector2 tex_min;
     TVector2 tex_max;
 
-	TGuiParticle(double x, double y);
-	void Draw(double xres, double yres) const;
-	void Update(double time_step, double push_timestep, const TVector2& push_vector);
+	TGuiParticle(ETR_DOUBLE x, ETR_DOUBLE y);
+	void Draw(ETR_DOUBLE xres, ETR_DOUBLE yres) const;
+	void Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const TVector2& push_vector);
 };
 
 static list<TGuiParticle> particles_2d;
 static GLfloat part_col[4] = {1, 1, 1, 0.5 };
 static TVector2 push_position(0, 0);
 static TVector2 last_push_position;
-static double last_update_time = -1;
+static ETR_DOUBLE last_update_time = -1;
 static bool push_position_initialized = false;
 
-static double frand () {return (double)rand() / RAND_MAX; }
+static ETR_DOUBLE frand () {return (ETR_DOUBLE)rand() / RAND_MAX; }
 
-TGuiParticle::TGuiParticle(double x, double y) {
+TGuiParticle::TGuiParticle(ETR_DOUBLE x, ETR_DOUBLE y) {
     pt.x = x;
     pt.y = y;
-    double p_dist = frand();
+    ETR_DOUBLE p_dist = frand();
 
 	size = PARTICLE_MIN_SIZE + (1.0 - p_dist) * PARTICLE_SIZE_RANGE;
     vel.x = 0;
@@ -90,7 +90,7 @@ TGuiParticle::TGuiParticle(double x, double y) {
     }
 }
 
-void TGuiParticle::Draw(double xres, double yres) const {
+void TGuiParticle::Draw(ETR_DOUBLE xres, ETR_DOUBLE yres) const {
 	glPushMatrix();
 	glTranslatef (pt.x * xres, pt.y * yres, 0);
 	glBegin (GL_QUADS);
@@ -106,10 +106,10 @@ void TGuiParticle::Draw(double xres, double yres) const {
 	glPopMatrix();
 }
 
-void TGuiParticle::Update(double time_step, double push_timestep, const TVector2& push_vector) {
+void TGuiParticle::Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const TVector2& push_vector) {
 	TVector2 f;
 
-	double dist_from_push = (pow((pt.x - push_position.x), 2) +
+	ETR_DOUBLE dist_from_push = (pow((pt.x - push_position.x), 2) +
 			pow((pt.y - push_position.y), 2));
 	if  (push_timestep > 0) {
 	    f.x = PUSH_FACTOR * push_vector.x / push_timestep;
@@ -143,13 +143,13 @@ void init_ui_snow () {
     push_position = TVector2(0.0, 0.0);
 }
 
-void update_ui_snow (double time_step) {
-    double time = Winsys.ClockTime ();
+void update_ui_snow (ETR_DOUBLE time_step) {
+    ETR_DOUBLE time = Winsys.ClockTime ();
 
     TVector2 push_vector;
     push_vector.x = 0;
     push_vector.y = 0;
-    double push_timestep = 0;
+    ETR_DOUBLE push_timestep = 0;
 
     if  (push_position_initialized) {
 		push_vector.x = push_position.x - last_push_position.x;
@@ -174,7 +174,7 @@ void update_ui_snow (double time_step) {
 			} else {
 				p->pt.x = frand();
 				p->pt.y = 1+frand()*BASE_VELOCITY;
-				double p_dist = frand();
+				ETR_DOUBLE p_dist = frand();
 				p->size = PARTICLE_MIN_SIZE + (1.0 - p_dist) * PARTICLE_SIZE_RANGE;
 				p->vel.x = 0;
 				p->vel.y = -BASE_VELOCITY-p_dist*VELOCITY_RANGE;
@@ -193,8 +193,8 @@ void update_ui_snow (double time_step) {
     }
 }
 void draw_ui_snow () {
-    double xres = param.x_resolution;
-    double yres = param.y_resolution;
+    ETR_DOUBLE xres = param.x_resolution;
+    ETR_DOUBLE yres = param.y_resolution;
 
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	Tex.BindTex (SNOW_PART);
@@ -206,7 +206,7 @@ void draw_ui_snow () {
 }
 
 void push_ui_snow (const TVector2& pos) {
-    push_position = TVector2(pos.x/(double)param.x_resolution, pos.y/(double)param.y_resolution);
+    push_position = TVector2(pos.x/(ETR_DOUBLE)param.x_resolution, pos.y/(ETR_DOUBLE)param.y_resolution);
     if  (!push_position_initialized) last_push_position = push_position;
     push_position_initialized = true;
 }
@@ -238,16 +238,16 @@ void push_ui_snow (const TVector2& pos) {
 struct Particle {
     TVector3 pt;
     short type;
-    double base_size;
-    double cur_size;
-    double terrain_height;
-    double age;
-    double death;
-    double alpha;
+    ETR_DOUBLE base_size;
+    ETR_DOUBLE cur_size;
+    ETR_DOUBLE terrain_height;
+    ETR_DOUBLE age;
+    ETR_DOUBLE death;
+    ETR_DOUBLE alpha;
     TVector3 vel;
 
 	void Draw(CControl* ctrl) const;
-	void draw_billboard (CControl *ctrl, double width, double height, bool use_world_y_axis,
+	void draw_billboard (CControl *ctrl, ETR_DOUBLE width, ETR_DOUBLE height, bool use_world_y_axis,
 		const TVector2& min_tex_coord, const TVector2& max_tex_coord) const;
 };
 
@@ -280,7 +280,7 @@ void Particle::Draw(CControl* ctrl) const {
 	draw_billboard (ctrl, cur_size, cur_size, false, min_tex_coord, max_tex_coord);
 }
 
-void Particle::draw_billboard (CControl *ctrl, double width, double height, bool use_world_y_axis, const TVector2& min_tex_coord, const TVector2& max_tex_coord) const
+void Particle::draw_billboard (CControl *ctrl, ETR_DOUBLE width, ETR_DOUBLE height, bool use_world_y_axis, const TVector2& min_tex_coord, const TVector2& max_tex_coord) const
 {
     TVector3 x_vec;
     TVector3 y_vec;
@@ -326,7 +326,7 @@ void Particle::draw_billboard (CControl *ctrl, double width, double height, bool
 }
 
 void create_new_particles (const TVector3& loc, TVector3 vel, int num)  {
-    double speed = NormVector (vel);
+    ETR_DOUBLE speed = NormVector (vel);
 
     if  (particles.size() + num > MAX_PARTICLES) {
 		Message ("maximum number of particles exceeded", "");
@@ -349,7 +349,7 @@ void create_new_particles (const TVector3& loc, TVector3 vel, int num)  {
 				 VARIANCE_FACTOR * (frand() - 0.5) * speed ));
     }
 }
-void update_particles (double time_step) {
+void update_particles (ETR_DOUBLE time_step) {
 	for(list<Particle>::iterator p = particles.begin(); p != particles.end();) {
 		p->age += time_step;
         if  (p->age < 0) {
@@ -358,7 +358,7 @@ void update_particles (double time_step) {
 		}
 
 		p->pt = AddVectors (p->pt, ScaleVector (time_step, p->vel));
-		double ycoord = Course.FindYCoord (p->pt.x, p->pt.z);
+		ETR_DOUBLE ycoord = Course.FindYCoord (p->pt.x, p->pt.z);
 		if (p->pt.y < ycoord - 3) {p->age = p->death + 1;}
         if (p->age >= p->death) {
 			p = particles.erase(p);
@@ -387,20 +387,20 @@ void clear_particles() {
 	particles.clear();
 }
 
-double adjust_particle_count (double particles) {
+ETR_DOUBLE adjust_particle_count (ETR_DOUBLE particles) {
     if  (particles < 1) {
-		if (((double) rand()) / RAND_MAX < particles) return 1.0;
+		if (((ETR_DOUBLE) rand()) / RAND_MAX < particles) return 1.0;
 		else return 0.0;
     } else return particles;
 }
 
-void generate_particles (CControl *ctrl, double dtime, const TVector3& pos, double speed) {
+void generate_particles (CControl *ctrl, ETR_DOUBLE dtime, const TVector3& pos, ETR_DOUBLE speed) {
     TVector3 left_part_pt, right_part_pt;
-    double brake_particles;
-    double turn_particles;
-    double roll_particles;
-    double surf_y;
-    double left_particles, right_particles;
+    ETR_DOUBLE brake_particles;
+    ETR_DOUBLE turn_particles;
+    ETR_DOUBLE roll_particles;
+    ETR_DOUBLE surf_y;
+    ETR_DOUBLE left_particles, right_particles;
     TMatrix rot_mat;
 	TTerrType *TerrList = &Course.TerrList[0];
 
@@ -656,7 +656,7 @@ void CFlakes::Init (int grade, CControl *ctrl) {
 	GenerateSnowFlakes (ctrl);
 }
 
-void CFlakes::Update (double timestep, CControl *ctrl) {
+void CFlakes::Update (ETR_DOUBLE timestep, CControl *ctrl) {
 	if (g_game.snow_id < 1)
 		return;
 
@@ -713,7 +713,7 @@ void InitChanges () {
 	}
 }
 
-void UpdateChanges (double timestep) {
+void UpdateChanges (ETR_DOUBLE timestep) {
 	for (int i=0; i<NUM_CHANGES; i++) {
 		TChange* ch = &changes[i];
 		if (ch->forward) {
@@ -1100,7 +1100,7 @@ void InitSnow (CControl *ctrl) {
 	Curtain.Init (ctrl);
 }
 
- void UpdateSnow (double timestep, CControl *ctrl) {
+ void UpdateSnow (ETR_DOUBLE timestep, CControl *ctrl) {
 	if (g_game.snow_id < 1 || g_game.snow_id > 3) return;
 	Flakes.Update (timestep, ctrl);
 	Curtain.Update (timestep, ctrl);
@@ -1116,6 +1116,6 @@ void InitWind () {
 	Wind.Init (g_game.wind_id);
 }
 
-void UpdateWind (double timestep, CControl *ctrl) {
+void UpdateWind (ETR_DOUBLE timestep, CControl *ctrl) {
 	Wind.Update (timestep);
 }

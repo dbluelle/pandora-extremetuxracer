@@ -178,7 +178,7 @@ void PrintFrameParams (int ytop, TKeyframe *frame) {
 	}
 }
 
-void RenderSingleFrame (double timestep) {
+void RenderSingleFrame (ETR_DOUBLE timestep) {
 	if (!must_render) return;
 	check_gl_error ();
 
@@ -256,7 +256,7 @@ void SequenceKeys (unsigned int key, bool special, bool release, int x, int y) {
 void SequenceMouse (int button, int state, int x, int y) {}
 void SequenceMotion (int x, int y) {}
 
-void RenderSequence (double timestep) {
+void RenderSequence (ETR_DOUBLE timestep) {
 	check_gl_error();
 	set_gl_options (TUX);
     ClearRenderContext (colDDBackgr);

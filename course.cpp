@@ -55,29 +55,29 @@ const TVector2& CCourse::GetStartPoint () const {
 	return start_pt;
 }
 
-double CCourse::GetBaseHeight (double distance) const {
-    double slope = tan (ANGLES_TO_RADIANS (curr_course->angle));
-    double base_height;
+ETR_DOUBLE CCourse::GetBaseHeight (ETR_DOUBLE distance) const {
+    ETR_DOUBLE slope = tan (ANGLES_TO_RADIANS (curr_course->angle));
+    ETR_DOUBLE base_height;
 
     base_height = -slope * distance -
 	base_height_value / 255.0 * curr_course->scale;
     return base_height;
 }
 
-double CCourse::GetMaxHeight (double distance) const {
+ETR_DOUBLE CCourse::GetMaxHeight (ETR_DOUBLE distance) const {
     return GetBaseHeight (distance) + curr_course->scale;
 }
 
-double CCourse::GetCourseAngle () const {
+ETR_DOUBLE CCourse::GetCourseAngle () const {
 	return curr_course->angle;
 }
 
-void CCourse::GetDimensions (double *w, double *l) const {
+void CCourse::GetDimensions (ETR_DOUBLE *w, ETR_DOUBLE *l) const {
     *w = curr_course->width;
     *l = curr_course->length;
 }
 
-void CCourse::GetPlayDimensions (double *pw, double *pl) const {
+void CCourse::GetPlayDimensions (ETR_DOUBLE *pw, ETR_DOUBLE *pl) const {
     *pw = curr_course->play_width;
     *pl = curr_course->play_length;
 }
@@ -378,20 +378,20 @@ bool CCourse::LoadElevMap () {
     nx = img.nx;
     ny = img.ny;
 	try {
-		elevation = new double[nx * ny];
+		elevation = new ETR_DOUBLE[nx * ny];
 	} catch(...) {
 		Message ("Allocation failed in LoadElevMap");
 		return false;
     }
 
-    double slope = tan (ANGLES_TO_RADIANS (curr_course->angle));
+    ETR_DOUBLE slope = tan (ANGLES_TO_RADIANS (curr_course->angle));
     int pad = 0;
     for (int y=0; y<ny; y++) {
         for (int x=0; x<nx; x++) {
 			elevation [(nx-1-x) + nx * (ny-1-y)] =
 				((img.data [(x+nx*y) * img.depth + pad]
 			    - base_height_value) / 255.0) * curr_course->scale
-				- (double)(ny-1-y) / ny * curr_course->length * slope;
+				- (ETR_DOUBLE)(ny-1-y) / ny * curr_course->length * slope;
    	     }
         pad += (nx * img.depth) % 4;
     }
@@ -416,10 +416,10 @@ void CCourse::LoadItemList () {
 		const string& line = list.Line(i);
 		int x = SPIntN (line, "x", 0);
 		int z = SPIntN (line, "z", 0);
-		double height = SPFloatN (line, "height", 1);
-		double diam = SPFloatN (line, "diam", 1);
-		double xx = (nx - x) / (double)(nx - 1.0) * curr_course->width;
-		double zz = -(ny - z) / (double)(ny - 1.0) * curr_course->length;
+		ETR_DOUBLE height = SPFloatN (line, "height", 1);
+		ETR_DOUBLE diam = SPFloatN (line, "diam", 1);
+		ETR_DOUBLE xx = (nx - x) / (ETR_DOUBLE)(nx - 1.0) * curr_course->width;
+		ETR_DOUBLE zz = -(ny - z) / (ETR_DOUBLE)(ny - 1.0) * curr_course->length;
 
 		string name = SPStrN (line, "name", "");
 		size_t type = ObjectIndex[name];
@@ -478,14 +478,14 @@ static int GetObject (unsigned char pixel[]) {
 #define SHRUB_MIN 1.0
 #define SHRUB_MAX 2.0
 
-const double sizefact[6] = {0.5, 0.5, 0.7, 1.0, 1.4, 2.0};
-const double varfact[6] = {1.0, 1.0, 1.22, 1.41, 1.73, 2.0};
-const double diamfact = 1.4;
+const ETR_DOUBLE sizefact[6] = {0.5, 0.5, 0.7, 1.0, 1.4, 2.0};
+const ETR_DOUBLE varfact[6] = {1.0, 1.0, 1.22, 1.41, 1.73, 2.0};
+const ETR_DOUBLE diamfact = 1.4;
 
-static void CalcRandomTrees (double baseheight, double basediam, double &height, double &diam) {
-	double hhh = baseheight * sizefact[g_game.treesize];
-	double minsiz = hhh / varfact[g_game.treevar];
-	double maxsiz = hhh * varfact[g_game.treevar];
+static void CalcRandomTrees (ETR_DOUBLE baseheight, ETR_DOUBLE basediam, ETR_DOUBLE &height, ETR_DOUBLE &diam) {
+	ETR_DOUBLE hhh = baseheight * sizefact[g_game.treesize];
+	ETR_DOUBLE minsiz = hhh / varfact[g_game.treevar];
+	ETR_DOUBLE maxsiz = hhh * varfact[g_game.treevar];
 	height = XRandom (minsiz, maxsiz);
 	diam = XRandom (height/diamfact, height);
 }
@@ -500,7 +500,7 @@ bool CCourse::LoadObjectMap () {
 
 	int pad = 0;
     int cnt = 0;
-	double height, diam;
+	ETR_DOUBLE height, diam;
 	CSPList savelist (10000);
 
 	CollArr.clear();
@@ -511,8 +511,8 @@ bool CCourse::LoadObjectMap () {
 			int type = GetObject (&treeImg.data[imgidx]);
 			if (type >= 0) {
 				cnt++;
-				double xx = (nx - x) / (double)(nx - 1.0) * curr_course->width;
-				double zz = -(ny - y) / (double)(ny - 1.0) * curr_course->length;
+				ETR_DOUBLE xx = (nx - x) / (ETR_DOUBLE)(nx - 1.0) * curr_course->width;
+				ETR_DOUBLE zz = -(ny - y) / (ETR_DOUBLE)(ny - 1.0) * curr_course->length;
 				if (ObjTypes[type].texture == NULL && ObjTypes[type].drawable) {
 					string terrpath = param.obj_dir + SEP + ObjTypes[type].textureFile;
 					ObjTypes[type].texture = new TTexture();
@@ -877,7 +877,7 @@ size_t CCourse::GetEnv () const {
 void CCourse::MirrorCourseData () {
 	for (int y=0; y<ny; y++) {
 		for (int x=0; x<nx/2; x++) {
-			double tmp = ELEV(x,y);
+			ETR_DOUBLE tmp = ELEV(x,y);
 			ELEV(x,y) = ELEV(nx-1-x, y);
 			ELEV(nx-1-x,y) = tmp;
 
@@ -925,10 +925,10 @@ void CCourse::MirrorCourse () {
 // ********************************************************************
 
 void CCourse::GetIndicesForPoint
-		(double x, double z, int *x0, int *y0, int *x1, int *y1) const {
+		(ETR_DOUBLE x, ETR_DOUBLE z, int *x0, int *y0, int *x1, int *y1) const {
 
-	double xidx = x / curr_course->width * ((double) nx - 1.);
-	double yidx = -z / curr_course->length *  ((double) ny - 1.);
+	ETR_DOUBLE xidx = x / curr_course->width * ((ETR_DOUBLE) nx - 1.);
+	ETR_DOUBLE yidx = -z / curr_course->length *  ((ETR_DOUBLE) ny - 1.);
 
     if (xidx < 0) xidx = 0;
     else if  (xidx > nx-1) xidx = nx-1;
@@ -950,15 +950,15 @@ void CCourse::GetIndicesForPoint
     }
 }
 
-void CCourse::FindBarycentricCoords (double x, double z, TIndex2 *idx0,
-		TIndex2 *idx1, TIndex2 *idx2, double *u, double *v) const {
-    double xidx, yidx;
+void CCourse::FindBarycentricCoords (ETR_DOUBLE x, ETR_DOUBLE z, TIndex2 *idx0,
+		TIndex2 *idx1, TIndex2 *idx2, ETR_DOUBLE *u, ETR_DOUBLE *v) const {
+    ETR_DOUBLE xidx, yidx;
     int x0, x1, y0, y1;
-    double dx, ex, dz, ez, qx, qz, invdet;
+    ETR_DOUBLE dx, ex, dz, ez, qx, qz, invdet;
 
     GetIndicesForPoint (x, z, &x0, &y0, &x1, &y1);
-    xidx = x / curr_course->width * ((double) nx - 1.);
-    yidx = -z / curr_course->length * ((double) ny - 1.);
+    xidx = x / curr_course->width * ((ETR_DOUBLE) nx - 1.);
+    yidx = -z / curr_course->length * ((ETR_DOUBLE) ny - 1.);
 
     if  ((x0 + y0) % 2 == 0) {
 		if  (yidx - y0 < xidx - x0) {
@@ -994,17 +994,17 @@ void CCourse::FindBarycentricCoords (double x, double z, TIndex2 *idx0,
     *v = (qz * dx - qx * dz) * invdet;
 }
 
-#define COURSE_VERTX(x,y) TVector3 ( (double)(x)/(nx-1.)*curr_course->width, \
-                       ELEV((x),(y)), -(double)(y)/(ny-1.)*curr_course->length )
+#define COURSE_VERTX(x,y) TVector3 ( (ETR_DOUBLE)(x)/(nx-1.)*curr_course->width, \
+                       ELEV((x),(y)), -(ETR_DOUBLE)(y)/(ny-1.)*curr_course->length )
 
-TVector3 CCourse::FindCourseNormal (double x, double z) const {
+TVector3 CCourse::FindCourseNormal (ETR_DOUBLE x, ETR_DOUBLE z) const {
 
-    double *elevation = Course.elevation;
+    ETR_DOUBLE *elevation = Course.elevation;
     int x0, x1, y0, y1;
     GetIndicesForPoint (x, z, &x0, &y0, &x1, &y1);
 
     TIndex2 idx0, idx1, idx2;
-    double u, v;
+    ETR_DOUBLE u, v;
     FindBarycentricCoords (x, z, &idx0, &idx1, &idx2, &u, &v);
 
 	TVector3 n0 = Course.nmls[ idx0.i + nx * idx0.j ];
@@ -1023,8 +1023,8 @@ TVector3 CCourse::FindCourseNormal (double x, double z) const {
 	SubtractVectors (p1, p0), SubtractVectors (p2, p0));
     NormVector (tri_nml);
 
-	double min_bary = min (u, min (v, 1. - u - v));
-	double interp_factor = min (min_bary / NORM_INTERPOL, 1.0);
+	ETR_DOUBLE min_bary = min (u, min (v, 1. - u - v));
+	ETR_DOUBLE interp_factor = min (min_bary / NORM_INTERPOL, 1.0);
 
  	TVector3 interp_nml = AddVectors (
 	ScaleVector (interp_factor, tri_nml),
@@ -1034,22 +1034,22 @@ TVector3 CCourse::FindCourseNormal (double x, double z) const {
     return interp_nml;
 }
 
-double CCourse::FindYCoord (double x, double z) const {
-    static double last_x, last_z, last_y;
+ETR_DOUBLE CCourse::FindYCoord (ETR_DOUBLE x, ETR_DOUBLE z) const {
+    static ETR_DOUBLE last_x, last_z, last_y;
     static bool cache_full = false;
 
     if  (cache_full && last_x == x && last_z == z) return last_y;
-    double *elevation = Course.elevation;
+    ETR_DOUBLE *elevation = Course.elevation;
 
     TIndex2 idx0, idx1, idx2;
-    double u, v;
+    ETR_DOUBLE u, v;
     FindBarycentricCoords (x, z, &idx0, &idx1, &idx2, &u, &v);
 
 	TVector3 p0 = COURSE_VERTX (idx0.i, idx0.j);
 	TVector3 p1 = COURSE_VERTX (idx1.i, idx1.j);
 	TVector3 p2 = COURSE_VERTX (idx2.i, idx2.j);
 
-	double ycoord = u * p0.y + v * p1.y +  (1. - u - v) * p2.y;
+	ETR_DOUBLE ycoord = u * p0.y + v * p1.y +  (1. - u - v) * p2.y;
 
     last_x = x;
     last_z = z;
@@ -1059,9 +1059,9 @@ double CCourse::FindYCoord (double x, double z) const {
     return ycoord;
 }
 
-void CCourse::GetSurfaceType (double x, double z, double weights[]) const {
+void CCourse::GetSurfaceType (ETR_DOUBLE x, ETR_DOUBLE z, ETR_DOUBLE weights[]) const {
     TIndex2 idx0, idx1, idx2;
-    double u, v;
+    ETR_DOUBLE u, v;
     FindBarycentricCoords (x, z, &idx0, &idx1, &idx2, &u, &v);
 
 	char *terrain = Course.terrain;
@@ -1073,14 +1073,14 @@ void CCourse::GetSurfaceType (double x, double z, double weights[]) const {
     }
 }
 
-int CCourse::GetTerrainIdx (double x, double z, double level) const {
+int CCourse::GetTerrainIdx (ETR_DOUBLE x, ETR_DOUBLE z, ETR_DOUBLE level) const {
     TIndex2 idx0, idx1, idx2;
-    double u, v;
+    ETR_DOUBLE u, v;
     FindBarycentricCoords (x, z, &idx0, &idx1, &idx2, &u, &v);
 	char *terrain = Course.terrain;
 
 	for (size_t i=0; i<Course.TerrList.size(); i++) {
-		double wheight = 0.0;
+		ETR_DOUBLE wheight = 0.0;
 		if (terrain [idx0.i + nx*idx0.j] == i) wheight += u;
 		if (terrain [idx1.i + nx*idx1.j] == i) wheight += v;
 		if (terrain [idx2.i + nx*idx2.j] == i) wheight += 1.0 - u - v;

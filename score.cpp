@@ -145,10 +145,10 @@ int CScore::CalcRaceResult () {
 	if (g_game.time <= g_game.time_req.z &&
 		g_game.herring >= g_game.herring_req.k) g_game.race_result = 2;
 
-	double ll, ww;
+	ETR_DOUBLE ll, ww;
 	Course.GetDimensions (&ww, &ll);
-	double herringpt = g_game.herring * 10;
-	double timept = ll - (g_game.time * 10);
+	ETR_DOUBLE herringpt = g_game.herring * 10;
+	ETR_DOUBLE timept = ll - (g_game.time * 10);
 	g_game.score = (int)(herringpt + timept);
 	if (g_game.score < 0) g_game.score = 0;
 
@@ -235,7 +235,7 @@ void CScore::Enter() {
 const string ordinals[10] =
 	{"1:st", "2:nd", "3:rd", "4:th", "5:th", "6:th", "7:th", "8:th", "9:th", "10:th"};
 
-void CScore::Loop (double timestep ){
+void CScore::Loop (ETR_DOUBLE timestep ){
 	int ww = param.x_resolution;
 	int hh = param.y_resolution;
 

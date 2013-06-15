@@ -28,8 +28,8 @@ GNU General Public License for more details.
 #define STRIDE_GL_ARRAY (8 * sizeof(GLfloat) + 4 * sizeof(GLubyte))
 #define ELEV(x,y) (elevation[(x) + nx*(y)] )
 #define NORM_INTERPOL 0.05
-#define XCD(x) ((double)(x) / (nx-1.0) * curr_course->width)
-#define ZCD(y) (-(double)(y) / (ny-1.0) * curr_course->length)
+#define XCD(x) ((ETR_DOUBLE)(x) / (nx-1.0) * curr_course->width)
+#define ZCD(y) (-(ETR_DOUBLE)(y) / (ny-1.0) * curr_course->length)
 #define NMLPOINT(x,y) TVector3(XCD(x), ELEV(x,y), ZCD(y) )
 
 
@@ -42,15 +42,15 @@ class TTexture;
 
 struct TCollidable {
 	TVector3 pt;
-	double height;
-	double diam;
+	ETR_DOUBLE height;
+	ETR_DOUBLE diam;
 	size_t tree_type;
 };
 
 struct TItem {
 	TVector3 pt;
-	double height;
-	double diam;
+	ETR_DOUBLE height;
+	ETR_DOUBLE diam;
 	size_t item_type;
 	int collectable;
 	bool drawable;
@@ -63,18 +63,18 @@ struct TCourse {
 	string desc[MAX_DESCRIPTION_LINES];
 	size_t num_lines;
 	TTexture* preview;
-	double width;
-	double length;
-	double play_width;
-	double play_length;
-	double angle;
-	double scale;
-	double startx;
-	double starty;
+	ETR_DOUBLE width;
+	ETR_DOUBLE length;
+	ETR_DOUBLE play_width;
+	ETR_DOUBLE play_length;
+	ETR_DOUBLE angle;
+	ETR_DOUBLE scale;
+	ETR_DOUBLE startx;
+	ETR_DOUBLE starty;
 	size_t env;
 	size_t music_theme;
  	bool use_keyframe;
-	double finish_brake;
+	ETR_DOUBLE finish_brake;
 };
 
 struct TTerrType {
@@ -83,8 +83,8 @@ struct TTerrType {
 	string sound;
 	TColor3 col;
 
-	double friction;
-	double depth;
+	ETR_DOUBLE friction;
+	ETR_DOUBLE depth;
 	int vol_type;
 	int particles;
 	int trackmarks;
@@ -145,7 +145,7 @@ public:
 	vector<TPolyhedron>	PolyArr;
 
 	char		*terrain;
-	double		*elevation;
+	ETR_DOUBLE		*elevation;
 	TVector3	*nmls;
 	GLubyte		*vnc_array;
 
@@ -160,24 +160,24 @@ public:
 	void GetGLArrays (GLubyte **vnc_array) const;
 	void FillGlArrays();
 
-	void GetDimensions (double *w, double *l) const;
-	void GetPlayDimensions (double *pw, double *pl) const;
+	void GetDimensions (ETR_DOUBLE *w, ETR_DOUBLE *l) const;
+	void GetPlayDimensions (ETR_DOUBLE *pw, ETR_DOUBLE *pl) const;
 	void GetDivisions (int *nx, int *ny) const;
-	double GetCourseAngle () const;
-	double GetBaseHeight (double distance) const;
-	double GetMaxHeight (double distance) const;
+	ETR_DOUBLE GetCourseAngle () const;
+	ETR_DOUBLE GetBaseHeight (ETR_DOUBLE distance) const;
+	ETR_DOUBLE GetMaxHeight (ETR_DOUBLE distance) const;
 	size_t GetEnv () const;
 	const TVector2& GetStartPoint () const;
 	const TPolyhedron& GetPoly (size_t type) const;
 	void MirrorCourse ();
 
-	void GetIndicesForPoint (double x, double z, int *x0, int *y0, int *x1, int *y1) const;
-	void FindBarycentricCoords (double x, double z,
-		TIndex2 *idx0, TIndex2 *idx1, TIndex2 *idx2, double *u, double *v) const;
-	TVector3 FindCourseNormal (double x, double z) const;
-	double FindYCoord (double x, double z) const;
-	void GetSurfaceType (double x, double z, double weights[]) const;
-	int GetTerrainIdx (double x, double z, double level) const;
+	void GetIndicesForPoint (ETR_DOUBLE x, ETR_DOUBLE z, int *x0, int *y0, int *x1, int *y1) const;
+	void FindBarycentricCoords (ETR_DOUBLE x, ETR_DOUBLE z,
+		TIndex2 *idx0, TIndex2 *idx1, TIndex2 *idx2, ETR_DOUBLE *u, ETR_DOUBLE *v) const;
+	TVector3 FindCourseNormal (ETR_DOUBLE x, ETR_DOUBLE z) const;
+	ETR_DOUBLE FindYCoord (ETR_DOUBLE x, ETR_DOUBLE z) const;
+	void GetSurfaceType (ETR_DOUBLE x, ETR_DOUBLE z, ETR_DOUBLE weights[]) const;
+	int GetTerrainIdx (ETR_DOUBLE x, ETR_DOUBLE z, ETR_DOUBLE level) const;
 	TPlane GetLocalCoursePlane (TVector3 pt) const;
 };
 

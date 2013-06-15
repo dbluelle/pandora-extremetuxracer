@@ -35,20 +35,20 @@ enum Orientation {
 };
 
 struct TVector2	{
-	double x, y;
-	TVector2(double _x = 0.0, double _y = 0.0)
+	ETR_DOUBLE x, y;
+	TVector2(ETR_DOUBLE _x = 0.0, ETR_DOUBLE _y = 0.0)
 		: x(_x), y(_y)
 	{}
 };
 struct TVector3 : public TVector2 {
-	double z;
-	TVector3(double _x = 0.0, double _y = 0.0, double _z = 0.0)
+	ETR_DOUBLE z;
+	TVector3(ETR_DOUBLE _x = 0.0, ETR_DOUBLE _y = 0.0, ETR_DOUBLE _z = 0.0)
 		: TVector2(_x, _y), z(_z)
 	{}
 };
 struct TVector4 : public TVector3 {
-	double w;
-	TVector4(double _x = 0.0, double _y = 0.0, double _z = 0.0, double _w = 0.0)
+	ETR_DOUBLE w;
+	TVector4(ETR_DOUBLE _x = 0.0, ETR_DOUBLE _y = 0.0, ETR_DOUBLE _z = 0.0, ETR_DOUBLE _w = 0.0)
 		: TVector3(_x, _y, _z), w(_w)
 	{}
 };
@@ -73,24 +73,24 @@ struct TIndex4 : public TIndex3 {
 };
 
 struct TColor3 {
-	double r, g, b;
-	TColor3(double r_ = 0, double g_ = 0, double b_ = 0)
+	ETR_DOUBLE r, g, b;
+	TColor3(ETR_DOUBLE r_ = 0, ETR_DOUBLE g_ = 0, ETR_DOUBLE b_ = 0)
 		: r(r_), g(g_), b(b_)
 	{}
 };
 struct TColor : public TColor3 {
-	double a;
-	TColor(double r_ = 0, double g_ = 0, double b_ = 0, double a_ = 0)
+	ETR_DOUBLE a;
+	TColor(ETR_DOUBLE r_ = 0, ETR_DOUBLE g_ = 0, ETR_DOUBLE b_ = 0, ETR_DOUBLE a_ = 0)
 		: TColor3(r_, g_, b_), a(a_)
 	{}
 };
 
-typedef double TMatrix[4][4];
+typedef ETR_DOUBLE TMatrix[4][4];
 typedef TVector4 TQuaternion;
 
-struct TPlane		{ TVector3 nml; double d; };
+struct TPlane		{ TVector3 nml; ETR_DOUBLE d; };
 struct TPolygon		{ int num_vertices; int *vertices; };
-struct TSphere		{ double radius; int divisions; };
+struct TSphere		{ ETR_DOUBLE radius; int divisions; };
 struct TRay			{ TVector3 pt; TVector3 vec; };
 struct TScreenRes	{ int width, height; };
 
@@ -139,7 +139,7 @@ struct TCup2;
 
 struct TGameData {
 	TToolMode toolmode;
-	double time_step;
+	ETR_DOUBLE time_step;
 	TGameType game_type;
 	bool force_treemap;
 	int treesize;
@@ -151,7 +151,7 @@ struct TGameData {
 	int loopdelay;
 	bool finish;
 	bool use_keyframe;
-	double finish_brake;
+	ETR_DOUBLE finish_brake;
 
 	// course and race params
 	size_t player_id;
@@ -172,7 +172,7 @@ struct TGameData {
 	TVector3 time_req;		// 3 levels of allowed time
 
 	// race results (better in player.ctrl ?)
-	double time;			// reached time
+	ETR_DOUBLE time;			// reached time
 	int score;				// reached score
 	int herring;			// catched herrings during the race
 	int race_result;		// tuxlifes, only for a single race, see game_ctrl

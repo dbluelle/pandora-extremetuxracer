@@ -75,7 +75,7 @@ void PrintFloat (const float val) {
 	cout << val << '\n';
 }
 
-void PrintDouble (const double val) {
+void PrintDouble (const ETR_DOUBLE val) {
 	cout.precision(4);
 	cout << val << '\n';
 }
@@ -231,7 +231,7 @@ bool DirExists (const char *dirname) {
 //				date and time
 // --------------------------------------------------------------------
 
-void GetTimeComponents (double time, int *min, int *sec, int *hundr) {
+void GetTimeComponents (ETR_DOUBLE time, int *min, int *sec, int *hundr) {
     *min = (int) (time / 60);
     *sec = ((int) time) % 60;
     *hundr = ((int) (time * 100 + 0.5) ) % 100;

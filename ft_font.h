@@ -324,7 +324,7 @@ class FTGL_EXPORT FTPoint {
             return temp;
         }
 
-        FTPoint operator * (double multiplier) {
+        FTPoint operator * (ETR_DOUBLE multiplier) {
             FTPoint temp;
             temp.values[0] = values[0] * multiplier;
             temp.values[1] = values[1] * multiplier;
@@ -333,7 +333,7 @@ class FTGL_EXPORT FTPoint {
             return temp;
         }
 
-        friend FTPoint operator*(double multiplier, FTPoint& point);
+        friend FTPoint operator*(ETR_DOUBLE multiplier, FTPoint& point);
         friend bool operator == (const FTPoint &a, const FTPoint &b);
         friend bool operator != (const FTPoint &a, const FTPoint &b);
         operator const FTGL_DOUBLE*() const {return values;}

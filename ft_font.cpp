@@ -347,7 +347,7 @@ bool operator !=  (const FTPoint &a, const FTPoint &b) {
 	!= b.values[1]) || (a.values[2] != b.values[2]));
 }
 
-FTPoint operator * (double multiplier, FTPoint& point){
+FTPoint operator * (ETR_DOUBLE multiplier, FTPoint& point){
     return point * multiplier;
 }
 

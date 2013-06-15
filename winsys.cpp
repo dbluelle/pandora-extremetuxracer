@@ -74,8 +74,8 @@ string CWinsys::GetResName (size_t idx) {
 	return line;
 }
 
-double CWinsys::CalcScreenScale () {
-	double hh = (double)param.y_resolution;
+ETR_DOUBLE CWinsys::CalcScreenScale () {
+	ETR_DOUBLE hh = (ETR_DOUBLE)param.y_resolution;
 	if (hh < 768) return 0.78;
 	else if (hh == 768) return 1.0;
 	else return (hh / 768);

@@ -81,7 +81,7 @@ struct TParam {
 
 	int 	x_resolution;
 	int 	y_resolution;
-	double	scale;		// scale factor for screen, see 'use_quad_scale'
+	ETR_DOUBLE	scale;		// scale factor for screen, see 'use_quad_scale'
 };
 
 void InitConfig (char *arg0);

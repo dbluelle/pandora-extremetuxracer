@@ -56,7 +56,7 @@ void CHelp::Enter() {
 	ytop = AutoYPosN (15);
 }
 
-void CHelp::Loop(double timestep ){
+void CHelp::Loop(ETR_DOUBLE timestep ){
 	Music.Update ();
 	check_gl_error();
     ClearRenderContext ();

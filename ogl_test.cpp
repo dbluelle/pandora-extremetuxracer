@@ -64,7 +64,7 @@ void COglTest::Enter() {
  	g_game.loopdelay = 1;
 }
 
-void COglTest::Loop(double timestep) {
+void COglTest::Loop(ETR_DOUBLE timestep) {
 	check_gl_error();
 
 	// ------------- 3d scenery ---------------------------------------

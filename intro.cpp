@@ -89,7 +89,7 @@ void CIntro::Enter() {
 	g_game.loopdelay = 1;
 }
 
-void CIntro::Loop (double time_step) {
+void CIntro::Loop (ETR_DOUBLE time_step) {
 	CControl *ctrl = Players.GetCtrl (g_game.player_id);
     int width = param.x_resolution;
     int height = param.y_resolution;

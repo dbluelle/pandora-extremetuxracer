@@ -21,11 +21,11 @@ GNU General Public License for more details.
 #include "bh.h"
 
 void set_view_mode (CControl *ctrl, TViewMode mode);
-void update_view (CControl *ctrl, double dt);
+void update_view (CControl *ctrl, ETR_DOUBLE dt);
 
 void SetStationaryCamera (bool stat); // 0 follow, 1 stationary
-void IncCameraDistance (double timestep);
-void SetCameraDistance (double val);
+void IncCameraDistance (ETR_DOUBLE timestep);
+void SetCameraDistance (ETR_DOUBLE val);
 
 // ------------- viewfrustum ------------------------------------------
 

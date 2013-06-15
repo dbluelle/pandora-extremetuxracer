@@ -48,7 +48,7 @@ void check_gl_error() {
 void init_glfloat_array (int num, GLfloat arr[], ...) {
     va_list args;
     va_start (args, arr);
-    for (int i=0; i<num; i++) arr[i] = va_arg(args, double);
+    for (int i=0; i<num; i++) arr[i] = va_arg(args, ETR_DOUBLE);
     va_end (args);
 }
 
@@ -136,7 +136,7 @@ void PrintGLInfo (){
     }
 }
 
-void set_material (const TColor& diffuse_colour, const TColor& specular_colour, double specular_exp) {
+void set_material (const TColor& diffuse_colour, const TColor& specular_colour, ETR_DOUBLE specular_exp) {
 	GLfloat mat_amb_diff[4];
 	GLfloat mat_specular[4];
 
@@ -172,7 +172,7 @@ void ClearRenderContext (const TColor& col) {
 }
 
 void SetupGuiDisplay (){
-    double offset = 0.0;
+    ETR_DOUBLE offset = 0.0;
 
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
@@ -184,12 +184,12 @@ void SetupGuiDisplay (){
 }
 
 void Reshape (int w, int h) {
-    double far_clip_dist;
+    ETR_DOUBLE far_clip_dist;
     glViewport (0, 0, (GLint) w, (GLint) h );
     glMatrixMode (GL_PROJECTION );
     glLoadIdentity ();
     far_clip_dist = param.forward_clip_distance + FAR_CLIP_FUDGE_AMOUNT;
-    gluPerspective (param.fov, (double)w/h, NEAR_CLIP_DIST, far_clip_dist );
+    gluPerspective (param.fov, (ETR_DOUBLE)w/h, NEAR_CLIP_DIST, far_clip_dist );
     glMatrixMode (GL_MODELVIEW );
 }
 // ====================================================================

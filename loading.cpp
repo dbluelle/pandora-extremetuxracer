@@ -36,7 +36,7 @@ void CLoading::Enter() {
     Music.Play ("loading", -1);
 }
 
-void CLoading::Loop(double time_step) {
+void CLoading::Loop(ETR_DOUBLE time_step) {
 	TCourse *CourseList = &Course.CourseList[0];
 	int ww = param.x_resolution;
     int hh = param.y_resolution;

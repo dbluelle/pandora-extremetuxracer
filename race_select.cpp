@@ -140,14 +140,14 @@ void CRaceSelect::Enter() {
 	mirror = AddIconButton (iconleft + iconspace*3, icontop, Tex.GetTexture (MIRROR_BUTT), iconsize, 1, (int)g_game.mirror_id);
 	random_btn = AddIconButton (iconleft + iconspace*4, icontop, Tex.GetTexture (RANDOM_BUTT), iconsize, 1, 0);
 	int siz = FT.AutoSizeN (5);
-	double len1 = FT.GetTextWidth (Trans.Text(13));
+	ETR_DOUBLE len1 = FT.GetTextWidth (Trans.Text(13));
 	textbuttons[0] = AddTextButton (Trans.Text(13), area.right-len1-50, AutoYPosN (80), siz);
 	textbuttons[1] = AddTextButton (Trans.Text(8), area.left + 50, AutoYPosN (80), siz);
 
 	g_game.loopdelay = 20;
 }
 
-void CRaceSelect::Loop(double timestep) {
+void CRaceSelect::Loop(ETR_DOUBLE timestep) {
 	int ww = param.x_resolution;
 	int hh = param.y_resolution;
 	TColor col;

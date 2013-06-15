@@ -163,7 +163,7 @@ public:
 	void Draw();
 	void Draw(int x, int y, float size, Orientation orientation);
 	void Draw(int x, int y, float width, float height, Orientation orientation);
-	void DrawFrame(int x, int y, double w, double h, int frame, const TColor& col);
+	void DrawFrame(int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col);
 };
 
 class CTexture {
@@ -193,8 +193,8 @@ public:
 	void Draw (size_t idx, int x, int y, int width, int height);
 	void Draw (const string& name, int x, int y, int width, int height);
 
-	void DrawFrame (size_t idx, int x, int y, double w, double h, int frame, const TColor& col);
-	void DrawFrame (const string& name, int x, int y, double w, double h, int frame, const TColor& col);
+	void DrawFrame (size_t idx, int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col);
+	void DrawFrame (const string& name, int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col);
 
 	void SetOrientation (Orientation orientation);
 	void DrawNumStr (const char *s, int x, int y, float size, const TColor& col);

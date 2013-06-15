@@ -65,39 +65,39 @@ struct TForce {
 	TVector3 vel;
 	TVector3 frictdir;
 
-	double frict_coeff;
-	double comp_depth;
-	double surfdistance;
-    double compression;
+	ETR_DOUBLE frict_coeff;
+	ETR_DOUBLE comp_depth;
+	ETR_DOUBLE surfdistance;
+    ETR_DOUBLE compression;
 };
 
 class CControl {
 private:
 	TForce ff;
-	double ode_time_step;
-	double finish_speed;
+	ETR_DOUBLE ode_time_step;
+	ETR_DOUBLE finish_speed;
 
-	bool     CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, double *tree_diam);
+	bool     CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR_DOUBLE *tree_diam);
 	void     AdjustTreeCollision (const TVector3& pos, TVector3 *vel);
 	void     CheckItemCollection (const TVector3& pos);
 
-	TVector3 CalcRollNormal (double speed);
+	TVector3 CalcRollNormal (ETR_DOUBLE speed);
 	TVector3 CalcAirForce ();
 	TVector3 CalcSpringForce ();
 	TVector3 CalcNormalForce ();
 	TVector3 CalcJumpForce ();
-	TVector3 CalcFrictionForce (double speed, const TVector3& nmlforce);
-	TVector3 CalcPaddleForce (double speed);
-	TVector3 CalcBrakeForce (double speed);
+	TVector3 CalcFrictionForce (ETR_DOUBLE speed, const TVector3& nmlforce);
+	TVector3 CalcPaddleForce (ETR_DOUBLE speed);
+	TVector3 CalcBrakeForce (ETR_DOUBLE speed);
 	TVector3 CalcGravitationForce ();
 	TVector3 CalcNetForce (const TVector3& pos, const TVector3& vel);
 	TVector3 CalcFinishForce (const TVector3& pos, const TVector3& vel);
 
 	void     AdjustVelocity (const TPlane& surf_plane);
-	void     AdjustPosition (const TPlane& surf_plane, double dist_from_surface);
-	void     SetTuxPosition (double speed);
-	double   AdjustTimeStep (double h, TVector3 vel);
-	void     SolveOdeSystem (double timestep);
+	void     AdjustPosition (const TPlane& surf_plane, ETR_DOUBLE dist_from_surface);
+	void     SetTuxPosition (ETR_DOUBLE speed);
+	ETR_DOUBLE   AdjustTimeStep (ETR_DOUBLE h, TVector3 vel);
+	void     SolveOdeSystem (ETR_DOUBLE timestep);
 public:
 	CControl ();
 
@@ -116,16 +116,16 @@ public:
     TVector3 cnet_force;
     TVector3 cdirection;
 	TQuaternion corientation;
-	double way;
+	ETR_DOUBLE way;
 
     bool orientation_initialized;
     TVector3 plane_nml;
 	// steering:
-    double turn_fact;
-    double turn_animation;
-	double paddle_time;
-    double jump_amt;
-    double jump_start_time;
+    ETR_DOUBLE turn_fact;
+    ETR_DOUBLE turn_animation;
+	ETR_DOUBLE paddle_time;
+    ETR_DOUBLE jump_amt;
+    ETR_DOUBLE jump_start_time;
     bool   is_paddling;
     bool   is_braking;
     bool   begin_jump;
@@ -137,14 +137,14 @@ public:
     bool   cairborne;
     bool   roll_left;
     bool   roll_right;
-    double roll_factor;
-    double flip_factor;
+    ETR_DOUBLE roll_factor;
+    ETR_DOUBLE flip_factor;
 	// pseudo constants:
-	double minSpeed;
-	double minFrictspeed;
+	ETR_DOUBLE minSpeed;
+	ETR_DOUBLE minFrictspeed;
 
 	void Init ();
-	void UpdatePlayerPos (double timestep);
+	void UpdatePlayerPos (ETR_DOUBLE timestep);
 };
 
 // STRUCTURE OF PHYSICS.CPP
@@ -153,25 +153,25 @@ public:
 // void InitSimulation ()
 
 // ----------------- collision ----------------------------------------
-// bool  CheckTreeCollisions (TVector3 pos, TVector3 *tree_loc, double *tree_diam)
+// bool  CheckTreeCollisions (TVector3 pos, TVector3 *tree_loc, ETR_DOUBLE *tree_diam)
 // void  AdjustTreeCollision (TVector3 pos, TVector3 *vel)
 // void  CheckItemCollection (TVector3 pos)
 
 // ----------------- position and vlelocity ---------------------------
-// double AdjustVelocity (TVector3 *vel, TVector3 pos, TPlane surf_plane,
-// 	   double dist_from_surface)
-// void   AdjustPosition (TVector3 *pos, TPlane surf_plane, double dist_from_surface)
+// ETR_DOUBLE AdjustVelocity (TVector3 *vel, TVector3 pos, TPlane surf_plane,
+// 	   ETR_DOUBLE dist_from_surface)
+// void   AdjustPosition (TVector3 *pos, TPlane surf_plane, ETR_DOUBLE dist_from_surface)
 // void   SetTuxPosition (TVector3 new_pos)
 
 // ----------------- forces -------------------------------------------
-// TVector3 AdjustRollNormal (TVector3 vel, double fric_coeff, TVector3 nml)
+// TVector3 AdjustRollNormal (TVector3 vel, ETR_DOUBLE fric_coeff, TVector3 nml)
 // TVector3 CalcAirForce (TVector3 player_vel)
-// TVector3 CalcSpringForce (double compression, TVector3 vel, TVector3 surf_nml)
+// TVector3 CalcSpringForce (ETR_DOUBLE compression, TVector3 vel, TVector3 surf_nml)
 // TVector3 CalcNetForce (TVector3 pos, TVector3 vel)
 
 // ------------------ ODE solver and port function
-// static double adjust_time_step_size (double h, TVector3 vel)
-// void   SolveOdeSystem (double timestep)
-// void   UpdatePlayerPos (double timestep)
+// static ETR_DOUBLE adjust_time_step_size (ETR_DOUBLE h, TVector3 vel)
+// void   SolveOdeSystem (ETR_DOUBLE timestep)
+// void   UpdatePlayerPos (ETR_DOUBLE timestep)
 
 #endif

@@ -40,7 +40,7 @@ struct TCharAction {
 	size_t num;
 	int type[MAX_ACTIONS];
 	TVector3 vec[MAX_ACTIONS];
-	double dval[MAX_ACTIONS];
+	ETR_DOUBLE dval[MAX_ACTIONS];
 	string name;
 	string order;
 	string mat;
@@ -62,7 +62,7 @@ struct TCharNode {
     string joint;
     TMatrix trans;
 	TMatrix invtrans;
-	double radius;
+	ETR_DOUBLE radius;
 	int divisions;
     TCharMaterial *mat;
     bool render_shadow;
@@ -108,12 +108,12 @@ private:
 	bool CheckCollision (const TPolyhedron& ph);
 
 	// shadow
-	void DrawShadowVertex (double x, double y, double z, TMatrix mat);
+	void DrawShadowVertex (ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z, TMatrix mat);
 	void DrawShadowSphere (TMatrix mat);
 	void TraverseDagForShadow (TCharNode *node, TMatrix mat);
 
 	// testing and developing
-	void AddAction (size_t node_name, int type, const TVector3& vec, double val);
+	void AddAction (size_t node_name, int type, const TVector3& vec, ETR_DOUBLE val);
 public:
 	CCharShape ();
 	~CCharShape();
@@ -125,8 +125,8 @@ public:
 	bool ResetNode (size_t node_name);
 	bool ResetNode (const string& node_trivialname);
 	bool TranslateNode (size_t node_name, const TVector3& vec);
-	bool RotateNode (size_t node_name, int axis, double angle);
-	bool RotateNode (const string& node_trivialname, int axis, double angle);
+	bool RotateNode (size_t node_name, int axis, ETR_DOUBLE angle);
+	bool RotateNode (const string& node_trivialname, int axis, ETR_DOUBLE angle);
 	void ScaleNode (size_t node_name, const TVector3& vec);
 	void ResetRoot ();
 	void ResetJoints ();
@@ -137,11 +137,11 @@ public:
 	void DrawShadow ();
 	bool Load (const string& dir, const string& filename, bool with_actions);
 
-	void AdjustOrientation (CControl *ctrl, double dtime,
-		double dist_from_surface, const TVector3& surf_nml);
-	void AdjustJoints (double turnFact, bool isBraking,
-		double paddling_factor, double speed,
-		const TVector3& net_force, double flap_factor);
+	void AdjustOrientation (CControl *ctrl, ETR_DOUBLE dtime,
+		ETR_DOUBLE dist_from_surface, const TVector3& surf_nml);
+	void AdjustJoints (ETR_DOUBLE turnFact, bool isBraking,
+		ETR_DOUBLE paddling_factor, ETR_DOUBLE speed,
+		const TVector3& net_force, ETR_DOUBLE flap_factor);
 	bool Collision (const TVector3& pos, const TPolyhedron& ph);
 
 	// testing and tools

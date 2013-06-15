@@ -120,7 +120,7 @@ void	SaveMessages ();
 //				date and time
 // --------------------------------------------------------------------
 
-void GetTimeComponents (double time, int *min, int *sec, int *hundr);
+void GetTimeComponents (ETR_DOUBLE time, int *min, int *sec, int *hundr);
 string GetTimeString1 ();
 
 size_t write_word (FILE *fp, uint16_t w);

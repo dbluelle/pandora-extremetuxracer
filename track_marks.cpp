@@ -41,7 +41,7 @@ struct track_quad_t {
     TVector2 t1, t2, t3, t4;
     TVector3 n1, n2, n3, n4;
     track_types_t track_type;
-    double alpha;
+    ETR_DOUBLE alpha;
 };
 
 struct track_marks_t {
@@ -215,14 +215,14 @@ void add_track_mark(CControl *ctrl, int *id) {
 	}
 
 	TVector3 vel = ctrl->cvel;
-    double speed = NormVector (vel);
+    ETR_DOUBLE speed = NormVector (vel);
     if (speed < SPEED_TO_START_TRENCH) {
 		break_track_marks();
 		return;
     }
 
     TVector3 width_vector = CrossProduct (ctrl->cdirection, TVector3 (0, 1, 0));
-    double magnitude = NormVector (width_vector);
+    ETR_DOUBLE magnitude = NormVector (width_vector);
     if  (magnitude == 0) {
 		break_track_marks();
 		return;
@@ -232,8 +232,8 @@ void add_track_mark(CControl *ctrl, int *id) {
     TVector3 right_vector = ScaleVector (-TRACK_WIDTH/2.0, width_vector);
     TVector3 left_wing =  SubtractVectors (ctrl->cpos, left_vector);
     TVector3 right_wing = SubtractVectors (ctrl->cpos, right_vector);
-    double left_y = Course.FindYCoord (left_wing.x, left_wing.z);
-    double right_y = Course.FindYCoord (right_wing.x, right_wing.z);
+    ETR_DOUBLE left_y = Course.FindYCoord (left_wing.x, left_wing.z);
+    ETR_DOUBLE right_y = Course.FindYCoord (right_wing.x, right_wing.z);
 
 	if (fabs(left_y-right_y) > MAX_TRACK_DEPTH) {
 		break_track_marks();
@@ -241,9 +241,9 @@ void add_track_mark(CControl *ctrl, int *id) {
     }
 
     TPlane surf_plane = Course.GetLocalCoursePlane (ctrl->cpos);
-    double dist_from_surface = DistanceToPlane (surf_plane, ctrl->cpos);
+    ETR_DOUBLE dist_from_surface = DistanceToPlane (surf_plane, ctrl->cpos);
 	// comp_depth = get_compression_depth(Snow);
-	double comp_depth = 0.1;
+	ETR_DOUBLE comp_depth = 0.1;
     if  (dist_from_surface >= (2 * comp_depth)) {
 		break_track_marks();
 		return;
@@ -282,7 +282,7 @@ void add_track_mark(CControl *ctrl, int *id) {
 		q->v4 = TVector3 (right_wing.x, right_y + TRACK_HEIGHT, right_wing.z);
 		q->n3 = Course.FindCourseNormal (q->v3.x, q->v3.z);
 		q->n4 = Course.FindCourseNormal (q->v4.x, q->v4.z);
-		double tex_end = speed*g_game.time_step/TRACK_WIDTH;
+		ETR_DOUBLE tex_end = speed*g_game.time_step/TRACK_WIDTH;
 		if (q->track_type == TRACK_HEAD) {
 		    q->t3= TVector2 (0.0, 1.0);
 		    q->t4= TVector2 (1.0, 1.0);

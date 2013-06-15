@@ -83,7 +83,7 @@ void CRegist::Motion (int x, int y) {
 
 static int framewidth, frameheight, arrowwidth, sumwidth;
 static TArea area;
-static double scale, texsize;
+static ETR_DOUBLE scale, texsize;
 
 void CRegist::Enter (void) {
 	Winsys.ShowCursor (!param.ice_cursor);
@@ -108,7 +108,7 @@ void CRegist::Enter (void) {
 	CharList = &Char.CharList[0];
 }
 
-void CRegist::Loop (double timestep) {
+void CRegist::Loop (ETR_DOUBLE timestep) {
 	int ww = param.x_resolution;
 	int hh = param.y_resolution;
 	Music.Update ();
