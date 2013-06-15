@@ -75,11 +75,17 @@ struct quadsquare {
     static char *Terrain;
     static TTexture* EnvmapTexture;
 
+#ifdef USE_GLES1
+    static GLushort *VertexArrayIndices;
+    static GLushort VertexArrayCounter;
+    static GLushort VertexArrayMinIdx;
+    static GLushort VertexArrayMaxIdx;
+#else
     static GLuint *VertexArrayIndices;
     static GLuint VertexArrayCounter;
     static GLuint VertexArrayMinIdx;
     static GLuint VertexArrayMaxIdx;
-
+#endif
     static void MakeTri( int a, int b, int c, int terrain );
     static void MakeSpecialTri( int a, int b, int c, int terrain );
     static void MakeNoBlendTri( int a, int b, int c, int terrain );

@@ -50,11 +50,17 @@
 	}
 
 TTexture* quadsquare::EnvmapTexture = NULL;
+#ifdef USE_GLES1
+GLushort *quadsquare::VertexArrayIndices = (GLushort*) NULL;
+GLushort quadsquare::VertexArrayCounter;
+GLushort quadsquare::VertexArrayMinIdx;
+GLushort quadsquare::VertexArrayMaxIdx;
+#else
 GLuint *quadsquare::VertexArrayIndices = (GLuint*) NULL;
 GLuint quadsquare::VertexArrayCounter;
 GLuint quadsquare::VertexArrayMinIdx;
 GLuint quadsquare::VertexArrayMaxIdx;
-
+#endif
 quadsquare::quadsquare (quadcornerdata* pcd) {
 	pcd->Square = this;
 	Static = false;
@@ -739,8 +745,11 @@ void quadsquare::UpdateAux (const quadcornerdata& cd,
 		cd.Parent->Square->NotifyChildDisable(*cd.Parent, cd.ChildIndex);
 	}
 }
-
+#ifdef USE_GLES1
+GLushort VertexIndices[9];
+#else
 GLuint VertexIndices[9];
+#endif
 int VertexTerrains[9];
 
 void quadsquare::InitVert(int i, int x, int z) {
@@ -756,6 +765,10 @@ void quadsquare::InitVert(int i, int x, int z) {
 GLubyte *VNCArray;
 
 void quadsquare::DrawTris() {
+#ifdef USE_GLES1
+	glDrawElements (GL_TRIANGLES, VertexArrayCounter,
+		GL_UNSIGNED_INT, VertexArrayIndices );
+#else
 	int tmp_min_idx = VertexArrayMinIdx;
 
 	/*
@@ -776,20 +789,25 @@ void quadsquare::DrawTris() {
 	glDrawElements (GL_TRIANGLES, VertexArrayCounter,
 		GL_UNSIGNED_INT, VertexArrayIndices );
 	if (glUnlockArraysEXT_p) glUnlockArraysEXT_p();
+#endif
 }
 
 void quadsquare::DrawEnvmapTris()
 {
 	if  (VertexArrayCounter > 0 && EnvmapTexture != NULL ) {
+#ifndef USE_GLES1
 		glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP );
 		glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP );
-
+#endif
 		EnvmapTexture->Bind();
 
 		DrawTris();
 
+#ifndef USE_GLES1
 		glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
 		glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+#endif
+	  
 	}
 }
 
@@ -815,7 +833,6 @@ void quadsquare::Render (const quadcornerdata& cd, GLubyte *vnc_array) {
 			InitArrayCounters();
 			RenderAux (cd, SomeClip, (int)j);
 			if (VertexArrayCounter == 0) continue;
-
 			Course.TerrList[j].texture->Bind();
 			DrawTris ();
 
@@ -1088,7 +1105,11 @@ void quadsquare::AddHeightMap(const quadcornerdata& cd, const HeightMapInfo& hm)
 		if  (VertexArrayIndices != NULL ) {
 			delete VertexArrayIndices;
 		}
+#ifdef USE_GLES1
+		VertexArrayIndices = new GLushort[6 * RowSize * NumRows];
+#else
 		VertexArrayIndices = new GLuint[6 * RowSize * NumRows];
+#endif
 	}
 	int	BlockSize = 2 << cd.Level;
 	if (cd.xorg > hm.XOrigin + ((hm.XSize + 2) << hm.Scale) ||
@@ -1252,5 +1273,27 @@ void UpdateQuadtree (const TVector3& view_pos, float detail){
 void RenderQuadtree(){
 	GLubyte *vnc_array;
 	Course.GetGLArrays (&vnc_array);
+#ifdef USE_GLES1
+    glEnableClientState (GL_VERTEX_ARRAY);
+    glVertexPointer (3, GL_FLOAT, STRIDE_GL_ARRAY, vnc_array);
+
+    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+    glTexCoordPointer(2,GL_FLOAT,STRIDE_GL_ARRAY,
+		     vnc_array + 3*sizeof(GLfloat));
+
+    glEnableClientState (GL_NORMAL_ARRAY);
+    glNormalPointer (GL_FLOAT, STRIDE_GL_ARRAY,
+		     vnc_array + 6*sizeof(GLfloat));
+
+    glEnableClientState (GL_COLOR_ARRAY);
+    glColorPointer (4, GL_UNSIGNED_BYTE, STRIDE_GL_ARRAY,
+		    vnc_array + 10*sizeof(GLfloat));
+#endif
 	root->Render (root_corner_data, vnc_array);
+#ifdef USE_GLES1
+    glDisableClientState (GL_VERTEX_ARRAY);
+    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState (GL_NORMAL_ARRAY);
+    glDisableClientState (GL_COLOR_ARRAY);
+#endif
 }
