@@ -32,10 +32,15 @@ GNU General Public License for more details.
 class FTFont;
 class CSPList;
 
+struct fontinfo {
+	string fontpath;
+	string fontname;
+	map<float,FTFont*> fonts;
+};
 
 class CFont {
 private:
-	vector<FTFont*> fonts;
+	vector<fontinfo*> fonts;
 	map<string, size_t> fontindex;
 	Orientation forientation;
 
@@ -45,18 +50,19 @@ private:
 	float  curr_fact;		// the length factor
 
 	static wstring UnicodeStr(const char* s);
-	void DrawText(float x, float y, const char *text, size_t font, float size) const;
-	void DrawText(float x, float y, const wchar_t *text, size_t font, float size) const;
-	void GetTextSize(const char *text, float &x, float &y, size_t font, float size) const;
-	void GetTextSize(const wchar_t *text, float &x, float &y, size_t font, float size) const;
+	void DrawText(float x, float y, const char *text, size_t font, float size) ;
+	void DrawText(float x, float y, const wchar_t *text, size_t font, float size) ;
+	void GetTextSize(const char *text, float &x, float &y, size_t font, float size) ;
+	void GetTextSize(const wchar_t *text, float &x, float &y, size_t font, float size) ;
 
+	FTFont* GetFont(const size_t findex,const float size);
 public:
 	CFont ();
 	~CFont ();
 
 	void Clear ();
-	int  LoadFont (const string& name, const char *dir, const char *filename);
-	int  LoadFont (const string& name, const char *path);
+	int  LoadFont (const string& name, const char *dir, const char *filename,float size);
+	int  LoadFont (const string& name, const char *path,float size);
 	bool LoadFontlist ();
 	size_t GetFontIdx (const string &name) const;
 
@@ -71,29 +77,29 @@ public:
 	// auto
 	int AutoSizeN     (int rel_val);	// rel_val = relative size, return: autosize
 	int AutoDistanceN (int rel_val);	// rel_val = relative dist
-
+	
 	// draw
-	void DrawText   (float x, float y, const char *text) const;		// normal char*
-	void DrawText   (float x, float y, const wchar_t *text) const;	// wide char*
-	void DrawString (float x, float y, const string &s) const;		// string class
-	void DrawString (float x, float y, const wstring &s) const;		// wstring class
+	void DrawText   (float x, float y, const char *text) ;		// normal char*
+	void DrawText   (float x, float y, const wchar_t *text) ;	// wide char*
+	void DrawString (float x, float y, const string &s) ;		// string class
+	void DrawString (float x, float y, const wstring &s) ;		// wstring class
 
 
-	void DrawText   (float x, float y, const char *text, const string &fontname, float size) const;
-	void DrawText   (float x, float y, const wchar_t *text, const string &fontname, float size) const;
-	void DrawString (float x, float y, const string &s, const string &fontname, float size) const;
-	void DrawString (float x, float y, const wstring &s, const string &fontname, float size) const;
+	void DrawText   (float x, float y, const char *text, const string &fontname, float size) ;
+	void DrawText   (float x, float y, const wchar_t *text, const string &fontname, float size) ;
+	void DrawString (float x, float y, const string &s, const string &fontname, float size) ;
+	void DrawString (float x, float y, const wstring &s, const string &fontname, float size) ;
 
 	// metrics
-	void  GetTextSize  (const char *text, float &x, float &y) const;
-	void  GetTextSize  (const char *text, float &x, float &y, const string &fontname, float size) const;
-	float GetTextWidth (const char *text) const;
-	float GetTextWidth (const string& text) const;
-	float GetTextWidth (const wchar_t *text) const;
-	float GetTextWidth (const char *text, const string &fontname, float size) const;
-	float GetTextWidth (const wchar_t *text, const string &fontname, float size) const;
+	void  GetTextSize  (const char *text, float &x, float &y) ;
+	void  GetTextSize  (const char *text, float &x, float &y, const string &fontname, float size) ;
+	float GetTextWidth (const char *text) ;
+	float GetTextWidth (const string& text) ;
+	float GetTextWidth (const wchar_t *text) ;
+	float GetTextWidth (const char *text, const string &fontname, float size) ;
+	float GetTextWidth (const wchar_t *text, const string &fontname, float size) ;
 
-	float CenterX        (const char *text) const;
+	float CenterX        (const char *text) ;
 	void  SetOrientation (Orientation orientation);
 
 	void MakeLineList (const char *source, CSPList *dest, float width);
