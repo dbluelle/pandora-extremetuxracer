@@ -24,7 +24,7 @@ module.
 #include <ft2build.h>
 #include FT_OUTLINE_H
 
-typedef double FTGL_DOUBLE;
+typedef ETR_DOUBLE FTGL_DOUBLE;
 
 #ifndef FT_OPEN_MEMORY
     #define FT_OPEN_MEMORY (FT_Open_Flags)1
@@ -638,6 +638,7 @@ class FTGL_EXPORT FTGLTextureFont : public FTFont {
         int yOffset;
 };
 
+#ifndef USE_GLES1
 class FTGL_EXPORT FTGLPixmapFont : public FTFont
 {
     public:
@@ -664,5 +665,6 @@ class FTGL_EXPORT FTPixmapGlyph : public FTGlyph
         FTPoint pos;
         unsigned char* data;
 };
+#endif
 
 #endif

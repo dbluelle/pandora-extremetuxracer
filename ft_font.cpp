@@ -170,7 +170,11 @@ void FTFont::Render (const char* string) {
     pen.X(0); pen.Y(0);
 
     while (*c) {
+#ifdef USE_GLES1
+        if(CheckGlyph (*c)) pen += glyphList->Render (*c, *(c + 1), pen);
+#else
         if(CheckGlyph (*c)) pen = glyphList->Render (*c, *(c + 1), pen);
+#endif
         ++c;
     }
 }
@@ -178,13 +182,15 @@ void FTFont::Render (const char* string) {
 void FTFont::Render (const wchar_t* string){
     const wchar_t* c = string;
     pen.X(0); pen.Y(0);
-
     while (*c) {
+#ifdef USE_GLES1
+        if(CheckGlyph (*c)) pen += glyphList->Render (*c, *(c + 1), pen);
+#else
         if(CheckGlyph (*c)) pen = glyphList->Render (*c, *(c + 1), pen);
+#endif
         ++c;
     }
 }
-
 bool FTFont::CheckGlyph (const unsigned int characterCode) {
     if (NULL == glyphList->Glyph (characterCode)) {
         unsigned int glyphIndex = glyphList->FontIndex (characterCode);
@@ -521,16 +527,20 @@ FTTextureGlyph::FTTextureGlyph (FT_GlyphSlot glyph, int id, int xOffset,
     destHeight = bitmap.rows;
 
     if (destWidth && destHeight) {
+#ifndef USE_GLES1
         glPushClientAttrib (GL_CLIENT_PIXEL_STORE_BIT);
         glPixelStorei (GL_UNPACK_LSB_FIRST, GL_FALSE);
         glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
+#endif
         glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
 
         glBindTexture (GL_TEXTURE_2D, glTextureID);
         glTexSubImage2D (GL_TEXTURE_2D, 0, xOffset, yOffset,
 			destWidth, destHeight, GL_ALPHA, GL_UNSIGNED_BYTE, bitmap.buffer);
 
+#ifndef USE_GLES1
         glPopClientAttrib();
+#endif
     }
 
     uv[0].X (static_cast<float>(xOffset) / static_cast<float>(width));
@@ -550,8 +560,27 @@ const FTPoint& FTTextureGlyph::Render (const FTPoint& pen) {
         activeTextureID = glTextureID;
     }
 
-    glTranslatef (pen.X(),  pen.Y(), 0.0f);
+#ifdef USE_GLES1
+        glTexCoord2f (uv[0].X(), uv[0].Y());
+        glVertex2f (pen.X()+pos.X(), pen.Y()+pos.Y());
 
+        glTexCoord2f (uv[0].X(), uv[1].Y());
+        glVertex2f (pen.X()+pos.X(), pen.Y()+pos.Y() - destHeight);
+
+        glTexCoord2f (uv[1].X(), uv[1].Y());
+        glVertex2f (pen.X()+destWidth + pos.X(), pen.Y()+pos.Y() - destHeight);
+
+        glTexCoord2f (uv[0].X(), uv[0].Y());
+        glVertex2f (pen.X()+pos.X(), pen.Y()+pos.Y());
+
+
+        glTexCoord2f (uv[1].X(), uv[0].Y());
+        glVertex2f (pen.X()+destWidth + pos.X(), pen.Y()+pos.Y());
+
+        glTexCoord2f (uv[1].X(), uv[1].Y());
+        glVertex2f (pen.X()+destWidth + pos.X(), pen.Y()+pos.Y() - destHeight);
+#else
+    glTranslatef (pen.X(),  pen.Y(), 0.0f);
     glBegin (GL_QUADS);
         glTexCoord2f (uv[0].X(), uv[0].Y());
         glVertex2f (pos.X(), pos.Y());
@@ -565,6 +594,7 @@ const FTPoint& FTTextureGlyph::Render (const FTPoint& pen) {
         glTexCoord2f (uv[1].X(), uv[0].Y());
         glVertex2f (destWidth + pos.X(), pos.Y());
     glEnd();
+#endif
     return advance;
 }
 
@@ -671,8 +701,10 @@ GLuint FTGLTextureFont::CreateTexture() {
     glGenTextures (1, (GLuint*)&textID);
 
     glBindTexture (GL_TEXTURE_2D, textID);
+#ifndef USE_GLES1
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+#endif
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -693,21 +725,43 @@ bool FTGLTextureFont::FaceSize (const unsigned int size, const unsigned int res)
 }
 
 void FTGLTextureFont::Render (const char* string) {
+#ifdef USE_GLES1
+    glPushAttrib (GL_COLOR_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_ONE
+	glBegin(GL_TRIANGLES);
+	FTTextureGlyph::ResetActiveTexture();
+    FTFont::Render (string);
+    glEnd();
+    glPopAttrib();
+#else
     glPushAttrib (GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
     glEnable(GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_ONE
     FTTextureGlyph::ResetActiveTexture();
     FTFont::Render (string);
     glPopAttrib();
+#endif
 }
 
 void FTGLTextureFont::Render (const wchar_t* string) {
+#ifdef USE_GLES1
+    glPushAttrib (GL_COLOR_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_ONE
+	glBegin(GL_TRIANGLES);
+	FTTextureGlyph::ResetActiveTexture();
+    FTFont::Render (string);
+    glEnd();
+    glPopAttrib();
+#else
     glPushAttrib (GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
     glEnable(GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_ONE
     FTTextureGlyph::ResetActiveTexture();
     FTFont::Render (string);
     glPopAttrib();
+#endif
 }
 
 // --------------------------------------------------------------------
@@ -744,6 +798,7 @@ void FTCharmap::InsertIndex (const unsigned int characterCode, const unsigned in
 }
 
 
+#ifndef USE_GLES1
 // --------------------------------------------------------------------
 //			FTPixmapGlyph
 // --------------------------------------------------------------------
@@ -878,7 +933,7 @@ void FTGLPixmapFont::Render( const wchar_t* string) {
     glPopClientAttrib();
     glPopAttrib();
 }
-
+#endif
 
 
 
