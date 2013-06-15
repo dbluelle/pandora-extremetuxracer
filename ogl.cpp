@@ -30,7 +30,9 @@ static const gl_value_t gl_values[] = {
     { "modelview stack depth", GL_MAX_MODELVIEW_STACK_DEPTH, GL_INT },
     { "projection stack depth", GL_MAX_PROJECTION_STACK_DEPTH, GL_INT },
     { "max texture size", GL_MAX_TEXTURE_SIZE, GL_INT },
+#ifndef USE_GLES1
     { "double buffering", GL_DOUBLEBUFFER, GL_UNSIGNED_BYTE },
+#endif
     { "red bits", GL_RED_BITS, GL_INT },
     { "green bits", GL_GREEN_BITS, GL_INT },
     { "blue bits", GL_BLUE_BITS, GL_INT },
@@ -41,7 +43,7 @@ static const gl_value_t gl_values[] = {
 void check_gl_error() {
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-		Message ("OpenGL Error: ", "");
+		Message ("OpenGL Error: ", (const char*)gluErrorString(error));
     }
 }
 
@@ -52,11 +54,14 @@ void init_glfloat_array (int num, GLfloat arr[], ...) {
     va_end (args);
 }
 
+#ifndef USE_GLES1
 PFNGLLOCKARRAYSEXTPROC glLockArraysEXT_p = NULL;
 PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT_p = NULL;
+#endif
 
 typedef void (*(*get_gl_proc_fptr_t)(const GLubyte *))();
 void InitOpenglExtensions () {
+#ifndef USE_GLES1
 	get_gl_proc_fptr_t get_gl_proc;
 
 	#if defined (HAVE_SDL)
@@ -68,13 +73,13 @@ void InitOpenglExtensions () {
 	#endif
 
     if (get_gl_proc) {
-		glLockArraysEXT_p = (PFNGLLOCKARRAYSEXTPROC)
+		glLockArraysEXT_p = (PFNGLLOCKARRAYSEXTPROC) 
 		    (*get_gl_proc)((GLubyte*) "glLockArraysEXT");
-		glUnlockArraysEXT_p = (PFNGLUNLOCKARRAYSEXTPROC)
+		glUnlockArraysEXT_p = (PFNGLUNLOCKARRAYSEXTPROC) 
 		    (*get_gl_proc)((GLubyte*) "glUnlockArraysEXT");
-
+	
 		if (glLockArraysEXT_p != NULL && glUnlockArraysEXT_p != NULL) {
-
+		
 		} else {
 		    Message ("GL_EXT_compiled_vertex_array extension NOT supported", "");
 	    	glLockArraysEXT_p = NULL;
@@ -83,6 +88,7 @@ void InitOpenglExtensions () {
     } else {
 		Message ("No function available for obtaining GL proc addresses", "");
     }
+#endif
 
 }
 
@@ -108,7 +114,7 @@ void PrintGLInfo (){
 		oldpos = pos+1;
     }
 	Message(extensions.substr(oldpos), "");
-
+#ifndef USE_GLES1
 	Message ("", "");
     for (int i=0; i<(int)(sizeof(gl_values)/sizeof(gl_values[0])); i++) {
 		switch (gl_values[i].type) {
@@ -134,6 +140,7 @@ void PrintGLInfo (){
 			Message ("","");
 		}
     }
+#endif
 }
 
 void set_material (const TColor& diffuse_colour, const TColor& specular_colour, ETR_DOUBLE specular_exp) {
@@ -143,7 +150,7 @@ void set_material (const TColor& diffuse_colour, const TColor& specular_colour, 
 	mat_amb_diff[0] = diffuse_colour.r;
 	mat_amb_diff[1] = diffuse_colour.g;
 	mat_amb_diff[2] = diffuse_colour.b;
-	mat_amb_diff[3] = diffuse_colour.a;
+	mat_amb_diff[3] = diffuse_colour.a; 
 	glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_amb_diff);
 
 	mat_specular[0] = specular_colour.r;
@@ -154,9 +161,10 @@ void set_material (const TColor& diffuse_colour, const TColor& specular_colour, 
 
 	glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, specular_exp);
 
-	glColor4f (diffuse_colour.r, diffuse_colour.g, diffuse_colour.b,
+	glColor4f (diffuse_colour.r, diffuse_colour.g, diffuse_colour.b, 
 	     diffuse_colour.a);
 }
+
 void ClearRenderContext () {
 	glDepthMask (GL_TRUE);
 	glClearColor (colBackgr.r, colBackgr.g, colBackgr.b, colBackgr.a);
@@ -191,12 +199,13 @@ void Reshape (int w, int h) {
     far_clip_dist = param.forward_clip_distance + FAR_CLIP_FUDGE_AMOUNT;
     gluPerspective (param.fov, (ETR_DOUBLE)w/h, NEAR_CLIP_DIST, far_clip_dist );
     glMatrixMode (GL_MODELVIEW );
-}
+} 
+
 // ====================================================================
 //					GL options
 // ====================================================================
 
-void set_gl_options (TRenderMode mode)
+void set_gl_options (TRenderMode mode) 
 {
 	switch (mode) {
     case GUI:
@@ -208,15 +217,17 @@ void set_gl_options (TRenderMode mode)
 		glDisable (GL_ALPHA_TEST);
         glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glDisable (GL_TEXTURE_GEN_S);
 		glDisable (GL_TEXTURE_GEN_T);
+#endif
 		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
 		glShadeModel (GL_SMOOTH);
 		glDepthFunc (GL_LESS);
 		glDisable (GL_FOG);
         break;
-
+    
 	case GAUGE_BARS:
         glEnable (GL_TEXTURE_2D);
         glDisable (GL_DEPTH_TEST);
@@ -226,16 +237,20 @@ void set_gl_options (TRenderMode mode)
 		glDisable (GL_ALPHA_TEST);
         glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glEnable (GL_TEXTURE_GEN_S);
 		glEnable (GL_TEXTURE_GEN_T);
+#endif
 		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
 		glShadeModel (GL_SMOOTH);
 		glDepthFunc (GL_LESS);
 
+#ifndef USE_GLES1
 		glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 		glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-        break;
+#endif
+	break;
 
     case TEXFONT:
         glEnable (GL_TEXTURE_2D);
@@ -246,14 +261,16 @@ void set_gl_options (TRenderMode mode)
 		glDisable (GL_ALPHA_TEST);
         glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glDisable (GL_TEXTURE_GEN_S);
 		glDisable (GL_TEXTURE_GEN_T);
+#endif
 		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
 		glShadeModel (GL_SMOOTH);
 		glDepthFunc (GL_LESS);
         break;
-
+    
 	case COURSE:
 		glEnable (GL_TEXTURE_2D);
 		glEnable (GL_DEPTH_TEST);
@@ -263,15 +280,19 @@ void set_gl_options (TRenderMode mode)
 		glDisable (GL_ALPHA_TEST);
 		glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glEnable (GL_TEXTURE_GEN_S);
 		glEnable (GL_TEXTURE_GEN_T);
+#endif
 		glEnable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
 		glShadeModel (GL_SMOOTH);
 		glDepthFunc (GL_LEQUAL);
 
+#ifndef USE_GLES1
 		glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 		glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+#endif
 		break;
 
     case TREES:
@@ -283,8 +304,10 @@ void set_gl_options (TRenderMode mode)
         glEnable (GL_ALPHA_TEST);
 		glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glDisable (GL_TEXTURE_GEN_S);
 		glDisable (GL_TEXTURE_GEN_T);
+#endif
 		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
 		glShadeModel (GL_SMOOTH);
@@ -292,7 +315,7 @@ void set_gl_options (TRenderMode mode)
 
         glAlphaFunc (GL_GEQUAL, 0.5);
         break;
-
+        
     case PARTICLES:
         glEnable (GL_TEXTURE_2D);
 		glEnable (GL_DEPTH_TEST);
@@ -302,8 +325,10 @@ void set_gl_options (TRenderMode mode)
 		glEnable (GL_ALPHA_TEST);
         glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glDisable (GL_TEXTURE_GEN_S);
 		glDisable (GL_TEXTURE_GEN_T);
+#endif
 		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
 		glShadeModel (GL_SMOOTH);
@@ -311,35 +336,39 @@ void set_gl_options (TRenderMode mode)
 
         glAlphaFunc (GL_GEQUAL, 0.5);
         break;
-
+    
 	case SKY:
 		glEnable (GL_TEXTURE_2D);
 		glDisable (GL_DEPTH_TEST);
-		glDisable (GL_CULL_FACE);
+		glDisable (GL_CULL_FACE); 
 		glDisable (GL_LIGHTING);
 		glDisable (GL_NORMALIZE);
 		glDisable (GL_ALPHA_TEST);
 		glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glDisable (GL_TEXTURE_GEN_S);
 		glDisable (GL_TEXTURE_GEN_T);
+#endif
 		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_FALSE);
 		glShadeModel (GL_SMOOTH);
 		glDepthFunc (GL_LESS);
 		break;
-
+ 	
     case FOG_PLANE:
 		glDisable (GL_TEXTURE_2D);
 		glEnable (GL_DEPTH_TEST);
-		glDisable (GL_CULL_FACE);
+		glDisable (GL_CULL_FACE); 
 		glDisable (GL_LIGHTING);
 		glDisable (GL_NORMALIZE);
 		glDisable (GL_ALPHA_TEST);
 		glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glDisable (GL_TEXTURE_GEN_S);
 		glDisable (GL_TEXTURE_GEN_T);
+#endif
 		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
 		glShadeModel (GL_SMOOTH);
@@ -355,8 +384,10 @@ void set_gl_options (TRenderMode mode)
 		glDisable (GL_ALPHA_TEST);
 		glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
+#ifndef USE_GLES1
 		glDisable (GL_TEXTURE_GEN_S);
 		glDisable (GL_TEXTURE_GEN_T);
+#endif
 		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
 		glShadeModel (GL_SMOOTH);
@@ -406,17 +437,20 @@ void set_gl_options (TRenderMode mode)
 		glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
 		glDisable (GL_COLOR_MATERIAL);
+#ifndef USE_GLES1
 		glDisable (GL_TEXTURE_GEN_S);
 		glDisable (GL_TEXTURE_GEN_T);
+#endif
 		glDepthMask (GL_FALSE);
 		glShadeModel (GL_SMOOTH);
 		glDepthFunc (GL_LEQUAL);
 		break;
-
+    
 	default:
 		Message ("not a valid render mode", "");
     }
 }
+
 /* defined but not used
     case TEXT:
         glDisable (GL_TEXTURE_2D);

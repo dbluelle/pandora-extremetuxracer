@@ -40,9 +40,10 @@ enum TRenderMode {
 
 #undef GL_EXT_compiled_vertex_array
 
+#ifndef USE_GLES1
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT_p;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT_p;
-
+#endif
 void check_gl_error();
 void init_glfloat_array( int num, GLfloat arr[], ... );
 void InitOpenglExtensions();
