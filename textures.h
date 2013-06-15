@@ -164,6 +164,10 @@ public:
 	void Draw(int x, int y, float size, Orientation orientation);
 	void Draw(int x, int y, float width, float height, Orientation orientation);
 	void DrawFrame(int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col);
+#ifdef USE_GLES1
+	int width;
+	int height;
+#endif
 };
 
 class CTexture {

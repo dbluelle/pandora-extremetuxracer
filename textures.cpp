@@ -20,8 +20,20 @@ GNU General Public License for more details.
 #include "course.h"
 #include <fstream>
 #include <cctype>
-#include <cstdio>
 
+#ifdef USE_GLES1
+static int GLES2D_p2( int input )
+{
+return input;
+	int value = 1;
+
+	 while (value < input)
+	{
+		value <<= 1;
+	}
+	return value;
+}
+#endif
 // --------------------------------------------------------------------
 //				class CImage
 // --------------------------------------------------------------------
@@ -95,6 +107,7 @@ bool CImage::LoadPng (const char *dir, const char *filename, bool mirroring) {
 // ------------------ read framebuffer --------------------------------
 
 bool CImage::ReadFrameBuffer_PPM () {
+#ifndef USE_GLES1
 	int viewport[4];
 	glGetIntegerv (GL_VIEWPORT, viewport);
 
@@ -111,11 +124,13 @@ bool CImage::ReadFrameBuffer_PPM () {
 		glReadPixels (viewport[0], viewport[1] + viewport[3] - 1 - i,
 			viewport[2], 1, GL_RGB, GL_UNSIGNED_BYTE, data + viewport[2] * i * 3);
 	}
+#endif
 
 	return true;
 }
 
 void CImage::ReadFrameBuffer_TGA () {
+#ifndef USE_GLES1
 	nx = param.x_resolution;
 	ny = param.y_resolution;
 	depth = 3;
@@ -125,9 +140,11 @@ void CImage::ReadFrameBuffer_TGA () {
 
 	glReadBuffer (GL_FRONT);
 	glReadPixels (0, 0, nx, ny, GL_BGR, GL_UNSIGNED_BYTE, data);
+#endif
 }
 
 void CImage::ReadFrameBuffer_BMP () {
+#ifndef USE_GLES1
 	nx = param.x_resolution;
 	ny = param.y_resolution;
 	depth = 4;
@@ -136,6 +153,7 @@ void CImage::ReadFrameBuffer_BMP () {
 	data  = new unsigned char[nx * ny * depth];
 	glReadBuffer (GL_FRONT);
 	glReadPixels (0, 0, nx, ny, GL_BGRA, GL_UNSIGNED_BYTE, data);
+#endif
 }
 
 // ---------------------------
@@ -291,11 +309,17 @@ bool TTexture::Load(const string& filename) {
 
 	if (texImage.LoadPng (filename.c_str(), true) == false)
 		return false;
+#ifdef USE_GLES1
+	width = GLES2D_p2(texImage.nx);
+	height= GLES2D_p2(texImage.ny);
+#endif
 	glGenTextures (1, &id);
 	glBindTexture (GL_TEXTURE_2D, id);
     glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
+#ifndef USE_GLES1
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+#endif
 
 	GLenum format;
 	if (texImage.depth == 3) format = GL_RGB;
@@ -304,10 +328,15 @@ bool TTexture::Load(const string& filename) {
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+#ifdef USE_GLES1
+	glTexImage2D
+		(GL_TEXTURE_2D, 0, format, GLES2D_p2(texImage.nx),
+		GLES2D_p2(texImage.ny), 0, format, GL_UNSIGNED_BYTE, texImage.data);
+#else
 	glTexImage2D
 		(GL_TEXTURE_2D, 0, texImage.depth, texImage.nx,
 		texImage.ny, 0, format, GL_UNSIGNED_BYTE, texImage.data);
-
+#endif
 	texImage.DisposeData();
     return true;
 }
@@ -328,8 +357,10 @@ bool TTexture::LoadMipmap(const string& filename, bool repeatable) {
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     } else {
+#ifndef USE_GLES1
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+#endif
     }
 
 	GLenum format;
@@ -339,10 +370,15 @@ bool TTexture::LoadMipmap(const string& filename, bool repeatable) {
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 
+#ifdef USE_GLES1
+	gluBuild2DMipmaps
+		(GL_TEXTURE_2D, format, GLES2D_p2(texImage.nx),
+		GLES2D_p2(texImage.ny), format, GL_UNSIGNED_BYTE, texImage.data);
+#else
 	gluBuild2DMipmaps
 		(GL_TEXTURE_2D, texImage.depth, texImage.nx,
 		texImage.ny, format, GL_UNSIGNED_BYTE, texImage.data);
-
+#endif
 	texImage.DisposeData();
     return true;
 }
@@ -356,13 +392,17 @@ void TTexture::Bind() {
 
 void TTexture::Draw() {
 	GLint w, h;
-
 	glEnable (GL_TEXTURE_2D);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindTexture (GL_TEXTURE_2D, id);
 
+#ifdef USE_GLES1
+	w=this->width;
+	h=this->height;
+#else
 	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
 	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+#endif
 
     glColor4f (1.0, 1.0, 1.0, 1.0);
 	glBegin (GL_QUADS);
@@ -381,8 +421,13 @@ void TTexture::Draw(int x, int y, float size, Orientation orientation) {
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindTexture (GL_TEXTURE_2D, id);
 
+#ifdef USE_GLES1
+	w=this->width;
+	h=this->height;
+#else
 	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
 	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+#endif
 
 	width  = w * size;
 	height = h * size;
@@ -398,7 +443,7 @@ void TTexture::Draw(int x, int y, float size, Orientation orientation) {
 	if (x >= 0) left = x; else left = (param.x_resolution - width) / 2;
 	right = left + width;
 
-    glColor4f (1.0, 1.0, 1.0, 1.0);
+      glColor4f (1.0, 1.0, 1.0, 1.0);
 	glBegin (GL_QUADS);
 	    glTexCoord2f (0, 0); glVertex2f (left, bott);
 	    glTexCoord2f (1, 0); glVertex2f (right, bott);
@@ -410,13 +455,17 @@ void TTexture::Draw(int x, int y, float size, Orientation orientation) {
 void TTexture::Draw(int x, int y, float width, float height, Orientation orientation) {
 	GLint w, h;
 	GLfloat top, bott, left, right;
-
 	glEnable (GL_TEXTURE_2D);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindTexture (GL_TEXTURE_2D, id);
 
+#ifdef USE_GLES1
+	w=this->width;
+	h=this->height;
+#else
 	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
 	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+#endif
 
 	if (orientation == OR_TOP) {
 		top = param.y_resolution - y;
@@ -449,8 +498,13 @@ void TTexture::DrawFrame(int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, co
 	glBindTexture (GL_TEXTURE_2D, id);
 
 	if (frame > 0) {
+#ifdef USE_GLES1
+		if (w < 1) ww=this->width;
+		if (h < 1) hh=this->height;
+#else
 		if (w < 1) glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &ww);
 		if (h < 1) glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &hh);
+#endif
 
 	   glColor4f (col.r, col.g, col.b, 1.0);
 
@@ -486,7 +540,6 @@ CTexture::CTexture () {
 CTexture::~CTexture () {
 	FreeTextureList();
 }
-
 void CTexture::LoadTextureList () {
 	FreeTextureList();
 	CSPList list (200);
