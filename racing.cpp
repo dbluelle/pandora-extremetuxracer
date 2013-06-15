@@ -62,6 +62,11 @@ static int lastsound = -1;
 
 void CRacing::Keyb (unsigned int key, bool special, bool release, int x, int y) {
 	switch (key) {
+#ifdef PANDORA
+		case SDLK_PAGEUP: if (!release) State::manager.RequestEnterState (Reset); break;				
+		case SDLK_PAGEDOWN: key_charging = !release; break;
+		case SDLK_HOME: trick_modifier = !release; break;		
+#endif
 		// steering flipflops
 		case 273: key_paddling = !release; break;
 		case 274: key_braking = !release; break;
