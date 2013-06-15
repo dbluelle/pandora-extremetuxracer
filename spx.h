@@ -92,7 +92,7 @@ void     SPSetStrN    (string &s, const string &tag, const string &val);
 
 class CSPList {
 private:
-	vector<pair<string, int>> flines;
+	vector<pair<string, int> > flines;
 	size_t fmax;
 	bool fnewlineflag;
 public:
