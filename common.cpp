@@ -75,7 +75,7 @@ void PrintFloat (const float val) {
 	cout << val << '\n';
 }
 
-void PrintDouble (const ETR_DOUBLE val) {
+void PrintDouble (const double val) {
 	cout.precision(4);
 	cout << val << '\n';
 }
