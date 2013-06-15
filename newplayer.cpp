@@ -51,6 +51,8 @@ void CNewPlayer::Keyb_spec (SDL_keysym sym, bool release) {
 			if (textbuttons[0]->focussed()) State::manager.RequestEnterState (Regist);
 			else QuitAndAddPlayer ();
 			break;
+		default:
+			break;
 	}
 }
 
