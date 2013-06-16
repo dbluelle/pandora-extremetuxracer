@@ -95,13 +95,23 @@ void DrawTrees() {
 		NormVector (normal);
 		glNormal3f (normal.x, normal.y, normal.z); */
 
+#ifdef USE_GLES1
+		glBegin (GL_TRIANGLES);
+#else
 		glBegin (GL_QUADS);
+#endif
 			glTexCoord2f (0.0, 0.0);
     	    glVertex3f (-treeRadius, 0.0, 0.0);
     	    glTexCoord2f (1.0, 0.0);
     	    glVertex3f (treeRadius, 0.0, 0.0);
     	    glTexCoord2f (1.0, 1.0);
     	    glVertex3f (treeRadius, treeHeight, 0.0);
+#ifdef USE_GLES1
+			glTexCoord2f (0.0, 0.0);
+    	    glVertex3f (-treeRadius, 0.0, 0.0);
+    	    glTexCoord2f (1.0, 1.0);
+    	    glVertex3f (treeRadius, treeHeight, 0.0);
+#endif
     	    glTexCoord2f (0.0, 1.0);
     	    glVertex3f (-treeRadius, treeHeight, 0.0);
 
@@ -112,6 +122,12 @@ void DrawTrees() {
 			    glVertex3f  (0.0, 0.0, treeRadius);
 			    glTexCoord2f  (1., 1.);
 			    glVertex3f  (0.0, treeHeight, treeRadius);
+#ifdef USE_GLES1
+			    glTexCoord2f  (0., 0.);
+			    glVertex3f  (0.0, 0.0, -treeRadius);
+			    glTexCoord2f  (1., 1.);
+			    glVertex3f  (0.0, treeHeight, treeRadius);
+#endif
 			    glTexCoord2f  (0., 1.);
 			    glVertex3f  (0.0, treeHeight, -treeRadius);
 //			}
