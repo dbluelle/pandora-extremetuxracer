@@ -20,11 +20,9 @@ GNU General Public License for more details.
 #include "course.h"
 #include <fstream>
 #include <cctype>
-
 #ifdef USE_GLES1
 static int GLES2D_p2( int input )
 {
-return input;
 	int value = 1;
 
 	 while (value < input)
@@ -57,7 +55,7 @@ void CImage::DisposeData () {
 	}
 }
 
-bool CImage::LoadPng (const char *filepath, bool mirroring) {
+bool CImage::LoadPng (const char *filepath, bool mirroring,bool needsquared) {
 	SDL_Surface *sdlImage;
 	unsigned char *sdlData;
 
@@ -72,8 +70,12 @@ bool CImage::LoadPng (const char *filepath, bool mirroring) {
 	depth = sdlImage->format->BytesPerPixel;
 	pitch = sdlImage->pitch;
 	DisposeData ();
+#ifdef USE_GLES1
+	int squared =GLES2D_p2(max(nx,ny));
+	data  = new unsigned char[squared * squared * depth];
+#else
 	data  = new unsigned char[pitch * ny];
-
+#endif
    	if (SDL_MUSTLOCK (sdlImage)) {
    	    if (SDL_LockSurface (sdlImage) < 0) {
 			SDL_FreeSurface (sdlImage);
@@ -84,6 +86,33 @@ bool CImage::LoadPng (const char *filepath, bool mirroring) {
 
 	sdlData = (unsigned char *) sdlImage->pixels;
 
+#ifdef USE_GLES1
+	if (!needsquared || (squared == sdlImage->w && squared == sdlImage->h))
+	{
+		if (mirroring) {
+			for (int y=0; y<ny; y++) {
+				memcpy(data + y*pitch, sdlData + (ny-1-y)*pitch, pitch);
+			}
+		} else {
+			memcpy(data, sdlData, ny*pitch);
+		}
+	}
+	else
+	{
+		int i, j, x, y, offset_y, offset_x;
+		for (j=0; j<squared; j++)
+		{
+			y = ((mirroring ? squared-j : j) * sdlImage->h) / squared;
+			offset_y = y * sdlImage->w;
+			for (i=0; i<squared; i++)
+			{
+				x = (i * sdlImage->w) / squared;
+				offset_x = (offset_y + x) * depth;
+				memcpy(&data[(i+j*squared)*depth],&sdlData[offset_x],depth);
+			}
+		}
+	}
+#else
 	if (mirroring) {
 		for (int y=0; y<ny; y++) {
 			memcpy(data + y*pitch, sdlData + (ny-1-y)*pitch, pitch);
@@ -91,17 +120,18 @@ bool CImage::LoadPng (const char *filepath, bool mirroring) {
 	} else {
 		memcpy(data, sdlData, ny*pitch);
 	}
+#endif
 
 	if (SDL_MUSTLOCK (sdlImage)) SDL_UnlockSurface (sdlImage);
 	SDL_FreeSurface (sdlImage);
 	return true;
 }
 
-bool CImage::LoadPng (const char *dir, const char *filename, bool mirroring) {
+bool CImage::LoadPng (const char *dir, const char *filename, bool mirroring, bool needsquared) {
 	string path = dir;
 	path += SEP;
 	path += filename;
-	return LoadPng (path.c_str(), mirroring);
+	return LoadPng (path.c_str(), mirroring, needsquared);
 }
 
 // ------------------ read framebuffer --------------------------------
@@ -299,7 +329,6 @@ void CImage::WriteBMP (const char *dir, const char *filename) {
 // --------------------------------------------------------------------
 //				class TTexture
 // --------------------------------------------------------------------
-
 TTexture::~TTexture() {
 	glDeleteTextures (1, &id);
 }
@@ -310,11 +339,11 @@ bool TTexture::Load(const string& filename) {
 	if (texImage.LoadPng (filename.c_str(), true) == false)
 		return false;
 #ifdef USE_GLES1
-	width = GLES2D_p2(texImage.nx);
-	height= GLES2D_p2(texImage.ny);
+	width = texImage.nx;
+	height= texImage.ny;
 #endif
 	glGenTextures (1, &id);
-	glBindTexture (GL_TEXTURE_2D, id);
+	Bind();
     glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
 #ifndef USE_GLES1
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -343,14 +372,17 @@ bool TTexture::Load(const string& filename) {
 bool TTexture::Load(const string& dir, const string& filename) {
 	return Load(dir + SEP + filename);
 }
-
 bool TTexture::LoadMipmap(const string& filename, bool repeatable) {
     CImage texImage;
-	if (texImage.LoadPng (filename.c_str(), true) == false)
+	if (texImage.LoadPng (filename.c_str(), true,!repeatable) == false)
 		return false;
 
+#ifdef USE_GLES1
+	width = texImage.nx;
+	height= texImage.ny;
+#endif
 	glGenTextures (1, &id);
-	glBindTexture (GL_TEXTURE_2D, id);
+	Bind();
     glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
 
    if  (repeatable) {
@@ -367,13 +399,24 @@ bool TTexture::LoadMipmap(const string& filename, bool repeatable) {
 	if (texImage.depth == 3) format = GL_RGB;
 	else format = GL_RGBA;
 
+
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 
 #ifdef USE_GLES1
-	gluBuild2DMipmaps
-		(GL_TEXTURE_2D, format, GLES2D_p2(texImage.nx),
-		GLES2D_p2(texImage.ny), format, GL_UNSIGNED_BYTE, texImage.data);
+	if (repeatable)
+	{
+		gluBuild2DMipmaps
+				(GL_TEXTURE_2D, format, texImage.nx,
+				 texImage.ny, format, GL_UNSIGNED_BYTE, texImage.data);
+	}
+	else
+	{
+		int squared =GLES2D_p2(max(texImage.nx,texImage.ny));
+		gluBuild2DMipmaps
+				(GL_TEXTURE_2D, format, squared,
+				 squared, format, GL_UNSIGNED_BYTE, texImage.data);
+	}
 #else
 	gluBuild2DMipmaps
 		(GL_TEXTURE_2D, texImage.depth, texImage.nx,
@@ -385,16 +428,21 @@ bool TTexture::LoadMipmap(const string& filename, bool repeatable) {
 bool TTexture::LoadMipmap(const string& dir, const string& filename, bool repeatable) {
 	return LoadMipmap(dir + SEP + filename, repeatable);
 }
+static GLuint currentTexID = 0;
 
 void TTexture::Bind() {
-	glBindTexture (GL_TEXTURE_2D, id);
+	if (currentTexID != id)
+	{
+		glBindTexture (GL_TEXTURE_2D, id);
+		currentTexID = id;
+	}
 }
 
 void TTexture::Draw() {
 	GLint w, h;
 	glEnable (GL_TEXTURE_2D);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glBindTexture (GL_TEXTURE_2D, id);
+	Bind();
 
 #ifdef USE_GLES1
 	w=this->width;
@@ -419,7 +467,7 @@ void TTexture::Draw(int x, int y, float size, Orientation orientation) {
 
 	glEnable (GL_TEXTURE_2D);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glBindTexture (GL_TEXTURE_2D, id);
+	Bind();
 
 #ifdef USE_GLES1
 	w=this->width;
@@ -457,7 +505,7 @@ void TTexture::Draw(int x, int y, float width, float height, Orientation orienta
 	GLfloat top, bott, left, right;
 	glEnable (GL_TEXTURE_2D);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glBindTexture (GL_TEXTURE_2D, id);
+	Bind();
 
 #ifdef USE_GLES1
 	w=this->width;
@@ -495,7 +543,7 @@ void TTexture::DrawFrame(int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, co
 	GLint xx = x;
 	GLint yy = param.y_resolution - hh - y;
 
-	glBindTexture (GL_TEXTURE_2D, id);
+	Bind();
 
 	if (frame > 0) {
 #ifdef USE_GLES1
@@ -530,7 +578,6 @@ void TTexture::DrawFrame(int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, co
 // --------------------------------------------------------------------
 //				class CTexture
 // --------------------------------------------------------------------
-
 CTexture Tex;
 
 CTexture::CTexture () {

@@ -122,8 +122,8 @@ public:
 	void DisposeData ();
 
 	// load:
-	bool LoadPng (const char *filepath, bool mirroring);
-	bool LoadPng (const char *dir, const char *filepath, bool mirroring);
+	bool LoadPng (const char *filepath, bool mirroring, bool needsquared = false);
+	bool LoadPng (const char *dir, const char *filepath, bool mirroring, bool needsquared = false);
 
 	// write:
 	bool ReadFrameBuffer_PPM ();
@@ -144,7 +144,6 @@ public:
 // --------------------------------------------------------------------
 //				class CTexture
 // --------------------------------------------------------------------
-
 class TTexture {
 	TTexture(const TTexture&);
 	TTexture& operator=(const TTexture&);
