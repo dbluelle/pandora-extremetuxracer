@@ -531,7 +531,6 @@ void TFlakeArea::Draw (CControl *ctrl) const {
 	Tex.BindTex (T_WIDGETS);
 	TColor particle_colour = Env.ParticleColor ();
     glColor4f (particle_colour.r, particle_colour.g, particle_colour.b, particle_colour.a);
-
 	for (size_t i=0; i < flakes.size(); i++) {
 		flakes[i].Draw(lp, rp, rotate_flake, dir_angle);
 	}
@@ -621,8 +620,10 @@ void CFlakes::Init (int grade, CControl *ctrl) {
 //			areas.push_back(TFlakeArea(400, 12, 5, 8,      2, 8, 0.03, 0.045,    5, false));
 //			areas.push_back(TFlakeArea(400, 30, 6, 15,      10, 15, 0.06, 0.12,    5, false));
 			areas.push_back(TFlakeArea(400, 5, 4, 4,     -2, 4, 0.015, 0.03,    5, true));
+#ifndef PANDORA
 			areas.push_back(TFlakeArea(400, 12, 5, 8,      2, 8, 0.045, 0.07,    5, false));
 			areas.push_back(TFlakeArea(400, 30, 6, 15,      10, 15, 0.09, 0.18,    5, false));
+#endif
 //			areas.push_back(TFlakeArea(400, 5, 4, 4,     -2, 4, 0.02, 0.04,    5, true));
 //			areas.push_back(TFlakeArea(400, 12, 5, 8,      2, 8, 0.06, 0.09,    5, false));
 //			areas.push_back(TFlakeArea(400, 30, 6, 15,      10, 15, 0.15, 0.25,    5, false));
@@ -632,8 +633,10 @@ void CFlakes::Init (int grade, CControl *ctrl) {
 //			areas.push_back(TFlakeArea(500, 12, 5, 8,      2, 8, 0.045, 0.07,    5, false));
 //			areas.push_back(TFlakeArea(500, 30, 6, 15,      10, 15, 0.1, 0.15,    5, false));
 			areas.push_back(TFlakeArea(500, 5, 4, 4,     -2, 4, 0.03, 0.045,    5, true));
+#ifndef PANDORA
 			areas.push_back(TFlakeArea(500, 12, 5, 8,      2, 8, 0.07, 0.1,    5, false));
 			areas.push_back(TFlakeArea(500, 30, 6, 15,      10, 15, 0.15, 0.22,    5, false));
+#endif
 //			areas.push_back(TFlakeArea(500, 5, 4, 4,     -2, 4, 0.04, 0.06,    5, true));
 //			areas.push_back(TFlakeArea(500, 12, 5, 8,      2, 8, 0.09, 0.15,    5, false));
 //			areas.push_back(TFlakeArea(500, 30, 6, 15,      10, 15, 0.2, 0.32,    5, false));
@@ -643,8 +646,10 @@ void CFlakes::Init (int grade, CControl *ctrl) {
 //			areas.push_back(TFlakeArea(1000, 12, 5, 9,      2, 8, 0.06, 0.10,    5, false));
 //			areas.push_back(TFlakeArea(1000, 30, 6, 15,      10, 15, 0.12, 0.2,    5, false));
 			areas.push_back(TFlakeArea(1000, 5, 4, 4,     -2, 4, 0.037, 0.05,    5, true));
+#ifndef PANDORA
 			areas.push_back(TFlakeArea(1000, 12, 5, 9,      2, 8, 0.09, 0.15,    5, false));
 			areas.push_back(TFlakeArea(1000, 30, 6, 15,      10, 15, 0.18, 0.35,    5, false));
+#endif
 //			areas.push_back(TFlakeArea(800, 5, 4, 4,     -2, 4, 0.05, 0.08,    5, true));
 //			areas.push_back(TFlakeArea(800, 12, 5, 9,      2, 8, 0.12, 0.20,    5, false));
 //			areas.push_back(TFlakeArea(800, 30, 6, 15,      10, 15, 0.25, 0.5,    5, false));
@@ -840,7 +845,7 @@ void CCurtain::Update (float timestep, CControl *ctrl) {
 	for (size_t i=0; i<curtains.size(); i++) {
 		curtains[i].Update(timestep, drift, ctrl);
 	}
-	Draw (ctrl);
+	//Draw (ctrl);
 }
 
 void CCurtain::Reset () {
@@ -862,8 +867,10 @@ void CCurtain::Init (CControl *ctrl) {
 //		curtains.push_back(TCurtain(3, 50, 13,       3, -100, -10, 1));
 //		curtains.push_back(TCurtain(3, 40, 16,       3, -100, -10, 1));
 		curtains.push_back(TCurtain(3, 60, 15,       3, -100, -10, 1));
+#ifndef PANDORA
 		curtains.push_back(TCurtain(3, 50, 19,       3, -100, -10, 1));
 		curtains.push_back(TCurtain(3, 40, 23,       3, -100, -10, 1));
+#endif
 //		curtains.push_back(TCurtain(3, 60, 20,       3, -100, -10, 1));
 //		curtains.push_back(TCurtain(3, 50, 25,       3, -100, -10, 1));
 //		curtains.push_back(TCurtain(3, 40, 30,       3, -100, -10, 1));
@@ -873,8 +880,10 @@ void CCurtain::Init (CControl *ctrl) {
 //		curtains.push_back(TCurtain(3, 50, 17,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 40, 20,       3, -100, -10, 2));
 		curtains.push_back(TCurtain(3, 60, 22,       3, -100, -10, 2));
+#ifndef PANDORA
 		curtains.push_back(TCurtain(3, 50, 25,       3, -100, -10, 2));
 		curtains.push_back(TCurtain(3, 40, 30,       3, -100, -10, 2));
+#endif
 //		curtains.push_back(TCurtain(3, 60, 30,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 50, 35,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 40, 40,       3, -100, -10, 2));
@@ -884,8 +893,10 @@ void CCurtain::Init (CControl *ctrl) {
 //		curtains.push_back(TCurtain(3, 50, 25,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 40, 30,       3, -100, -10, 2));
 		curtains.push_back(TCurtain(3, 60, 22,       3, -100, -10, 3));
+#ifndef PANDORA
 		curtains.push_back(TCurtain(3, 50, 27,       3, -100, -10, 2));
 		curtains.push_back(TCurtain(3, 40, 32,       3, -100, -10, 2));
+#endif
 //		curtains.push_back(TCurtain(3, 60, 25,       3, -100, -10, 3));
 //		curtains.push_back(TCurtain(3, 50, 30,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 40, 35,       3, -100, -10, 2));
