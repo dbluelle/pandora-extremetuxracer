@@ -61,9 +61,9 @@ int CScore::AddScore (size_t list_idx, const TScore& score) {
 }
 
 // for testing:
-void CScore::PrintScorelist (size_t list_idx) {
+void CScore::PrintScorelist (size_t list_idx) const {
 	if (list_idx >= Scorelist.size()) return;
-	TScoreList *list = &Scorelist[list_idx];
+	const TScoreList *list = &Scorelist[list_idx];
 
 	if (list->numScores < 1) {
 		PrintString ("no entries in this score list");
@@ -83,11 +83,11 @@ TScoreList *CScore::GetScorelist (size_t list_idx) {
 	return &Scorelist[list_idx];
 }
 
-bool CScore::SaveHighScore () {
+bool CScore::SaveHighScore () const {
 	CSPList splist ((int)Scorelist.size()*MAX_SCORES);
 
 	for (size_t li=0; li<Scorelist.size(); li++) {
-		TScoreList* lst = &Scorelist[li];
+		const TScoreList* lst = &Scorelist[li];
 		if (lst != NULL) {
 			int num = lst->numScores;
 			if (num > 0) {
@@ -164,7 +164,6 @@ int CScore::CalcRaceResult () {
 //				score screen
 // --------------------------------------------------------------------
 
-static TVector2 cursor_pos(0, 0);
 static TCourse *CourseList;
 static TUpDown* course;
 static TWidget* textbutton;
@@ -173,11 +172,11 @@ void CScore::Keyb (unsigned int key, bool special, bool release, int x, int y) {
 	KeyGUI(key, 0, release);
 	if (release) return;
 	switch (key) {
-		case 27: State::manager.RequestEnterState (GameTypeSelect); break;
+		case SDLK_ESCAPE: State::manager.RequestEnterState (GameTypeSelect); break;
 		case SDLK_q: State::manager.RequestQuit(); break;
 		case SDLK_s: Score.SaveHighScore (); break;
 		case SDLK_l: Score.LoadHighScore (); break;
-		case 13: State::manager.RequestEnterState (GameTypeSelect); break;
+		case SDLK_RETURN: State::manager.RequestEnterState (GameTypeSelect); break;
 	}
 }
 
@@ -189,15 +188,10 @@ void CScore::Mouse (int button, int state, int x, int y) {
 	}
 }
 
-void CScore::Motion (int x, int y ){
+void CScore::Motion (int x, int y) {
 	MouseMoveGUI(x, y);
-	y = param.y_resolution - y;
 
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
-    if (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 static TArea area;
@@ -210,17 +204,17 @@ void CScore::Enter() {
 	Winsys.KeyRepeat (true);
 	Music.Play (param.menu_music, -1);
 
-	framewidth = 550 * param.scale;
-	frameheight = 50 * param.scale;
+	framewidth = 550 * Winsys.scale;
+	frameheight = 50 * Winsys.scale;
 	frametop = AutoYPosN (32);
 	area = AutoAreaN (30, 80, framewidth);
 	FT.AutoSizeN (3);
 	linedist = FT.AutoDistanceN (1);
 	listtop = AutoYPosN (44);
-	dd1 = 50 * param.scale;
-	dd2 = 115 * param.scale;
-	dd3 = 250 * param.scale;
-	dd4 = 375 * param.scale;
+	dd1 = 50 * Winsys.scale;
+	dd2 = 115 * Winsys.scale;
+	dd3 = 250 * Winsys.scale;
+	dd4 = 375 * Winsys.scale;
 
 	CourseList = &Course.CourseList[0];
 
@@ -235,23 +229,27 @@ void CScore::Enter() {
 const string ordinals[10] =
 	{"1:st", "2:nd", "3:rd", "4:th", "5:th", "6:th", "7:th", "8:th", "9:th", "10:th"};
 
-void CScore::Loop (ETR_DOUBLE timestep ){
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
+void CScore::Loop (ETR_DOUBLE timestep ) {
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
 
 	Music.Update ();
 	check_gl_error();
     ClearRenderContext ();
-    set_gl_options (GUI);
+    ScopedRenderMode rm(GUI);
     SetupGuiDisplay ();
-	update_ui_snow (timestep);
-	draw_ui_snow();
+
+	if (param.ui_snow) {
+		update_ui_snow (timestep);
+		draw_ui_snow();
+	}
+
 
 	Tex.Draw (BOTTOM_LEFT, 0, hh - 256, 1);
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);
 	Tex.Draw (TOP_RIGHT, ww-256, 0, 1);
-	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), param.scale);
+	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), Winsys.scale);
 
 //	DrawFrameX (area.left, area.top, area.right-area.left, area.bottom - area.top,
 //			0, colMBackgr, colBlack, 0.2);

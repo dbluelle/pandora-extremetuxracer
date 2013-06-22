@@ -102,7 +102,7 @@ public:
 	float CenterX        (const char *text) ;
 	void  SetOrientation (Orientation orientation);
 
-	void MakeLineList (const char *source, CSPList *dest, float width);
+	vector<string> MakeLineList (const char *source, float width);
 };
 
 extern CFont FT;

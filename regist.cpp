@@ -30,7 +30,6 @@ GNU General Public License for more details.
 
 CRegist Regist;
 
-static TVector2 cursor_pos(0, 0);
 static TCharacter *CharList;
 static TWidget* textbuttons[2];
 static TUpDown* player;
@@ -49,8 +48,8 @@ void CRegist::Keyb (unsigned int key, bool special, bool release, int x, int y) 
 	TWidget* focussed = KeyGUI(key, 0, release);
 	if (release) return;
 	switch (key) {
-		case 27: State::manager.RequestQuit(); break;
-		case 13:
+		case SDLK_ESCAPE: State::manager.RequestQuit(); break;
+		case SDLK_RETURN:
 			if (focussed == textbuttons[1]) {
 				g_game.player_id = player->GetValue();
 				State::manager.RequestEnterState (NewPlayer);
@@ -72,13 +71,8 @@ void CRegist::Mouse (int button, int state, int x, int y) {
 
 void CRegist::Motion (int x, int y) {
 	MouseMoveGUI(x, y);
-	y = param.y_resolution - y;
 
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
-    if  (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 static int framewidth, frameheight, arrowwidth, sumwidth;
@@ -89,7 +83,7 @@ void CRegist::Enter (void) {
 	Winsys.ShowCursor (!param.ice_cursor);
 	Music.Play (param.menu_music, -1);
 
-	scale = param.scale;
+	scale = Winsys.scale;
 	framewidth = (int)(scale * 280);
 	frameheight = (int)(scale * 50);
 	arrowwidth = 50;
@@ -109,17 +103,19 @@ void CRegist::Enter (void) {
 }
 
 void CRegist::Loop (ETR_DOUBLE timestep) {
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
 	Music.Update ();
 	check_gl_error();
     ClearRenderContext ();
-    set_gl_options (GUI);
+    ScopedRenderMode rm(GUI);
     SetupGuiDisplay ();
 	TColor col;
 
-	update_ui_snow (timestep);
-	draw_ui_snow();
+	if (param.ui_snow) {
+		update_ui_snow (timestep);
+		draw_ui_snow();
+	}
 
 	Tex.Draw (BOTTOM_LEFT, 0, hh - 256, 1);
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);

@@ -56,8 +56,8 @@ void CReset::Loop(ETR_DOUBLE time_step) {
     size_t first_reset, last_reset, num_item_types;
     int best_loc;
 
-    width = param.x_resolution;
-    height = param.y_resolution;
+    width = Winsys.resolution.width;
+    height = Winsys.resolution.height;
 
     check_gl_error();
 	ClearRenderContext ();
@@ -101,11 +101,11 @@ void CReset::Loop(ETR_DOUBLE time_step) {
 				} // if
 		    } // for
 
-		    if  (best_loc == -1) {
+		    if (best_loc == -1) {
 				Course.GetDimensions (&course_width, &course_length);
 				ctrl->cpos.x = course_width/2.0;
 				ctrl->cpos.z = min (ctrl->cpos.z + 10, -1.0);
-		    } else if  (item_locs[best_loc].pt.z <= ctrl->cpos.z) {
+		    } else if (item_locs[best_loc].pt.z <= ctrl->cpos.z) {
 				Course.GetDimensions (&course_width, &course_length);
 				ctrl->cpos.x = course_width/2.0;
 				ctrl->cpos.z = min (ctrl->cpos.z + 10, -1.0);

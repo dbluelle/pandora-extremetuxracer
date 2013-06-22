@@ -23,6 +23,7 @@ GNU General Public License for more details.
 #include "font.h"
 #include "course.h"
 #include "physics.h"
+#include "winsys.h"
 
 
 #define GAUGE_IMG_SIZE 128
@@ -49,7 +50,7 @@ static const GLfloat hud_white[] = { 1.0, 1.0, 1.0, 1.0 };
 
 static const TColor text_colour(0, 0, 0, 1);
 
-static void draw_time(){
+static void draw_time() {
     int min, sec, hundr;
     GetTimeComponents (g_game.time, &min, &sec, &hundr);
 	string timestr = Int_StrN (min, 2);
@@ -82,15 +83,15 @@ static void draw_time(){
 	}
 }
 
-static void draw_herring_count (int herring_count){
+static void draw_herring_count (int herring_count) {
 	string hcountstr = Int_StrN (herring_count, 3);
 	if (param.use_papercut_font < 2) {
-		Tex.DrawNumStr (hcountstr.c_str(), param.x_resolution - 90, 10, 1, colWhite);
-		Tex.Draw (HERRING_ICON, param.x_resolution-160, -20, 1);
+		Tex.DrawNumStr (hcountstr.c_str(), Winsys.resolution.width - 90, 10, 1, colWhite);
+		Tex.Draw (HERRING_ICON, Winsys.resolution.width-160, -20, 1);
 	} else {
 		FT.SetColor (colDYell);
-		FT.DrawString ( param.x_resolution - 90, 10, hcountstr);
-		Tex.Draw (T_YELLHERRING, param.x_resolution-160, 12, 1);
+		FT.DrawString ( Winsys.resolution.width - 90, 10, hcountstr);
+		Tex.Draw (T_YELLHERRING, Winsys.resolution.width-160, 12, 1);
 	}
 }
 
@@ -129,7 +130,7 @@ void draw_partial_tri_fan (ETR_DOUBLE fraction) {
     ETR_DOUBLE angle_incr = 360.0 / CIRCLE_DIVISIONS;
 
     for (int i=0; i<divs; i++) {
-		if  (!trifan) {
+		if (!trifan) {
 		    start_tri_fan();
 	    	trifan = true;
 		}
@@ -141,9 +142,9 @@ void draw_partial_tri_fan (ETR_DOUBLE fraction) {
 #endif
     }
 
-    if  (cur_angle > angle + EPS) {
+    if (cur_angle > angle + EPS) {
 		cur_angle = angle;
-		if  (!trifan) {
+		if (!trifan) {
 		    start_tri_fan();
 	    	trifan = true;
 		}
@@ -154,7 +155,7 @@ void draw_partial_tri_fan (ETR_DOUBLE fraction) {
 #endif
     }
 
-    if  (trifan) {
+    if (trifan) {
 		glEnd();
 		trifan = false;
     }
@@ -165,7 +166,7 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
     GLfloat xplane[4] = {1.0 / GAUGE_IMG_SIZE, 0.0, 0.0, 0.0 };
     GLfloat yplane[4] = {0.0, 1.0 / GAUGE_IMG_SIZE, 0.0, 0.0 };
 #endif
-    set_gl_options (GAUGE_BARS);
+    ScopedRenderMode rm(GAUGE_BARS);
 
 	if (Tex.GetTexture (GAUGE_ENERGY) == NULL) return;
 	if (Tex.GetTexture (GAUGE_SPEED) == NULL) return;
@@ -177,7 +178,7 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
     glTexGenfv (GL_T, GL_OBJECT_PLANE, yplane);
 #endif
     glPushMatrix();
-	glTranslatef (param.x_resolution - GAUGE_WIDTH, 0, 0);
+	glTranslatef (Winsys.resolution.width - GAUGE_WIDTH, 0, 0);
 	Tex.BindTex (GAUGE_ENERGY);
 	ETR_DOUBLE y = ENERGY_GAUGE_BOTTOM + energy * ENERGY_GAUGE_HEIGHT;
 	glColor4fv (energy_background_color);
@@ -221,12 +222,12 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 
 	ETR_DOUBLE speedbar_frac = 0.0;
 
-	if  (speed > SPEEDBAR_GREEN_MAX_SPEED) {
+	if (speed > SPEEDBAR_GREEN_MAX_SPEED) {
 	    speedbar_frac = SPEEDBAR_GREEN_FRACTION;
 	    
-	    if  (speed > SPEEDBAR_YELLOW_MAX_SPEED) {
+	    if (speed > SPEEDBAR_YELLOW_MAX_SPEED) {
 			speedbar_frac += SPEEDBAR_YELLOW_FRACTION;
-			if  (speed > SPEEDBAR_RED_MAX_SPEED) {
+			if (speed > SPEEDBAR_RED_MAX_SPEED) {
 				speedbar_frac += SPEEDBAR_RED_FRACTION;
 			} else {
 				speedbar_frac += (speed - SPEEDBAR_YELLOW_MAX_SPEED) /
@@ -272,17 +273,17 @@ void DrawSpeed (ETR_DOUBLE speed) {
 	string speedstr = Int_StrN ((int)speed, 3);
 	if (param.use_papercut_font < 2) {
 		Tex.DrawNumStr (speedstr.c_str(), 
-			param.x_resolution - 85, param.y_resolution-74, 1, colWhite);
+			Winsys.resolution.width - 85, Winsys.resolution.height-74, 1, colWhite);
 	} else {
 		FT.SetColor (colDDYell);
-		FT.DrawString (param.x_resolution-82, param.y_resolution-80, speedstr);
+		FT.DrawString (Winsys.resolution.width-82, Winsys.resolution.height-80, speedstr);
 	}
 }
 
 void DrawWind (ETR_DOUBLE dir, ETR_DOUBLE speed) {
-	Tex.Draw (SPEEDMETER, 10, param.y_resolution - 150, 1.0);
+	Tex.Draw (SPEEDMETER, 10, Winsys.resolution.height - 150, 1.0);
 	glPushMatrix ();
-    glDisable (GL_TEXTURE_2D );
+    glDisable (GL_TEXTURE_2D);
 	
 	glColor4f (1, 0, 0, 0.5);
 	glTranslatef (82, 77, 0);
@@ -294,14 +295,14 @@ void DrawWind (ETR_DOUBLE dir, ETR_DOUBLE speed) {
 	    glVertex2f (-3, -speed);
 	glEnd();
 	glPopMatrix ();
-	Tex.Draw (SPEED_KNOB, 74, param.y_resolution - 84, 1.0);
+	Tex.Draw (SPEED_KNOB, 74, Winsys.resolution.height - 84, 1.0);
 }
 
 void DrawWind2 (float dir, float speed, CControl *ctrl) {
 	if (g_game.wind_id < 1) return;
 
-	Tex.Draw (SPEEDMETER, 0, param.y_resolution-140, 1.0);
-    glDisable (GL_TEXTURE_2D );
+	Tex.Draw (SPEEDMETER, 0, Winsys.resolution.height-140, 1.0);
+    glDisable (GL_TEXTURE_2D);
 
 
 	float alpha, red, blue, len;
@@ -344,15 +345,15 @@ void DrawWind2 (float dir, float speed, CControl *ctrl) {
 	glEnd();
 	glPopMatrix ();
 
-    glEnable (GL_TEXTURE_2D );
+    glEnable (GL_TEXTURE_2D);
 
- 	Tex.Draw (SPEED_KNOB, 64, param.y_resolution - 74, 1.0);
+	Tex.Draw (SPEED_KNOB, 64, Winsys.resolution.height - 74, 1.0);
 	string windstr = Int_StrN ((int)speed, 3);
 	if (param.use_papercut_font < 2) {
-		Tex.DrawNumStr (windstr.c_str(), 130, param.y_resolution - 55, 1, colWhite);
+		Tex.DrawNumStr (windstr.c_str(), 130, Winsys.resolution.height - 55, 1, colWhite);
 	} else {
 		FT.SetColor (colBlue);
-		FT.DrawString (130, param.y_resolution - 55, windstr);
+		FT.DrawString (130, Winsys.resolution.height - 55, windstr);
 	}
 }
 
@@ -375,13 +376,13 @@ void DrawFps () {
 	if (param.display_fps) {
 		string fpsstr = Float_StrN (averagefps, 0);
 		if (param.use_papercut_font < 2) {
-			Tex.DrawNumStr (fpsstr.c_str(), (param.x_resolution - 60) / 2, 10, 1, colWhite);
+			Tex.DrawNumStr (fpsstr.c_str(), (Winsys.resolution.width - 60) / 2, 10, 1, colWhite);
 		} else {
 			if (averagefps >= 35)
 				FT.SetColor (colWhite);
 			else
 				FT.SetColor (colRed);
-			FT.DrawString ((param.x_resolution - 60) / 2, 10, fpsstr);
+			FT.DrawString ((Winsys.resolution.width - 60) / 2, 10, fpsstr);
 		}
 	}
 }
@@ -402,9 +403,9 @@ void DrawCoursePosition (CControl *ctrl) {
 	Course.GetPlayDimensions (&pw, &pl);
 	ETR_DOUBLE fact = ctrl->cpos.z / pl;
 	if (fact > 1.0) fact = 1.0;
-    glEnable (GL_TEXTURE_2D );
-	DrawPercentBar (-fact, param.x_resolution - 48, 280-128);
-	Tex.Draw (T_MASK_OUTLINE, param.x_resolution - 48, param.y_resolution - 280, 1.0);
+    glEnable (GL_TEXTURE_2D);
+	DrawPercentBar (-fact, Winsys.resolution.width - 48, 280-128);
+	Tex.Draw (T_MASK_OUTLINE, Winsys.resolution.width - 48, Winsys.resolution.height - 280, 1.0);
 }
 
 // -------------------------------------------------------
@@ -417,7 +418,7 @@ void DrawHud (CControl *ctrl) {
     SetupGuiDisplay ();
 
     draw_gauge (speed * 3.6, ctrl->jump_amt);
-	set_gl_options (TEXFONT);
+	ScopedRenderMode rm(TEXFONT);
 	glColor4f (1, 1, 1, 1);
     draw_time();
     draw_herring_count (g_game.herring);

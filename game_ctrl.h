@@ -70,8 +70,8 @@ public:
 	size_t GetRaceIdx (const string& race) const;
 	size_t GetCupIdx (const string& cup) const;
 	size_t GetEventIdx (const string& event) const;
-	string GetCup (size_t event, size_t cup) const;
-	string GetCupTrivialName (size_t event, size_t cup) const;
+	const string& GetCup (size_t event, size_t cup) const;
+	const string& GetCupTrivialName (size_t event, size_t cup) const;
 
 	void MakeUnlockList (const string& unlockstr);
 	bool IsUnlocked (size_t event, size_t cup) const;
@@ -154,7 +154,7 @@ public:
 	void Draw (size_t idx);
 	CCharShape *GetShape (size_t idx);
 	void LoadCharacterList ();
- 	void FreeCharacterPreviews ();
+	void FreeCharacterPreviews ();
 
 	CKeyframe *GetKeyframe (size_t idx, TFrameType type);
 };

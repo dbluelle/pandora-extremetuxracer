@@ -111,7 +111,7 @@ void TGuiParticle::Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const 
 
 	ETR_DOUBLE dist_from_push = (pow((pt.x - push_position.x), 2) +
 			pow((pt.y - push_position.y), 2));
-	if  (push_timestep > 0) {
+	if (push_timestep > 0) {
 	    f.x = PUSH_FACTOR * push_vector.x / push_timestep;
 		f.y = PUSH_FACTOR * push_vector.y / push_timestep;
 		f.x = MIN (MAX_PUSH_FORCE, f.x);
@@ -130,7 +130,7 @@ void TGuiParticle::Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const 
 	pt.x += vel.x * time_step *  (size / PARTICLE_SIZE_RANGE);
 	pt.y += vel.y * time_step *  (size / PARTICLE_SIZE_RANGE);
 
-	if  (pt.x < 0) {
+	if (pt.x < 0) {
 		pt.x = 1;
 	} else if (pt.x > 1) {
 		pt.x = 0.0;
@@ -151,7 +151,7 @@ void update_ui_snow (ETR_DOUBLE time_step) {
     push_vector.y = 0;
     ETR_DOUBLE push_timestep = 0;
 
-    if  (push_position_initialized) {
+    if (push_position_initialized) {
 		push_vector.x = push_position.x - last_push_position.x;
 		push_vector.y = push_position.y - last_push_position.y;
 		push_timestep = time - last_update_time;
@@ -169,7 +169,7 @@ void update_ui_snow (ETR_DOUBLE time_step) {
 
     for (list<TGuiParticle>::iterator p = particles_2d.begin(); p != particles_2d.end();) {
 		if (p->pt.y < -0.05) {
-			if  (particles_2d.size() > BASE_num_snowparticles && frand() > 0.2) {
+			if (particles_2d.size() > BASE_num_snowparticles && frand() > 0.2) {
 				p = particles_2d.erase(p);
 			} else {
 				p->pt.x = frand();
@@ -184,7 +184,7 @@ void update_ui_snow (ETR_DOUBLE time_step) {
 			++p;
     }
 
-    if  (time_step < PUSH_DECAY_TIME_CONSTANT) {
+    if (time_step < PUSH_DECAY_TIME_CONSTANT) {
 		push_vector.x *= 1.0 - time_step/PUSH_DECAY_TIME_CONSTANT;
 		push_vector.y *= 1.0 - time_step/PUSH_DECAY_TIME_CONSTANT;
     } else {
@@ -193,8 +193,8 @@ void update_ui_snow (ETR_DOUBLE time_step) {
     }
 }
 void draw_ui_snow () {
-    ETR_DOUBLE xres = param.x_resolution;
-    ETR_DOUBLE yres = param.y_resolution;
+    ETR_DOUBLE xres = Winsys.resolution.width;
+    ETR_DOUBLE yres = Winsys.resolution.height;
 
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	Tex.BindTex (SNOW_PART);
@@ -206,8 +206,8 @@ void draw_ui_snow () {
 }
 
 void push_ui_snow (const TVector2& pos) {
-    push_position = TVector2(pos.x/(ETR_DOUBLE)param.x_resolution, pos.y/(ETR_DOUBLE)param.y_resolution);
-    if  (!push_position_initialized) last_push_position = push_position;
+    push_position = TVector2(pos.x/(ETR_DOUBLE)Winsys.resolution.width, 1.0 - pos.y/(ETR_DOUBLE)Winsys.resolution.height);
+    if (!push_position_initialized) last_push_position = push_position;
     push_position_initialized = true;
 }
 
@@ -255,7 +255,7 @@ static list<Particle> particles;
 
 void Particle::Draw(CControl* ctrl) const {
 	TVector2 min_tex_coord, max_tex_coord;
-	if  (type == 0 || type == 1) {
+	if (type == 0 || type == 1) {
 		min_tex_coord.y = 0;
 		max_tex_coord.y = 0.5;
 	} else {
@@ -263,7 +263,7 @@ void Particle::Draw(CControl* ctrl) const {
 		max_tex_coord.y = 1.0;
 	}
 
-	if  (type == 0 || type == 3) {
+	if (type == 0 || type == 3) {
 		min_tex_coord.x = 0;
 		max_tex_coord.x = 0.5;
 	} else {
@@ -271,7 +271,7 @@ void Particle::Draw(CControl* ctrl) const {
 		max_tex_coord.x = 1.0;
 	}
 
-	TColor particle_colour = Env.ParticleColor ();
+	const TColor& particle_colour = Env.ParticleColor ();
 	glColor4f (particle_colour.r,
 			particle_colour.g,
 			particle_colour.b,
@@ -290,7 +290,7 @@ void Particle::draw_billboard (CControl *ctrl, ETR_DOUBLE width, ETR_DOUBLE heig
     x_vec.y = ctrl->view_mat[0][1];
     x_vec.z = ctrl->view_mat[0][2];
 
-    if  (use_world_y_axis) {
+    if (use_world_y_axis) {
 		y_vec = TVector3(0, 1, 0);
 		x_vec = ProjectToPlane (y_vec, x_vec);
 		NormVector (x_vec);
@@ -325,10 +325,10 @@ void Particle::draw_billboard (CControl *ctrl, ETR_DOUBLE width, ETR_DOUBLE heig
     glEnd ();
 }
 
-void create_new_particles (const TVector3& loc, TVector3 vel, int num)  {
+void create_new_particles (const TVector3& loc, TVector3 vel, int num) {
     ETR_DOUBLE speed = NormVector (vel);
 
-    if  (particles.size() + num > MAX_PARTICLES) {
+    if (particles.size() + num > MAX_PARTICLES) {
 		Message ("maximum number of particles exceeded", "");
     }
     for (int i=0; i<num; i++) {
@@ -352,7 +352,7 @@ void create_new_particles (const TVector3& loc, TVector3 vel, int num)  {
 void update_particles (ETR_DOUBLE time_step) {
 	for(list<Particle>::iterator p = particles.begin(); p != particles.end();) {
 		p->age += time_step;
-        if  (p->age < 0) {
+        if (p->age < 0) {
 			++p;
 			continue;
 		}
@@ -372,14 +372,14 @@ void update_particles (ETR_DOUBLE time_step) {
 	}
 }
 void draw_particles (CControl *ctrl) {
-    set_gl_options (PARTICLES);
+    ScopedRenderMode rm(PARTICLES);
 	Tex.BindTex (SNOW_PART);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glColor4f(part_col[0], part_col[1], part_col[2], part_col[3]);
 	part_col[3] = 0.8;    // !!!!!!!!!
 
 	for(list<Particle>::const_iterator p = particles.begin(); p != particles.end(); ++p) {
-        if  (p->age >= 0)
+        if (p->age >= 0)
 			p->Draw(ctrl);
     }
 }
@@ -388,14 +388,13 @@ void clear_particles() {
 }
 
 ETR_DOUBLE adjust_particle_count (ETR_DOUBLE particles) {
-    if  (particles < 1) {
+    if (particles < 1) {
 		if (((ETR_DOUBLE) rand()) / RAND_MAX < particles) return 1.0;
 		else return 0.0;
     } else return particles;
 }
 
 void generate_particles (CControl *ctrl, ETR_DOUBLE dtime, const TVector3& pos, ETR_DOUBLE speed) {
-    TVector3 left_part_pt, right_part_pt;
     ETR_DOUBLE brake_particles;
     ETR_DOUBLE turn_particles;
     ETR_DOUBLE roll_particles;
@@ -407,9 +406,10 @@ void generate_particles (CControl *ctrl, ETR_DOUBLE dtime, const TVector3& pos, 
     surf_y = Course.FindYCoord (pos.x, pos.z);
 
 	int id = Course.GetTerrainIdx (pos.x, pos.z, 0.5);
-	if (id >= 0 && TerrList[id].particles > 0 && pos.y < surf_y) {
+	if (id >= 0 && TerrList[id].particles && pos.y < surf_y) {
 		TVector3 xvec = CrossProduct (ctrl->cdirection, ctrl->plane_nml);
-        right_part_pt = left_part_pt = pos;
+        TVector3 right_part_pt = pos;
+		TVector3 left_part_pt = pos;
 
 		right_part_pt = AddVectors (
 		    right_part_pt,
@@ -526,10 +526,10 @@ void TFlakeArea::Draw (CControl *ctrl) const {
 	TPlane rp = get_right_clip_plane ();
 	float dir_angle (atan (ctrl->viewdir.x / ctrl->viewdir.z) * 180 / 3.14159);
 
-	set_gl_options (PARTICLES);
+	ScopedRenderMode rm(PARTICLES);
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	Tex.BindTex (T_WIDGETS);
-	TColor particle_colour = Env.ParticleColor ();
+	const TColor& particle_colour = Env.ParticleColor ();
     glColor4f (particle_colour.r, particle_colour.g, particle_colour.b, particle_colour.a);
 	for (size_t i=0; i < flakes.size(); i++) {
 		flakes[i].Draw(lp, rp, rotate_flake, dir_angle);
@@ -542,7 +542,7 @@ void TFlakeArea::Update(float timestep, float xcoeff, float ycoeff, float zcoeff
 		flakes[i].pt.y += flakes[i].vel.y * timestep + ycoeff;
 		flakes[i].pt.z += zcoeff;
 
- 		if (flakes[i].pt.y < bottom) {
+		if (flakes[i].pt.y < bottom) {
 			flakes[i].pt.y += yrange;
 		} else if (flakes[i].pt.x < left) {
 			flakes[i].pt.x += xrange;
@@ -586,7 +586,7 @@ void CFlakes::MakeSnowFlake (size_t ar, size_t i) {
 		areas[ar].flakes[i].tex_max = TVector2(0.125, 0.875);
     } else {
 		areas[ar].flakes[i].tex_min = TVector2(0.125, 0.75);
- 		areas[ar].flakes[i].tex_max = TVector2(0.25, 0.875);
+		areas[ar].flakes[i].tex_max = TVector2(0.25, 0.875);
     }
 }
 
@@ -709,7 +709,7 @@ struct TChange {
 TChange changes[NUM_CHANGES];
 
 void InitChanges () {
- 	for (int i=0; i<NUM_CHANGES; i++) {
+	for (int i=0; i<NUM_CHANGES; i++) {
 		changes[i].min = XRandom (-0.15, -0.05);
 		changes[i].max = XRandom (0.05, 0.15);
 		changes[i].curr = (changes[i].min + changes[i].max) / 2;
@@ -808,7 +808,7 @@ void TCurtain::Update(float timestep, const TVector3& drift, CControl* ctrl) {
 			float x, z;
 			CurtainVec (curt->angle, zdist, x, z);
 			curt->pt.x = ctrl->cpos.x + x;
-			curt->pt.z = ctrl->cpos.z + z ;
+			curt->pt.z = ctrl->cpos.z + z;
 			curt->pt.y = ctrl->cpos.y + curt->height;
 			if (curt->height < minheight - size) curt->height += numRows * size;
 		}
@@ -826,9 +826,9 @@ void TCurtain::CurtainVec (float angle, float zdist, float &x, float &z) {
 void CCurtain::Draw (CControl *ctrl) {
 	if (g_game.snow_id < 1) return;
 
-	set_gl_options (PARTICLES);
+	ScopedRenderMode rm(PARTICLES);
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	TColor particle_colour = Env.ParticleColor ();
+	const TColor& particle_colour = Env.ParticleColor ();
 	glColor4f (particle_colour.r, particle_colour.g, particle_colour.b, 1.0);
 
 	// glEnable (GL_NORMALIZE);

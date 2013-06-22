@@ -30,7 +30,6 @@ GNU General Public License for more details.
 
 CNewPlayer NewPlayer;
 
-static TVector2 cursor_pos(0, 0);
 static TUpDown* avatar;
 static TWidget* textbuttons[2];
 static TTextField* textfield;
@@ -46,8 +45,8 @@ void CNewPlayer::Keyb_spec (SDL_keysym sym, bool release) {
 
 	KeyGUI(sym.sym, sym.mod, release);
 	switch (sym.sym) {
-		case 27: State::manager.RequestEnterState (Regist); break;
-		case 13:
+		case SDLK_ESCAPE: State::manager.RequestEnterState (Regist); break;
+		case SDLK_RETURN:
 			if (textbuttons[0]->focussed()) State::manager.RequestEnterState (Regist);
 			else QuitAndAddPlayer ();
 			break;
@@ -69,13 +68,8 @@ void CNewPlayer::Mouse (int button, int state, int x, int y) {
 
 void CNewPlayer::Motion (int x, int y) {
 	MouseMoveGUI(x, y);
-	y = param.y_resolution - y;
 
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
-    if  (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 static int prevleft, prevtop, prevwidth, prevoffs;
@@ -86,13 +80,13 @@ void CNewPlayer::Enter() {
 	Music.Play (param.menu_music, -1);
 
 	g_game.loopdelay = 10;
-	int framewidth = 400 * param.scale;
-	int frameheight = 50 * param.scale;
+	int framewidth = 400 * Winsys.scale;
+	int frameheight = 50 * Winsys.scale;
 	int frametop = AutoYPosN (38);
 	TArea area = AutoAreaN (30, 80, framewidth);
 	prevleft = area.left;
 	prevtop = AutoYPosN (52);
-	prevwidth = 75 * param.scale;
+	prevwidth = 75 * Winsys.scale;
 	prevoffs = 80;
 
 	ResetGUI();
@@ -107,18 +101,20 @@ void CNewPlayer::Enter() {
 }
 
 void CNewPlayer::Loop(ETR_DOUBLE timestep) {
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
 	TColor col;
 
 	Music.Update ();
 	check_gl_error();
     ClearRenderContext ();
-    set_gl_options (GUI);
+    ScopedRenderMode rm(GUI);
     SetupGuiDisplay ();
 
-	update_ui_snow (timestep);
-	draw_ui_snow();
+	if (param.ui_snow) {
+		update_ui_snow (timestep);
+		draw_ui_snow();
+	}
 
 	textfield->UpdateCursor(timestep);
 
@@ -129,7 +125,7 @@ void CNewPlayer::Loop(ETR_DOUBLE timestep) {
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);
 	Tex.Draw (TOP_RIGHT, ww-256, 0, 1);
-	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), param.scale);
+	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), Winsys.scale);
 
 	FT.SetColor (colWhite);
 	FT.AutoSizeN (4);

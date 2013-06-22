@@ -68,14 +68,14 @@ void CRacing::Keyb (unsigned int key, bool special, bool release, int x, int y) 
 		case SDLK_HOME: trick_modifier = !release; break;		
 #endif
 		// steering flipflops
-		case 273: key_paddling = !release; break;
-		case 274: key_braking = !release; break;
-		case 276: left_turn = !release; break;
-		case 275: right_turn = !release; break;
-		case 32:  key_charging = !release; break;
+		case SDLK_UP: key_paddling = !release; break;
+		case SDLK_DOWN: key_braking = !release; break;
+		case SDLK_LEFT: left_turn = !release; break;
+		case SDLK_RIGHT: right_turn = !release; break;
+		case SDLK_SPACE: key_charging = !release; break;
 		case SDLK_t: trick_modifier = !release; break;
 		// mode changing and other actions
-		case 27:  if (!release) {
+		case SDLK_ESCAPE: if (!release) {
 			g_game.raceaborted = true;
 			g_game.race_result = -1;
 			State::manager.RequestEnterState (GameOver);
@@ -126,12 +126,12 @@ void CRacing::Jbutt (int button, int state) {
 	}
 }
 
-void CalcJumpEnergy (ETR_DOUBLE time_step){
+void CalcJumpEnergy (ETR_DOUBLE time_step) {
     CControl *ctrl = Players.GetCtrl (g_game.player_id);
 
-	if  (ctrl->jump_charging) {
+	if (ctrl->jump_charging) {
 		ctrl->jump_amt = min (MAX_JUMP_AMT, g_game.time - charge_start_time);
-	} else if  (ctrl->jumping) {
+	} else if (ctrl->jumping) {
 		ctrl->jump_amt *=  (1.0 - (g_game.time - ctrl->jump_start_time) /
 			JUMP_FORCE_DURATION);
 	} else {
@@ -207,7 +207,7 @@ void PlayTerrainSound (CControl *ctrl, bool airborne) {
 			newsound = (int)Sound.GetSoundIdx (tsound);
 		} else newsound = -1;
 	} else newsound = -1;
- 	if ((newsound != lastsound) && (lastsound >= 0)) Sound.Halt (lastsound);
+	if ((newsound != lastsound) && (lastsound >= 0)) Sound.Halt (lastsound);
 	if (newsound >= 0) Sound.Play (newsound, -1);
 
 	lastsound = newsound;
@@ -226,7 +226,7 @@ void CalcSteeringControls (CControl *ctrl, ETR_DOUBLE time_step) {
 		ctrl->turn_animation = min (1.0, max (-1.0, ctrl->turn_animation));
 	} else {
 		ctrl->turn_fact = 0.0;
-		if  (time_step < ROLL_DECAY) {
+		if (time_step < ROLL_DECAY) {
 	    	ctrl->turn_animation *= 1.0 - time_step / ROLL_DECAY;
 		} else {
 	    	ctrl->turn_animation = 0.0;
@@ -234,7 +234,7 @@ void CalcSteeringControls (CControl *ctrl, ETR_DOUBLE time_step) {
 	}
 
 	bool paddling = key_paddling || stick_paddling;
-    if  (paddling && ctrl->is_paddling == false) {
+    if (paddling && ctrl->is_paddling == false) {
 		ctrl->is_paddling = true;
 		ctrl->paddle_time = g_game.time;
     }
@@ -267,7 +267,7 @@ void CalcFinishControls (CControl *ctrl, ETR_DOUBLE timestep, bool airborne) {
 		ctrl->turn_animation += ctrl->turn_fact * 2 * timestep;
 	} else {
 		ctrl->turn_fact = 0;
-		if  (timestep < ROLL_DECAY) {
+		if (timestep < ROLL_DECAY) {
 	    	ctrl->turn_animation *= 1.0 - timestep / ROLL_DECAY;
 		} else ctrl->turn_animation = 0.0;
 	}
@@ -283,16 +283,16 @@ void CalcTrickControls (CControl *ctrl, ETR_DOUBLE time_step, bool airborne) {
 		if (ctrl->is_braking) ctrl->back_flip = true;
 	}
 
-	if (ctrl->roll_left || ctrl->roll_right ) {
-		ctrl->roll_factor += (ctrl->roll_left ? -1 : 1 ) * 0.15 * time_step / 0.05;
+	if (ctrl->roll_left || ctrl->roll_right) {
+		ctrl->roll_factor += (ctrl->roll_left ? -1 : 1) * 0.15 * time_step / 0.05;
 		if (ctrl->roll_factor  > 1 || ctrl->roll_factor < -1) {
 			ctrl->roll_factor = 0;
 			ctrl->roll_left = ctrl->roll_right = false;
 		}
     }
 	if (ctrl->front_flip || ctrl->back_flip) {
-		ctrl->flip_factor += (ctrl->back_flip ? -1 : 1 ) * 0.15 * time_step / 0.05;
-		if (ctrl->flip_factor > 1 || ctrl->flip_factor < -1 ) {
+		ctrl->flip_factor += (ctrl->back_flip ? -1 : 1) * 0.15 * time_step / 0.05;
+		if (ctrl->flip_factor > 1 || ctrl->flip_factor < -1) {
 			ctrl->flip_factor = 0;
 			ctrl->front_flip = ctrl->back_flip = false;
 		}
@@ -303,7 +303,7 @@ void CalcTrickControls (CControl *ctrl, ETR_DOUBLE time_step, bool airborne) {
 //					loop
 // ====================================================================
 
-void CRacing::Loop (ETR_DOUBLE time_step){
+void CRacing::Loop (ETR_DOUBLE time_step) {
     CControl *ctrl = Players.GetCtrl (g_game.player_id);
 	ETR_DOUBLE ycoord = Course.FindYCoord (ctrl->cpos.x, ctrl->cpos.z);
 	bool airborne = (bool) (ctrl->cpos.y > (ycoord + JUMP_MAX_START_HEIGHT));
@@ -343,7 +343,7 @@ void CRacing::Loop (ETR_DOUBLE time_step){
 	DrawSnow (ctrl);
 	DrawHud (ctrl);
 
-	Reshape (param.x_resolution, param.y_resolution);
+	Reshape (Winsys.resolution.width, Winsys.resolution.height);
     Winsys.SwapBuffers ();
 	if (g_game.finish == false) g_game.time += time_step;
 }

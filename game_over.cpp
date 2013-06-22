@@ -50,7 +50,7 @@ void QuitGameOver () {
 
 void CGameOver::Keyb (unsigned int key, bool special, bool release, int x, int y) {
 	if (release) return;
-	if (key == 13 || key == 27) QuitGameOver ();
+	if (key == 13 || key == SDLK_ESCAPE) QuitGameOver ();
 }
 
 void CGameOver::Mouse (int button, int state, int x, int y) {
@@ -60,27 +60,27 @@ void CGameOver::Mouse (int button, int state, int x, int y) {
 void DrawMessageFrame (float x, float y, float w, float h, int line,
 		TColor backcol, TColor framecol, float transp) {
 
-	float yy = param.y_resolution - y - h;
-	if (x < 0) 	x = (param.x_resolution - w) / 2;
+	float yy = Winsys.resolution.height - y - h;
+	if (x < 0) 	x = (Winsys.resolution.width - w) / 2;
 
 	glPushMatrix();
 	glDisable (GL_TEXTURE_2D);
 
 	glColor4f (framecol.r, framecol.g, framecol.b, transp);
 	glTranslatef (x, yy, 0);
-	glBegin (GL_QUADS );
-	    glVertex2f (0, 0 );
-	    glVertex2f (w, 0 );
-	    glVertex2f (w, h );
-	    glVertex2f (0, h );
+	glBegin (GL_QUADS);
+	    glVertex2f (0, 0);
+	    glVertex2f (w, 0);
+	    glVertex2f (w, h);
+	    glVertex2f (0, h);
 	glEnd();
 
 	glColor4f (backcol.r, backcol.g, backcol.b, transp);
-	glBegin (GL_QUADS );
-	    glVertex2f (0 + line, 0 + line );
-	    glVertex2f (w - line, 0 + line );
-	    glVertex2f (w - line, h - line );
-	    glVertex2f (0 + line, h - line );
+	glBegin (GL_QUADS);
+	    glVertex2f (0 + line, 0 + line);
+	    glVertex2f (w - line, 0 + line);
+	    glVertex2f (w - line, h - line);
+	    glVertex2f (0 + line, h - line);
 	glEnd();
 
 	glEnable (GL_TEXTURE_2D);
@@ -91,7 +91,7 @@ void DrawMessageFrame (float x, float y, float w, float h, int line,
 void GameOverMessage (CControl *ctrl) {
 	int fwidth = 500;
 
-	float leftframe = (param.x_resolution - fwidth) / 2;
+	float leftframe = (Winsys.resolution.width - fwidth) / 2;
 	float topframe = 80;
 
 	const TColor& backcol = colWhite;
@@ -210,8 +210,8 @@ void CGameOver::Enter() {
 void CGameOver::Loop(ETR_DOUBLE time_step) {
     CControl *ctrl = Players.GetCtrl (g_game.player_id);
     int width, height;
-    width = param.x_resolution;
-    height = param.y_resolution;
+    width = Winsys.resolution.width;
+    height = Winsys.resolution.height;
     check_gl_error();
 
 	Music.Update ();
@@ -238,7 +238,7 @@ void CGameOver::Loop(ETR_DOUBLE time_step) {
 
 	Char.Draw (g_game.char_id);
 
-    set_gl_options (GUI);
+    ScopedRenderMode rm(GUI);
 	SetupGuiDisplay ();
 	if (final_frame != NULL) {
 		if (!final_frame->active) GameOverMessage (ctrl);

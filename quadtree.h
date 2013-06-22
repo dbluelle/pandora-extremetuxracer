@@ -131,7 +131,7 @@ private:
 	void	SetStatic (const quadcornerdata &cd);
 	void	InitVert(int i, int x, int z);
     bool	VertexTest(int x, float y, int z, float error, const float Viewer[3],
-			int level, vertex_loc_t vertex_loc );
+			int level, vertex_loc_t vertex_loc);
 	bool	BoxTest(int x, int z, float size, float miny, float maxy,
 			float error, const float Viewer[3]);
 };
@@ -143,9 +143,9 @@ private:
 void ResetQuadtree();
 void InitQuadtree (ETR_DOUBLE *elevation, int nx, int nz,
 			   ETR_DOUBLE scalex, ETR_DOUBLE scalez,
-			   const TVector3& view_pos, ETR_DOUBLE detail );
+			   const TVector3& view_pos, ETR_DOUBLE detail);
 
-void UpdateQuadtree (const TVector3& view_pos, float detail );
+void UpdateQuadtree (const TVector3& view_pos, float detail);
 void RenderQuadtree();
 
 

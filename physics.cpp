@@ -96,14 +96,7 @@ void CControl::Init () {
 //					collision
 // --------------------------------------------------------------------
 
-bool CControl::CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR_DOUBLE *tree_diam){
-	CCharShape *shape = Char.GetShape (g_game.char_id);
-    ETR_DOUBLE diam = 0.0;
-    ETR_DOUBLE height;
-    TVector3 loc(0, 0, 0);
-    bool hit = false;
-	TMatrix mat;
-
+bool CControl::CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR_DOUBLE *tree_diam) {
     // These variables are used to cache collision detection results
     static bool last_collision = false;
     static TVector3 last_collision_tree_loc(-999, -999, -999);
@@ -118,6 +111,13 @@ bool CControl::CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR
 		    return true;
 		} else return false;
     }
+
+	CCharShape *shape = Char.GetShape (g_game.char_id);
+    ETR_DOUBLE diam = 0.0;
+    ETR_DOUBLE height;
+    TVector3 loc(0, 0, 0);
+    bool hit = false;
+	TMatrix mat;
 
 	TCollidable *trees = &Course.CollArr[0];
     size_t num_trees = Course.CollArr.size();
@@ -136,7 +136,7 @@ bool CControl::CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR
         if (MAG_SQD(distvec) > squared_dist) continue;
 
 		// have to look at polyhedron - switch to correct one if necessary
-		if (tree_type != trees[i].tree_type)  {
+		if (tree_type != trees[i].tree_type) {
 	    	tree_type = trees[i].tree_type;
 	    	ph = Course.GetPoly (tree_type);
 		}
@@ -150,7 +150,7 @@ bool CControl::CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR
 		hit = shape->Collision (pos, ph2);
         FreePolyhedron (ph2);
 
-        if  (hit == true) {
+        if (hit == true) {
 	    	if (tree_loc != NULL) *tree_loc = loc;
 	    	if (tree_diam != NULL) *tree_diam = diam;
 			Sound.Play ("tree_hit", 0);
@@ -166,15 +166,14 @@ bool CControl::CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR
     else last_collision = false;
     return hit;
 }
-void CControl::AdjustTreeCollision (const TVector3& pos, TVector3 *vel){
-    TVector3 treeNml;
+void CControl::AdjustTreeCollision (const TVector3& pos, TVector3 *vel) {
     TVector3 treeLoc;
     ETR_DOUBLE tree_diam;
 	ETR_DOUBLE factor;
 
 	if (CheckTreeCollisions (pos, &treeLoc, &tree_diam)) {
+		TVector3 treeNml;
         treeNml.x = pos.x - treeLoc.x;
-        treeNml.y = 0;
         treeNml.z = pos.z - treeLoc.z;
         NormVector (treeNml);
 
@@ -188,7 +187,7 @@ void CControl::AdjustTreeCollision (const TVector3& pos, TVector3 *vel){
 				//ScaleVector (-2 * DotProduct (*vel, treeNml), treeNml), *vel);
 				ScaleVector (-factor * costheta, treeNml), *vel);
 		    NormVector (*vel);
-   	    }
+	    }
 		speed = max (speed, minSpeed);
         *vel = ScaleVector (speed, *vel);
     }
@@ -214,7 +213,7 @@ void CControl::CheckItemCollection (const TVector3& pos) {
 		squared_dist *= squared_dist;
 		if (MAG_SQD (distvec) > squared_dist) continue;
 
-		if  ((pos.y - 0.6 >= loc.y && pos.y - 0.6 <= loc.y + height) ||
+		if ((pos.y - 0.6 >= loc.y && pos.y - 0.6 <= loc.y + height) ||
 			(pos.y + 0.6 >= loc.y && pos.y + 0.6 <= loc.y + height) ||
 			(pos.y - 0.6 <= loc.y && pos.y + 0.6 >= loc.y + height)) {
 			items[i].collectable = 0;
@@ -245,7 +244,7 @@ void CControl::AdjustVelocity (const TPlane& surf_plane) {
 }
 
 void CControl::AdjustPosition (const TPlane& surf_plane, ETR_DOUBLE dist_from_surface) {
-    if  (dist_from_surface < -MAX_SURF_PEN) {
+    if (dist_from_surface < -MAX_SURF_PEN) {
 		ETR_DOUBLE displace = -MAX_SURF_PEN - dist_from_surface;
 		cpos = AddVectors (cpos, ScaleVector (displace, surf_plane.nml));
     }
@@ -327,19 +326,18 @@ TVector3 CControl::CalcSpringForce () {
 }
 
 TVector3 CControl::CalcNormalForce () {
-    TVector3 nmlforce(0, 0, 0);
 	if (ff.surfdistance <= -ff.comp_depth) {
 		ff.compression = -ff.surfdistance - ff.comp_depth;
-		nmlforce = CalcSpringForce ();
+		return CalcSpringForce ();
     }
-	return nmlforce;
+	return TVector3(0, 0, 0);
 }
 
 TVector3 CControl::CalcJumpForce () {
 	TVector3 jumpforce;
 	if (begin_jump == true) {
 		begin_jump = false;
-		if  (cairborne == false) {
+		if (cairborne == false) {
 			jumping = true;
 		    jump_start_time = g_game.time;
 		} else jumping = false;
@@ -356,7 +354,6 @@ TVector3 CControl::CalcJumpForce () {
 }
 
 TVector3 CControl::CalcFrictionForce (ETR_DOUBLE speed, const TVector3& nmlforce) {
-	TVector3 frictforce;
 	ETR_DOUBLE fric_f_mag;
 	TMatrix fric_rot_mat;
 	ETR_DOUBLE steer_angle;
@@ -365,46 +362,46 @@ TVector3 CControl::CalcFrictionForce (ETR_DOUBLE speed, const TVector3& nmlforce
 		TVector3 tmp_nml_f = nmlforce;
 		fric_f_mag = NormVector (tmp_nml_f) * ff.frict_coeff;
 		fric_f_mag = MIN (MAX_FRICT_FORCE, fric_f_mag);
-		frictforce = ScaleVector (fric_f_mag, ff.frictdir);
+		TVector3 frictforce = ScaleVector (fric_f_mag, ff.frictdir);
 
 		steer_angle = turn_fact * MAX_TURN_ANGLE;
 
-		if  (fabs (fric_f_mag * sin (steer_angle * M_PI / 180)) > MAX_TURN_PERP) {
+		if (fabs (fric_f_mag * sin (steer_angle * M_PI / 180)) > MAX_TURN_PERP) {
 	    	steer_angle = RADIANS_TO_ANGLES (asin (MAX_TURN_PERP / fric_f_mag)) *
 					turn_fact / fabs (turn_fact);
 		}
 		RotateAboutVectorMatrix (fric_rot_mat, ff.surfnml, steer_angle);
 		frictforce = TransformVector (fric_rot_mat, frictforce);
-		frictforce = ScaleVector (1.0 + MAX_TURN_PEN, frictforce);
 
-    } else frictforce =  TVector3 (0, 0, 0);
-	return frictforce;
+		return ScaleVector (1.0 + MAX_TURN_PEN, frictforce);
+    }
+	return TVector3 (0, 0, 0);
 }
 
 TVector3 CControl::CalcBrakeForce (ETR_DOUBLE speed) {
-	TVector3 brakeforce;
 	if (g_game.finish == false) {
 		if (cairborne == false && speed > minFrictspeed) {
 			if (speed > minSpeed && is_braking) {
-				brakeforce = ScaleVector (ff.frict_coeff * BRAKE_FORCE, ff.frictdir);
-			} else brakeforce = TVector3 (0, 0, 0);
-		} else brakeforce = TVector3 (0, 0, 0);
+				return ScaleVector (ff.frict_coeff * BRAKE_FORCE, ff.frictdir);
+			}
+		}
+		return TVector3(0, 0, 0);
 
 	} else {
 /// ------------------- finish --------------------------------
 		if (cairborne == false) {
 			is_braking = true;
-			brakeforce = ScaleVector (finish_speed * g_game.finish_brake, ff.frictdir);
+			return ScaleVector (finish_speed * g_game.finish_brake, ff.frictdir);
 		} else {
-			brakeforce = ScaleVector (finish_speed * FIN_AIR_BRAKE, ff.frictdir);
+			return ScaleVector (finish_speed * FIN_AIR_BRAKE, ff.frictdir);
 		}
 /// -----------------------------------------------------------
 	}
-	return brakeforce;
+	return TVector3(0, 0, 0);
 }
 
 TVector3 CControl::CalcPaddleForce (ETR_DOUBLE speed) {
-	TVector3 paddleforce;
+	TVector3 paddleforce(0, 0, 0);
     if (is_paddling)
 		if (g_game.time - paddle_time >= PADDLING_DURATION) is_paddling = false;
 
@@ -417,21 +414,19 @@ TVector3 CControl::CalcPaddleForce (ETR_DOUBLE speed) {
 				* (MAX_PADDLING_SPEED - speed) / MAX_PADDLING_SPEED
 				* min(1.0, ff.frict_coeff / IDEAL_PADD_FRIC)), ff.frictdir);
 		}
-    } else paddleforce = TVector3 (0, 0, 0);
+    } else return paddleforce;
 	return ScaleVector (PADDLE_FACT, paddleforce);
 }
 
 TVector3 CControl::CalcGravitationForce () {
-	TVector3 gravforce;
 	if (g_game.finish == false) {
-		gravforce = TVector3 (0, -EARTH_GRAV * TUX_MASS, 0);
+		return TVector3 (0, -EARTH_GRAV * TUX_MASS, 0);
 	} else {
 /// ---------------- finish -----------------------------------
-		if (cairborne) gravforce = TVector3 (0, -FIN_AIR_GRAV, 0);
-		else gravforce = TVector3 (0, -FIN_GRAV, 0);
+		if (cairborne) return TVector3 (0, -FIN_AIR_GRAV, 0);
+		else return TVector3 (0, -FIN_GRAV, 0);
 /// -----------------------------------------------------------
 	}
-	return gravforce;
 }
 
 TVector3 CControl::CalcNetForce (const TVector3& pos, const TVector3& vel) {
@@ -497,7 +492,7 @@ void CControl::SolveOdeSystem (ETR_DOUBLE timestep) {
     ETR_DOUBLE pos_err[3], vel_err[3], tot_pos_err, tot_vel_err;
     ETR_DOUBLE err=0, tol=0;
 
- 	TOdeSolver solver = NewOdeSolver23 ();
+	TOdeSolver solver = NewOdeSolver23 ();
     ETR_DOUBLE h = ode_time_step;
     if (h < 0 || solver.EstimateError == NULL)
 		h = AdjustTimeStep (timestep, cvel);
@@ -517,11 +512,11 @@ void CControl::SolveOdeSystem (ETR_DOUBLE timestep) {
 
     bool done = false;
     while (!done) {
-		if  (t >= tfinal) {
-	   		Message ("t >= tfinal in ode_system()", "");
+		if (t >= tfinal) {
+			Message ("t >= tfinal in ode_system()", "");
 		    break;
 		}
-		if  (1.1 * h > tfinal - t) {
+		if (1.1 * h > tfinal - t) {
 	    	h = tfinal-t;
 		    done = true;
 		}
@@ -584,7 +579,7 @@ void CControl::SolveOdeSystem (ETR_DOUBLE timestep) {
 				tot_pos_err = 0.;
 				tot_vel_err = 0.;
 
-				for  (int i=0; i<3; i++) {
+				for (int i=0; i<3; i++) {
 				    pos_err[i] *= pos_err[i];
 				    tot_pos_err += pos_err[i];
 				    vel_err[i] *= vel_err[i];
@@ -592,7 +587,7 @@ void CControl::SolveOdeSystem (ETR_DOUBLE timestep) {
 				}
 				tot_pos_err = sqrt (tot_pos_err);
 				tot_vel_err = sqrt (tot_vel_err);
-				if  (tot_pos_err / MAX_POS_ERR > tot_vel_err / MAX_VEL_ERR) {
+				if (tot_pos_err / MAX_POS_ERR > tot_vel_err / MAX_VEL_ERR) {
 			    	err = tot_pos_err;
 				    tol = MAX_POS_ERR;
 				} else {
@@ -602,7 +597,7 @@ void CControl::SolveOdeSystem (ETR_DOUBLE timestep) {
 
 				if (err > tol  && h > MIN_TIME_STEP + EPS) {
 				    done = false;
-				    if  (!failed) {
+				    if (!failed) {
 						failed = true;
 						h *=  max (0.5, 0.8 * pow (tol/err, solver.TimestepExponent()));
 				    } else h *= 0.5;
@@ -622,7 +617,7 @@ void CControl::SolveOdeSystem (ETR_DOUBLE timestep) {
 
 		new_f = CalcNetForce (new_pos, new_vel);
 
-		if  (!failed && solver.EstimateError != NULL) {
+		if (!failed && solver.EstimateError != NULL) {
 	    	ETR_DOUBLE temp = 1.25 * pow (err / tol, solver.TimestepExponent());
 		    if (temp > 0.2) h = h / temp;
 		    else h = 5.0 * h;
@@ -688,7 +683,7 @@ void CControl::UpdatePlayerPos (ETR_DOUBLE timestep) {
     if (is_paddling) {
 		ETR_DOUBLE factor;
 		factor = (g_game.time - paddle_time) / PADDLING_DURATION;
-		if  (cairborne) {
+		if (cairborne) {
 		    paddling_factor = 0;
 		    flap_factor = factor;
 		} else {

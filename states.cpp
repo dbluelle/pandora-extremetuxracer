@@ -76,9 +76,13 @@ void State::Manager::PollEvent() {
 					current->Mouse(event.button.button, event.button.state, event.button.x, event.button.y);
 					break;
 
-				case SDL_MOUSEMOTION:
-					current->Motion(event.motion.x, event.motion.y);
+				case SDL_MOUSEMOTION: {
+					TVector2 old = cursor_pos;
+					cursor_pos.x = event.motion.x;
+					cursor_pos.y = event.motion.y;
+					current->Motion(event.motion.x-old.x, event.motion.y-old.y);
 					break;
+				}
 
 				case SDL_JOYAXISMOTION:
 					if (Winsys.joystick_isActive()) {
@@ -97,9 +101,9 @@ void State::Manager::PollEvent() {
 					break;
 
 				case SDL_VIDEORESIZE:
-					if(param.x_resolution != event.resize.w || param.y_resolution != event.resize.h) {
-						param.x_resolution = event.resize.w;
-						param.y_resolution = event.resize.h;
+					if(Winsys.resolution.width != event.resize.w || Winsys.resolution.height != event.resize.h) {
+						Winsys.resolution.width = event.resize.w;
+						Winsys.resolution.height = event.resize.h;
 						Winsys.SetupVideoMode (param.res_type);
 						Reshape(event.resize.w, event.resize.h);
 					}

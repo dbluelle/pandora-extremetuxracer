@@ -33,7 +33,6 @@ GNU General Public License for more details.
 
 CGameTypeSelect GameTypeSelect;
 
-static TVector2 cursor_pos(0, 0);
 static TTextButton* textbuttons[7];
 
 void EnterPractice () {
@@ -71,23 +70,18 @@ void CGameTypeSelect::Keyb (unsigned int key, bool special, bool release, int x,
 	KeyGUI(key, 0, release);
 	switch (key) {
 		case SDLK_u: param.ui_snow = !param.ui_snow; break;
-		case 27: State::manager.RequestQuit(); break;
-		case 274: IncreaseFocus(); break;
-		case 273: DecreaseFocus(); break;
-		case 13: QuitGameType(); break;
+		case SDLK_ESCAPE: State::manager.RequestQuit(); break;
+		case SDLK_DOWN: IncreaseFocus(); break;
+		case SDLK_UP: DecreaseFocus(); break;
+		case SDLK_RETURN: QuitGameType(); break;
 		case SDLK_w: Music.FreeMusics(); break;
 	}
 }
 
 void CGameTypeSelect::Motion (int x, int y) {
 	MouseMoveGUI(x, y);
-	y = param.y_resolution - y;
-	TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2 (x, y);
 
-    if  (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 // ====================================================================
@@ -116,12 +110,12 @@ void CGameTypeSelect::Enter () {
 }
 
 void CGameTypeSelect::Loop (ETR_DOUBLE time_step) {
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
-
-	check_gl_error();
-	Music.Update ();
-    set_gl_options (GUI);
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
+ 
+ 	check_gl_error();
+ 	Music.Update ();
+    ScopedRenderMode rm(GUI);
     ClearRenderContext ();
     SetupGuiDisplay ();
 
@@ -130,7 +124,7 @@ void CGameTypeSelect::Loop (ETR_DOUBLE time_step) {
 		draw_ui_snow();
     }
 
-	Tex.Draw (T_TITLE, CENTER, AutoYPosN (5), param.scale);
+	Tex.Draw (T_TITLE, CENTER, AutoYPosN (5), Winsys.scale);
 	Tex.Draw (BOTTOM_LEFT, 0, hh-256, 1);
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);

@@ -50,7 +50,6 @@ Then edit the below functions:
 #include "winsys.h"
 
 CGameConfig GameConfig;
-static TVector2 cursor_pos(0, 0);
 static string res_names[NUM_RESOLUTIONS];
 
 static TLang *LangList;
@@ -76,7 +75,7 @@ void RestartSDL () {
 
 	// second restore the freed resources
 	Winsys.Init ();					// includes SetVideoMode
- 	Audio.Open ();					// clear, it has been closed before
+	Audio.Open ();					// clear, it has been closed before
 	Sound.LoadSoundList ();			// all sounds must loaded again
 	Music.LoadMusicList (); 		// same with music pieces
 	Tex.LoadTextureList ();			// common textures
@@ -145,8 +144,8 @@ void CGameConfig::Keyb (unsigned int key, bool special, bool release, int x, int
 		KeyGUI(key, 0, release);
 	switch (key) {
 		case SDLK_q: State::manager.RequestQuit(); break;
-		case 27: State::manager.RequestEnterState (*State::manager.PreviousState()); break;
-		case 13:
+		case SDLK_ESCAPE: State::manager.RequestEnterState (*State::manager.PreviousState()); break;
+		case SDLK_RETURN:
 			if(textbuttons[0]->focussed())
 				State::manager.RequestEnterState (*State::manager.PreviousState());
 			else if(textbuttons[1]->focussed())
@@ -170,13 +169,8 @@ void CGameConfig::Mouse (int button, int state, int x, int y) {
 
 void CGameConfig::Motion (int x, int y) {
 	MouseMoveGUI(x, y);
-	y = param.y_resolution - y;
 
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
-    if  (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 // ------------------ Init --------------------------------------------
@@ -193,8 +187,8 @@ void CGameConfig::Enter() {
 
 	for (int i=0; i<NUM_RESOLUTIONS; i++) res_names[i] = Winsys.GetResName (i);
 
-	framewidth = 550 * param.scale;
-	frameheight = 50 * param.scale;
+	framewidth = 550 * Winsys.scale;
+	frameheight = 50 * Winsys.scale;
 	area = AutoAreaN (30, 80, framewidth);
 	FT.AutoSizeN (4);
 	dd = FT.AutoDistanceN (3);
@@ -222,14 +216,14 @@ void CGameConfig::Enter() {
 }
 
 void CGameConfig::Loop (ETR_DOUBLE time_step) {
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
 
 	Music.Update ();
 
 	check_gl_error();
 	Music.Update ();
-    set_gl_options (GUI);
+	ScopedRenderMode rm(GUI);
     ClearRenderContext ();
     SetupGuiDisplay ();
 

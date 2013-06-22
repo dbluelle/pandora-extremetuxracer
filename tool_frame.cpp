@@ -39,7 +39,7 @@ static bool lastframe = 0;
 static bool keyrun = false;
 
 void InitFrameTools () {
-	framebase = (int)((param.y_resolution - 350) / 18);
+	framebase = (int)((Winsys.resolution.height - 350) / 18);
 	if (TestFrame.numFrames() < 1) TestFrame.AddFrame ();
 	curr_joint = 0;
 	last_joint = TestFrame.GetNumJoints () -1;
@@ -59,9 +59,9 @@ void SingleFrameKeys (unsigned int key, bool special, bool release, int x, int y
 	else if (key == SDLK_F4) {GluCamera.farther = !release; return;}
 
 	// additional keys if needed
-	if (key == 304) shift = !release;
-	if (key == 306) control = !release;
-	if (key == 308) alt = !release;
+	if (key == SDLK_LSHIFT) shift = !release;
+	if (key == SDLK_LCTRL) control = !release;
+	if (key == SDLK_LALT) alt = !release;
 	if (shift) keyfact = -1; else keyfact = 1;
 
 	if (release) return;
@@ -75,7 +75,7 @@ void SingleFrameKeys (unsigned int key, bool special, bool release, int x, int y
 			} break;
 		case SDLK_n: if (ToolsFinalStage ()) State::manager.RequestQuit(); break;
 
-		case 27: case SDLK_q: QuitTool (); break;
+		case SDLK_ESCAPE: case SDLK_q: QuitTool (); break;
 		case SDLK_s: SaveToolFrame (); break;
 		case SDLK_TAB: SetToolMode (0); break;
 
@@ -83,11 +83,11 @@ void SingleFrameKeys (unsigned int key, bool special, bool release, int x, int y
 			TestFrame.AddFrame ();
 			SetFrameChanged (true);
 			break;
-		case 277:
+		case SDLK_INSERT:
 			TestFrame.InsertFrame (curr_frame);
 			SetFrameChanged (true);
 			break;
-		case 127:
+		case SDLK_DELETE:
 			curr_frame = TestFrame.DeleteFrame (curr_frame);
 			SetFrameChanged (true);
 			break;
@@ -109,13 +109,13 @@ void SingleFrameKeys (unsigned int key, bool special, bool release, int x, int y
 			frame->val[curr_joint] = 0.0;
 			SetFrameChanged (true);
 			break;
-		case 32:
+		case SDLK_SPACE:
 			if (curr_joint < 4) frame->val[curr_joint] += 0.05 * keyfact;
 			else frame->val[curr_joint] += 1 * keyfact;
 			SetFrameChanged (true);
 			break;
 
-		case 13:
+		case SDLK_RETURN:
 			TestFrame.InitTest (ref_position, &TestChar);
 			SetToolMode (2);
 			must_render = true;
@@ -183,14 +183,14 @@ void RenderSingleFrame (ETR_DOUBLE timestep) {
 	check_gl_error ();
 
 	// ------------------ 3d scenery ----------------------------------
-	set_gl_options (TUX);
+	ScopedRenderMode rm1(TUX);
     ClearRenderContext (colDDBackgr);
 
-	string hlname = TestFrame.GetHighlightName (curr_joint);
+	const string& hlname = TestFrame.GetHighlightName (curr_joint);
 	TestChar.highlight_node = TestChar.GetNodeName (hlname);
 
 	glPushMatrix ();
- 	SetToolLight ();
+	SetToolLight ();
 	GluCamera.Update (timestep);
 
 	TestFrame.CalcKeyframe (curr_frame, &TestChar, ref_position);
@@ -199,7 +199,7 @@ void RenderSingleFrame (ETR_DOUBLE timestep) {
 
 	// ----------------- 2d screen ------------------------------------
 	SetupGuiDisplay ();
-	set_gl_options (TEXFONT);
+	ScopedRenderMode rm2(TEXFONT);
 
 	if (FrameHasChanged ()) DrawChanged ();
 
@@ -226,15 +226,15 @@ void RenderSingleFrame (ETR_DOUBLE timestep) {
 
 	FT.SetFont ("normal");
 	FT.SetColor (colLGrey);
-	PrintFrameParams (param.y_resolution - 330, TestFrame.GetFrame (curr_frame));
+	PrintFrameParams (Winsys.resolution.height - 330, TestFrame.GetFrame (curr_frame));
 
 	if (ToolsFinalStage ()) {
 		FT.SetSize (20);
 		FT.SetColor (colYellow);
-		FT.DrawString (-1, param.y_resolution - 50, "Quit program. Save character list (y/n)");
+		FT.DrawString (-1, Winsys.resolution.height - 50, "Quit program. Save character list (y/n)");
 	}
 
-	Reshape (param.x_resolution, param.y_resolution);
+	Reshape (Winsys.resolution.width, Winsys.resolution.height);
     Winsys.SwapBuffers();
 	must_render = false;
 }
@@ -247,8 +247,8 @@ void RenderSingleFrame (ETR_DOUBLE timestep) {
 void SequenceKeys (unsigned int key, bool special, bool release, int x, int y) {
 	if (release) return;
 	switch (key) {
-		case 13: keyrun = true; break;
-		case 27: case SDLK_TAB: SetToolMode (1); break;
+		case SDLK_RETURN: keyrun = true; break;
+		case SDLK_ESCAPE: case SDLK_TAB: SetToolMode (1); break;
 		case SDLK_q: QuitTool (); break;
 	}
 }
@@ -258,7 +258,7 @@ void SequenceMotion (int x, int y) {}
 
 void RenderSequence (ETR_DOUBLE timestep) {
 	check_gl_error();
-	set_gl_options (TUX);
+	ScopedRenderMode rm(TUX);
     ClearRenderContext (colDDBackgr);
 
 	GluCamera.Update (timestep);
@@ -272,6 +272,6 @@ void RenderSequence (ETR_DOUBLE timestep) {
 	TestChar.Draw ();
 	glPopMatrix ();
 
-	Reshape (param.x_resolution, param.y_resolution);
+	Reshape (Winsys.resolution.width, Winsys.resolution.height);
     Winsys.SwapBuffers();
 }

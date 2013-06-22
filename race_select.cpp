@@ -32,7 +32,6 @@ GNU General Public License for more details.
 
 CRaceSelect RaceSelect;
 
-static TVector2 cursor_pos(0, 0);
 static TUpDown* course;
 static TIconButton* light;
 static TIconButton* snow;
@@ -63,16 +62,11 @@ void SetRaceConditions (void) {
 
 void CRaceSelect::Motion (int x, int y) {
 	MouseMoveGUI(x, y);
-	y = param.y_resolution - y;
 
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
-    if  (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
-void CRaceSelect::Mouse (int button, int state, int x, int y ){
+void CRaceSelect::Mouse (int button, int state, int x, int y) {
 	if (state == 1) {
 		ClickGUI(x, y);
 
@@ -87,14 +81,14 @@ void CRaceSelect::Keyb(unsigned int key, bool special, bool release, int x, int 
 	if (release) return;
 	KeyGUI(key, 0, release);
 	switch (key) {
-		case 27: State::manager.RequestEnterState (GameTypeSelect); break;
+		case SDLK_ESCAPE: State::manager.RequestEnterState (GameTypeSelect); break;
 		case SDLK_u: param.ui_snow = !param.ui_snow; break;
 		case SDLK_t: g_game.force_treemap = !g_game.force_treemap; break;
 		case SDLK_c: g_game.treesize++;
 				if (g_game.treesize > 5) g_game.treesize = 1; break;
 		case SDLK_v: g_game.treevar++;
 				if (g_game.treevar > 5) g_game.treevar = 1; break;
-		case 13: if (textbuttons[1]->focussed())
+		case SDLK_RETURN: if (textbuttons[1]->focussed())
 					 State::manager.RequestEnterState (GameTypeSelect);
 				 else
 					 SetRaceConditions (); break;
@@ -114,21 +108,21 @@ void CRaceSelect::Enter() {
 
 	CourseList = &Course.CourseList[0];
 
-	framewidth = 550 * param.scale;
-	frameheight = 50 * param.scale;
+	framewidth = 550 * Winsys.scale;
+	frameheight = 50 * Winsys.scale;
 	frametop = AutoYPosN (30);
 
 	area = AutoAreaN (30, 80, framewidth);
 	prevtop = AutoYPosN (50);
-	prevheight = 144 * param.scale;
-	prevwidth = 192 * param.scale;
+	prevheight = 144 * Winsys.scale;
+	prevwidth = 192 * Winsys.scale;
 	boxwidth = framewidth - prevwidth - 20;
 	boxleft = area.right - boxwidth;
 	icontop = AutoYPosN (40);
-	iconsize = 32 * param.scale;
+	iconsize = 32 * Winsys.scale;
 	iconspace = (int)((iconsize+6) * 1.5);
 	iconsumwidth = iconspace * 4 + iconsize;
-	iconleft = (param.x_resolution - iconsumwidth) / 2;
+	iconleft = (Winsys.resolution.width - iconsumwidth) / 2;
 
 	ResetGUI ();
 
@@ -148,12 +142,12 @@ void CRaceSelect::Enter() {
 }
 
 void CRaceSelect::Loop(ETR_DOUBLE timestep) {
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
 	TColor col;
 
 	check_gl_error();
-   	set_gl_options (GUI );
+	ScopedRenderMode rm(GUI);
     ClearRenderContext ();
 	SetupGuiDisplay ();
 
@@ -192,13 +186,13 @@ void CRaceSelect::Loop(ETR_DOUBLE timestep) {
 
 	FT.DrawString (CENTER, prevtop + prevheight + 10, "Author:  " + CourseList[course->GetValue()].author);
 
-	FT.AutoSizeN (4);
-	string forcetrees = "Load trees.png";
-	string sizevar = "Size: ";
-	sizevar += Int_StrN (g_game.treesize);
-	sizevar += " Variation: ";
-	sizevar += Int_StrN (g_game.treevar);
 	if (g_game.force_treemap) {
+		FT.AutoSizeN (4);
+		static const string forcetrees = "Load trees.png";
+		string sizevar = "Size: ";
+		sizevar += Int_StrN (g_game.treesize);
+		sizevar += " Variation: ";
+		sizevar += Int_StrN (g_game.treevar);
 		FT.SetColor (colYellow);
 		FT.DrawString (CENTER, AutoYPosN (85), forcetrees);
 		FT.DrawString (CENTER, AutoYPosN (90), sizevar);

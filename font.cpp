@@ -19,16 +19,16 @@ GNU General Public License for more details.
 #include "font.h"
 #include "ft_font.h"
 #include "spx.h"
-#include <deque>
+#include "winsys.h"
 
 #define USE_UNICODE 1
 
 // --------------------------------------------------------------------
 // First some common function used for textboxes and called by
 // CFont::MakeLineList. This bundle of functions generates
-// a SPList from a textstring and adapts the lines to the textbox
+// a vector<string> from a textstring and adapts the lines to the textbox
 
-static void MakeWordList (deque<string>& wordlist, const char *s) {
+static void MakeWordList (vector<string>& wordlist, const char *s) {
 	size_t start = 0;
 	for(size_t i = 0; s[i] != '\0'; i++) {
 		if(s[i] == ' ')
@@ -44,7 +44,7 @@ static void MakeWordList (deque<string>& wordlist, const char *s) {
 		wordlist.push_back(string(s+start));
 }
 
-static size_t MakeLine (size_t first, const deque<string>& wordlist, CSPList *linelist, float width) {
+static size_t MakeLine (size_t first, const vector<string>& wordlist, vector<string>& linelist, float width) {
 	if (first >= wordlist.size()) return wordlist.size()-1;
 
 	size_t last = first;
@@ -66,7 +66,7 @@ static size_t MakeLine (size_t first, const deque<string>& wordlist, CSPList *li
 		if(j < last)
 			line += ' ';
 	}
-	linelist->Add (line);
+	linelist.push_back(line);
 	return last-1;
 }
 
@@ -246,7 +246,7 @@ FTFont* CFont::GetFont(const size_t findex,const float size)
 int CFont::AutoSizeN (int rel_val) {
 	ETR_DOUBLE size = (rel_val + 2) * 4;
 	size *= curr_fact;
-	size *= param.scale;
+	size *= Winsys.scale;
 	SetSize (size);
 	return (int)size;
 }
@@ -268,18 +268,18 @@ void CFont::DrawText(float x, float y, const char *text, size_t font, float size
 
 	float left;
 	if (x >= 0) left = x;
-	else left = (param.x_resolution - GetTextWidth (text)) / 2;
+	else left = (Winsys.resolution.width - GetTextWidth (text)) / 2;
 	if (left < 0) left = 0;
 
 #ifdef USE_GLES1
 	if (forientation == OR_TOP) {
-		glTranslatef (left, param.y_resolution - curr_size - y, 0.0f);
+		glTranslatef (left, Winsys.resolution.height - curr_size - y, 0.0f);
 	} else {
 		glTranslatef (left, y, 0.0f);
 	}
 #else
 	if (forientation == OR_TOP) {
-		glRasterPos2i ((int)left, (int)(param.y_resolution - curr_size - y));
+		glRasterPos2i ((int)left, (int)(Winsys.resolution.height - curr_size - y));
 	} else {
 		glRasterPos2i ((int)left, (int)y);
 	}
@@ -297,19 +297,19 @@ void CFont::DrawText(float x, float y, const wchar_t *text, size_t font, float s
 
 	float left;
 	if (x >= 0) left = x;
-	else left = (param.x_resolution - GetTextWidth (text)) / 2;
+	else left = (Winsys.resolution.width - GetTextWidth (text)) / 2;
 	if (left < 0) left = 0;
 
 #ifdef USE_GLES1
 	//left /= curr_size/(20.0f*curr_fact);
 	if (forientation == OR_TOP) {
-		glTranslatef (left, param.y_resolution - curr_size - y, 0.0f);
+		glTranslatef (left, Winsys.resolution.height - curr_size - y, 0.0f);
 	} else {
 		glTranslatef (left, y, 0.0f);
 	}
 #else
 	if (forientation == OR_TOP) {
-		glRasterPos2i ((int)left, (int)(param.y_resolution - curr_size - y));
+		glRasterPos2i ((int)left, (int)(Winsys.resolution.height - curr_size - y));
 	} else {
 		glRasterPos2i ((int)left, (int)y);
 	}
@@ -429,17 +429,20 @@ float CFont::GetTextWidth (const wchar_t *text, const string &fontname, float si
 }
 
 float CFont::CenterX (const char *text) {
-	return (param.x_resolution - GetTextWidth (text)) / 2.0;
+	return (Winsys.resolution.width - GetTextWidth (text)) / 2.0;
 }
 
 void CFont::SetOrientation (Orientation orientation) {
 	forientation = orientation;
 }
 
-void CFont::MakeLineList (const char *source, CSPList *line_list, float width) {
-	deque<string> wordlist;
-	MakeWordList (wordlist, source);
+vector<string> CFont::MakeLineList (const char *source, float width) {
+	vector<string> wordlist;
+	MakeWordList(wordlist, source);
+	vector<string> linelist;
 
-	for(size_t last = 0; last < wordlist.size(); )
-		last = MakeLine(last, wordlist, line_list, width)+1;
+	for(size_t last = 0; last < wordlist.size();)
+		last = MakeLine(last, wordlist, linelist, width)+1;
+
+	return linelist;
 }

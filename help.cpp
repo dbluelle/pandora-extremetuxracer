@@ -28,7 +28,6 @@ GNU General Public License for more details.
 CHelp Help;
 
 static int xleft1, xleft2, ytop;
-static TVector2 cursor_pos(0, 0);
 
 void CHelp::Keyb(unsigned int key, bool special, bool release, int x, int y) {
 	if (key == SDLK_ESCAPE) State::manager.RequestEnterState (GameTypeSelect);
@@ -39,12 +38,7 @@ void CHelp::Mouse(int button, int state, int x, int y) {
 }
 
 void CHelp::Motion(int x, int y) {
-    y = param.y_resolution - y;
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
-    if  (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 void CHelp::Enter() {
@@ -52,15 +46,15 @@ void CHelp::Enter() {
 	Music.Play (param.credits_music, -1);
 
 	xleft1 = 40;
-	xleft2 = (int)(param.x_resolution / 2) + 20;
+	xleft2 = (int)(Winsys.resolution.width / 2) + 20;
 	ytop = AutoYPosN (15);
 }
 
-void CHelp::Loop(ETR_DOUBLE timestep ){
+void CHelp::Loop(ETR_DOUBLE timestep ) {
 	Music.Update ();
 	check_gl_error();
     ClearRenderContext ();
-    set_gl_options (GUI);
+    ScopedRenderMode rm(GUI);
     SetupGuiDisplay ();
 
 	if (param.ui_snow) {

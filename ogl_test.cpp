@@ -37,7 +37,7 @@ void InitTestLight () {
 		testlight.ambient[i]  = tedef_amb[i];
 		testlight.diffuse[i]  = tedef_diff[i];
 		testlight.specular[i] = tedef_spec[i];
- 		testlight.position[i] = tedef_pos[i];
+		testlight.position[i] = tedef_pos[i];
 	}
 }
 
@@ -54,26 +54,26 @@ void SetTestLight () {
 void COglTest::Keyb(unsigned int key, bool special, bool release, int x, int y) {
 	if (release) return;
 	switch (key) {
-		case 27: State::manager.RequestQuit(); break;
+		case SDLK_ESCAPE: State::manager.RequestQuit(); break;
 	}
 }
 
 void COglTest::Enter() {
 	InitTestLight ();
 	Winsys.KeyRepeat (true);
- 	g_game.loopdelay = 1;
+	g_game.loopdelay = 1;
 }
 
 void COglTest::Loop(ETR_DOUBLE timestep) {
 	check_gl_error();
 
 	// ------------- 3d scenery ---------------------------------------
-	set_gl_options (TUX);
+	ScopedRenderMode rm(TUX);
     ClearRenderContext (colDDBackgr);
 
 	glLoadIdentity ();
 	glPushMatrix ();
- 	SetTestLight ();
+	SetTestLight ();
 
 /*
 	glTranslatef (xposition, yposition, zposition);
@@ -85,11 +85,11 @@ void COglTest::Loop(ETR_DOUBLE timestep) {
 
 	// --------------- 2d screen --------------------------------------
 	SetupGuiDisplay ();
-	set_gl_options (TEXFONT);
+	ScopedRenderMode rm2(TEXFONT);
 	FT.SetFont ("bold");
 	FT.SetSize (24);
 	FT.SetColor (colWhite);
 	FT.DrawString (CENTER, 10, "Test screen");
-	Reshape (param.x_resolution, param.y_resolution);
+	Reshape (Winsys.resolution.width, Winsys.resolution.height);
     Winsys.SwapBuffers ();
 }

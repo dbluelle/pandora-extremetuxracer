@@ -169,7 +169,7 @@ void CSound::Halt (size_t soundid) {
 	if (sounds[soundid].loop_count < 0) {
 		Mix_HaltChannel (sounds[soundid].channel);
 	    sounds[soundid].loop_count = 0;
-   		sounds[soundid].channel = -1;
+		sounds[soundid].channel = -1;
 		sounds[soundid].active = false;
 	}
 }
@@ -204,7 +204,7 @@ CMusic::CMusic () {
 //	Mix_HookMusicFinished (Hook);
 }
 
-size_t CMusic::LoadPiece (const char *name, const char *filename) {
+size_t CMusic::LoadPiece (const string& name, const char *filename) {
     if (!Audio.IsOpen) return -1;
 	Mix_Music* m = Mix_LoadMUS (filename);
 	if (m == NULL) {
@@ -229,7 +229,7 @@ void CMusic::LoadMusicList () {
 			string name = SPStrN (line, "name", "");
 			string musicfile = SPStrN (line, "file", "");
 			string path = MakePathStr (param.music_dir, musicfile);
-			LoadPiece (name.c_str(), path.c_str());
+			LoadPiece (name, path.c_str());
 		}
 	} else {
 		Message ("could not load music.lst");
@@ -341,7 +341,7 @@ bool CMusic::Play (const string& name, int loop, int volume) {
 	return Play (GetMusicIdx (name), loop, volume);
 }
 
-bool CMusic::PlayTheme (size_t theme, ESituation situation)  {
+bool CMusic::PlayTheme (size_t theme, ESituation situation) {
 	if (theme >= themes.size()) return false;
 	if (situation >= SITUATION_COUNT) return false;
 	size_t musid = themes [theme].situation[situation];

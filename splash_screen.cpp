@@ -37,8 +37,8 @@ CSplashScreen SplashScreen;
 void CSplashScreen::Keyb(unsigned int key, bool special, bool release, int x, int y) {
 	if (release) return;
 	switch (key) {
-		case 27: State::manager.RequestQuit(); break;
-		case 13: State::manager.RequestEnterState (Regist); break;
+		case SDLK_ESCAPE: State::manager.RequestQuit(); break;
+		case SDLK_RETURN: State::manager.RequestEnterState (Regist); break;
 	}
 }
 
@@ -54,13 +54,13 @@ void CSplashScreen::Loop(ETR_DOUBLE timestep) {
 	Music.Update ();
 	check_gl_error();
     ClearRenderContext ();
-    set_gl_options (GUI);
+	ScopedRenderMode rm(GUI);
     SetupGuiDisplay ();
 	Trans.LoadLanguages ();
 	Trans.LoadTranslations (param.language); // Before first texts are being displayed
 
 //	FT.SetFont ("normal");
-	Tex.Draw (TEXLOGO, CENTER, 60, param.scale);
+	Tex.Draw (TEXLOGO, CENTER, 60, Winsys.scale);
 	FT.SetColor (colDYell);
 	FT.AutoSizeN (6);
 	int top = AutoYPosN (60);

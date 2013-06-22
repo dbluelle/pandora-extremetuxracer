@@ -22,36 +22,41 @@ GNU General Public License for more details.
 
 #define NUM_RESOLUTIONS 10
 
+extern TVector2 cursor_pos;
+
+struct TScreenRes {
+	int width, height;
+	TScreenRes(int w = 0, int h = 0) : width(w), height(h) {}
+};
+
 class CWinsys {
 private:
-	// time
-	float elapsed_time;
-
 	// joystick
 	SDL_Joystick *joystick;
-	int numJoysticks;
+	size_t numJoysticks;
 	bool joystick_active;
 
 	// sdl window
- 	TScreenRes resolution[NUM_RESOLUTIONS];
-	int auto_x_resolution;
-	int auto_y_resolution;
+	TScreenRes resolutions[NUM_RESOLUTIONS];
+	TScreenRes auto_resolution;
 	SDL_Surface *screen;
-	TScreenRes MakeRes (int width, int height);
-	ETR_DOUBLE CalcScreenScale ();
+	ETR_DOUBLE CalcScreenScale () const;
 public:
+	TScreenRes resolution;
+	ETR_DOUBLE scale;			// scale factor for screen, see 'use_quad_scale'
+
 	CWinsys ();
 
 	// sdl window
-	TScreenRes GetResolution (size_t idx);
-	string GetResName (size_t idx);
+	const TScreenRes& GetResolution (size_t idx) const;
+	string GetResName (size_t idx) const;
 	void Init ();
-	void SetupVideoMode (TScreenRes resolution);
+	void SetupVideoMode (const TScreenRes& resolution);
 	void SetupVideoMode (size_t idx);
 	void SetupVideoMode (int width, int height);
 	void KeyRepeat (bool repeat);
 	void SetFonttype ();
-	void PrintJoystickInfo ();
+	void PrintJoystickInfo () const;
 	void ShowCursor (bool visible) {SDL_ShowCursor (visible);}
 #ifdef PANDORA
 	void SwapBuffers () {EGL_SwapBuffers ();}
@@ -63,9 +68,8 @@ public:
 	void InitJoystick ();
 	void CloseJoystick ();
 	bool joystick_isActive() const { return joystick_active; }
-	ETR_DOUBLE ClockTime () {return SDL_GetTicks() * 1.e-3; }
-//	SDL_Surface *GetSurfaceData ();
-	unsigned char *GetSurfaceData ();
+	ETR_DOUBLE ClockTime () const {return SDL_GetTicks() * 1.e-3; }
+	unsigned char *GetSurfaceData () const ;
 };
 
 extern CWinsys Winsys;

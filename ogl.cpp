@@ -17,7 +17,9 @@ GNU General Public License for more details.
 
 #include "ogl.h"
 #include "spx.h"
+#include "winsys.h"
 #include <cstdarg>
+#include <stack>
 
 struct gl_value_t {
     char name[40];
@@ -93,7 +95,7 @@ void InitOpenglExtensions () {
 
 }
 
-void PrintGLInfo (){
+void PrintGLInfo () {
     GLint int_val;
     GLfloat float_val;
     GLboolean boolean_val;
@@ -180,12 +182,12 @@ void ClearRenderContext (const TColor& col) {
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
-void SetupGuiDisplay (){
+void SetupGuiDisplay () {
     ETR_DOUBLE offset = 0.0;
 
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
-    glOrtho (0, param.x_resolution, 0, param.y_resolution, -1.0, 1.0);
+    glOrtho (0, Winsys.resolution.width, 0, Winsys.resolution.height, -1.0, 1.0);
     glMatrixMode (GL_MODELVIEW);
     glLoadIdentity ();
     glTranslatef (offset, offset, -1.0);
@@ -195,19 +197,21 @@ void SetupGuiDisplay (){
 void Reshape (int w, int h) {
     ETR_DOUBLE far_clip_dist;
     glViewport (0, 0, (GLint) w, (GLint) h );
-    glMatrixMode (GL_PROJECTION );
+    glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
     far_clip_dist = param.forward_clip_distance + FAR_CLIP_FUDGE_AMOUNT;
     gluPerspective (param.fov, (ETR_DOUBLE)w/h, NEAR_CLIP_DIST, far_clip_dist );
-    glMatrixMode (GL_MODELVIEW );
+    glMatrixMode (GL_MODELVIEW);
 } 
 
 // ====================================================================
 //					GL options
 // ====================================================================
 
+TRenderMode currentMode = (TRenderMode)-1;
 void set_gl_options (TRenderMode mode) 
 {
+	currentMode = mode;
 	switch (mode) {
     case GUI:
         glEnable (GL_TEXTURE_2D);
@@ -396,37 +400,28 @@ void set_gl_options (TRenderMode mode)
     	break;
 
     case TUX_SHADOW:
-	#ifdef USE_STENCIL_BUFFER
 		glDisable (GL_TEXTURE_2D);
 		glEnable (GL_DEPTH_TEST);
-		glDisable (GL_CULL_FACE);
 		glDisable (GL_LIGHTING);
 		glDisable (GL_NORMALIZE);
 		glDisable (GL_ALPHA_TEST);
 		glEnable (GL_BLEND);
-		glEnable (GL_STENCIL_TEST);
 		glDisable (GL_COLOR_MATERIAL);
-		glDepthMask (GL_FALSE);
 		glShadeModel (GL_SMOOTH);
 		glDepthFunc (GL_LESS);
+	#ifdef USE_STENCIL_BUFFER
+		glDisable (GL_CULL_FACE);
+		glEnable (GL_STENCIL_TEST);
+		glDepthMask (GL_FALSE);
 
 		glStencilFunc (GL_EQUAL, 0, ~0);
 		glStencilOp (GL_KEEP, GL_KEEP, GL_INCR);
 	#else
-		glDisable (GL_TEXTURE_2D);
-		glEnable (GL_DEPTH_TEST);
 		glEnable (GL_CULL_FACE);
-		glDisable (GL_LIGHTING);
-		glDisable (GL_NORMALIZE);
-		glDisable (GL_ALPHA_TEST);
-		glEnable (GL_BLEND);
 		glDisable (GL_STENCIL_TEST);
-		glDisable (GL_COLOR_MATERIAL);
 		glDepthMask (GL_TRUE);
-		glShadeModel (GL_SMOOTH);
-		glDepthFunc (GL_LESS);
 	#endif
-	break;
+		break;
 
     case TRACK_MARKS:
 		glEnable (GL_TEXTURE_2D);
@@ -522,3 +517,19 @@ void set_gl_options (TRenderMode mode)
     	glAlphaFunc (GL_GEQUAL, 0.5);
     break;
 */
+
+stack<TRenderMode> modestack;
+void PushRenderMode(TRenderMode mode)
+{
+	if(currentMode != mode)
+		set_gl_options(mode);
+	modestack.push(mode);
+}
+
+void PopRenderMode()
+{
+	TRenderMode mode = modestack.top();
+	modestack.pop();
+	if(!modestack.empty() && modestack.top() != mode)
+		set_gl_options(modestack.top());
+}

@@ -35,7 +35,6 @@ static TUpDown* event;
 static TUpDown* cup;
 static TWidget* textbuttons[2];
 static TCup2 *CupList;
-static TVector2 cursor_pos(0, 0);
 
 void EnterEvent () {
 	g_game.game_type = CUPRACING;
@@ -47,9 +46,9 @@ void EnterEvent () {
 void CEventSelect::Keyb (unsigned int key, bool special, bool release, int x, int y) {
     if (release) return;
 	switch (key) {
-		case 27: State::manager.RequestEnterState (GameTypeSelect); break;
+		case SDLK_ESCAPE: State::manager.RequestEnterState (GameTypeSelect); break;
 		case SDLK_q: State::manager.RequestQuit(); break;
-		case 13: if (textbuttons[1]->focussed()) State::manager.RequestEnterState (GameTypeSelect);
+		case SDLK_RETURN: if (textbuttons[1]->focussed()) State::manager.RequestEnterState (GameTypeSelect);
 			else if (Events.IsUnlocked (event->GetValue(), cup->GetValue())) EnterEvent(); break;
 		case SDLK_u: param.ui_snow = !param.ui_snow; break;
 		default:
@@ -57,7 +56,7 @@ void CEventSelect::Keyb (unsigned int key, bool special, bool release, int x, in
 	}
 }
 
-void CEventSelect::Mouse (int button, int state, int x, int y ) {
+void CEventSelect::Mouse (int button, int state, int x, int y) {
 	if (state == 1) {
 		TWidget* clicked = ClickGUI(x, y);
 		if (textbuttons[0] == clicked) {
@@ -69,15 +68,10 @@ void CEventSelect::Mouse (int button, int state, int x, int y ) {
 	}
 }
 
-void CEventSelect::Motion (int x, int y ){
+void CEventSelect::Motion (int x, int y) {
 	MouseMoveGUI(x, y);
-	y = param.y_resolution - y;
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
 
-    if  (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 // --------------------------------------------------------------------
@@ -89,8 +83,8 @@ void CEventSelect::Enter () {
 	EventList = &Events.EventList[0];
 	CupList = &Events.CupList[0];
 
-	framewidth = 500 * param.scale;
-	frameheight = 50 * param.scale;
+	framewidth = 500 * Winsys.scale;
+	frameheight = 50 * Winsys.scale;
 	area = AutoAreaN (30, 80, framewidth);
 	frametop1 = AutoYPosN (35);
 	frametop2 = AutoYPosN (50);
@@ -112,12 +106,12 @@ void CEventSelect::Enter () {
 }
 
 void CEventSelect::Loop (ETR_DOUBLE timestep) {
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
 	TColor col;
 
 	check_gl_error();
-   	set_gl_options (GUI );
+	ScopedRenderMode rm(GUI);
 	Music.Update ();
     ClearRenderContext ();
 	SetupGuiDisplay ();
@@ -127,7 +121,7 @@ void CEventSelect::Loop (ETR_DOUBLE timestep) {
 		draw_ui_snow ();
 	}
 
-	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), param.scale);
+	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), Winsys.scale);
 	Tex.Draw (BOTTOM_LEFT, 0, hh-256, 1);
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);
@@ -142,7 +136,7 @@ void CEventSelect::Loop (ETR_DOUBLE timestep) {
 	FT.DrawString (area.left,AutoYPosN (45), Trans.Text (7));
 	if (Events.IsUnlocked (event->GetValue(), cup->GetValue()) == false) {
 		FT.SetColor (colLGrey);
- 		FT.DrawString (CENTER, AutoYPosN (58), Trans.Text (10));
+		FT.DrawString (CENTER, AutoYPosN (58), Trans.Text (10));
 	}
 
 	FT.AutoSizeN (4);
@@ -154,8 +148,10 @@ void CEventSelect::Loop (ETR_DOUBLE timestep) {
 
 	if (cup->focussed()) col = colDYell; else col = colWhite;
 	DrawFrameX (area.left, frametop2, framewidth, frameheight, 3, colMBackgr, col, 1.0);
-	if (Events.IsUnlocked (event->GetValue(), cup->GetValue())) FT.SetColor (colDYell);
-		else FT.SetColor (colLGrey);
+	if (Events.IsUnlocked (event->GetValue(), cup->GetValue()))
+		FT.SetColor (colDYell);
+	else
+		FT.SetColor (colLGrey);
 	FT.DrawString (area.left + 20, frametop2, Events.GetCupTrivialName (event->GetValue(), cup->GetValue()));
 
 	textbuttons[0]->SetActive(Events.IsUnlocked (event->GetValue(), cup->GetValue()));

@@ -92,11 +92,11 @@ struct TTerrType {
 	ETR_DOUBLE friction;
 	ETR_DOUBLE depth;
 	int vol_type;
-	int particles;
-	int trackmarks;
 	int starttex;
 	int tracktex;
 	int stoptex;
+	bool particles;
+	bool trackmarks;
 	bool shiny;
 };
 
@@ -156,7 +156,7 @@ public:
 	GLubyte		*vnc_array;
 
 	void ResetCourse ();
- 	size_t GetCourseIdx (const string& dir) const;
+	size_t GetCourseIdx (const string& dir) const;
 	bool LoadCourseList ();
 	void FreeCourseList ();
 	bool LoadCourse (size_t idx);

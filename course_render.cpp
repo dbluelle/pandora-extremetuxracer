@@ -41,7 +41,7 @@ void setup_course_tex_gen () {
 //							render course
 // --------------------------------------------------------------------
 void RenderCourse () {
-	set_gl_options (COURSE);
+	ScopedRenderMode rm(COURSE);
     setup_course_tex_gen ();
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     set_material (colWhite, colBlack, 1.0);
@@ -59,7 +59,7 @@ void DrawTrees() {
 	TObjectType*	object_types = &Course.ObjTypes[0];
 	CControl*		ctrl = Players.GetCtrl (g_game.player_id);
 
-	set_gl_options (TREES);
+	ScopedRenderMode rm(TREES);
     ETR_DOUBLE fwd_clip_limit = param.forward_clip_distance;
     ETR_DOUBLE bwd_clip_limit = param.backward_clip_distance;
 
@@ -115,7 +115,7 @@ void DrawTrees() {
     	    glTexCoord2f (0.0, 1.0);
     	    glVertex3f (-treeRadius, treeHeight, 0.0);
 
-//			if  (!clip_course || ctrl->viewpos.z - treeLocs[i].pt.z < fwd_tree_detail_limit) {
+//			if (!clip_course || ctrl->viewpos.z - treeLocs[i].pt.z < fwd_tree_detail_limit) {
 			    glTexCoord2f  (0., 0.);
 			    glVertex3f  (0.0, 0.0, -treeRadius);
 			    glTexCoord2f  (1., 0.);

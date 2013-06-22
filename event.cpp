@@ -40,7 +40,6 @@ static TWidget* curr_focus = 0;
 static TCup2 *ecup = 0;
 static size_t curr_race = 0;
 static size_t curr_bonus = 0;
-static TVector2 cursor_pos(0, 0);
 static TWidget* textbuttons[3];
 
 void StartRace () {
@@ -63,11 +62,11 @@ void StartRace () {
 void CEvent::Keyb (unsigned int key, bool special, bool release, int x, int y) {
     if (release) return;
 	switch (key) {
-	case 13:
+	case SDLK_RETURN:
 		if (curr_focus == textbuttons[0] && ready < 1) StartRace ();
 		else State::manager.RequestEnterState (EventSelect);
 		break;
-	case 27:
+	case SDLK_ESCAPE:
 		State::manager.RequestEnterState (EventSelect);
 		break;
 	case SDLK_TAB:
@@ -97,13 +96,8 @@ void CEvent::Mouse (int button, int state, int x, int y) {
 void CEvent::Motion (int x, int y) {
 	TWidget* foc = MouseMoveGUI(x, y);
 	if (foc != 0) curr_focus = foc;
-	y = param.y_resolution - y;
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
 
-    if  (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 void InitCupRacing () {
@@ -147,7 +141,7 @@ void CEvent::Enter () {
 	messtop = AutoYPosN (50);
 	messtop2 = AutoYPosN (60);
 	bonustop = AutoYPosN (35);
-	texsize = 32 * param.scale;
+	texsize = 32 * Winsys.scale;
 	if (texsize < 32) texsize = 32;
 	dist = texsize + 2 * 4;
 	framebottom = frametop + (int)ecup->races.size() * dist + 10;
@@ -171,11 +165,11 @@ int resultlevel (size_t num, size_t numraces) {
 }
 
 void CEvent::Loop (ETR_DOUBLE timestep) {
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
-
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
+ 
 	check_gl_error();
-	set_gl_options (GUI );
+	ScopedRenderMode rm(GUI);
 	Music.Update ();
     ClearRenderContext ();
 	SetupGuiDisplay ();
@@ -184,7 +178,7 @@ void CEvent::Loop (ETR_DOUBLE timestep) {
 		update_ui_snow (timestep);
 		draw_ui_snow ();
 	}
-	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), param.scale);
+	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), Winsys.scale);
 	Tex.Draw (BOTTOM_LEFT, 0, hh-256, 1);
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);

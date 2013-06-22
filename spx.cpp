@@ -22,6 +22,7 @@ GNU General Public License for more details.
 #include <fstream>
 
 const string emptyString = "";
+const string errorString = "error";
 
 // --------------------------------------------------------------------
 //					elementary string functions
@@ -216,7 +217,7 @@ string SPItemN (const string &s, const string &tag) {
 		item += s[ii];
 		ii++;
 	}
- 	return item;
+	return item;
 }
 
 string SPStrN (const string &s, const string &tag, const string& def) {

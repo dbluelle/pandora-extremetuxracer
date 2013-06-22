@@ -32,7 +32,6 @@ GNU General Public License for more details.
 CCredits Credits;
 
 
-static TVector2 cursor_pos(0, 0);
 static ETR_DOUBLE y_offset = 0;
 static bool moving = true;
 
@@ -49,7 +48,7 @@ void CCredits::LoadCreditList () {
 		TCredits credit;
 		credit.text = SPStrN (line, "text", "");
 
-		ETR_DOUBLE offset = SPFloatN (line, "offs", 0) * OFFS_SCALE_FACTOR * param.scale;
+		ETR_DOUBLE offset = SPFloatN (line, "offs", 0) * OFFS_SCALE_FACTOR * Winsys.scale;
 		if (i>0) credit.offs = CreditList.back().offs + (int)offset;
 		else credit.offs = offset;
 
@@ -60,8 +59,8 @@ void CCredits::LoadCreditList () {
 }
 
 void CCredits::DrawCreditsText (ETR_DOUBLE time_step) {
-    ETR_DOUBLE w = (ETR_DOUBLE)param.x_resolution;
-    ETR_DOUBLE h = (ETR_DOUBLE)param.y_resolution;
+    ETR_DOUBLE w = (ETR_DOUBLE)Winsys.resolution.width;
+    ETR_DOUBLE h = (ETR_DOUBLE)Winsys.resolution.height;
 	ETR_DOUBLE offs = 0.0;
 	if (moving) y_offset += time_step * 30;
 
@@ -84,26 +83,26 @@ void CCredits::DrawCreditsText (ETR_DOUBLE time_step) {
 	glColor4dv ((ETR_DOUBLE*)&colBackgr);
     glRectf (0, 0, w, BOTT_Y);
 
-    glBegin( GL_QUADS );
-		glVertex2f (0, BOTT_Y );
-		glVertex2f (w, BOTT_Y );
-		glColor4f (colBackgr.r, colBackgr.g, colBackgr.b, 0 );
-		glVertex2f (w, BOTT_Y + 30 );
-		glVertex2f (0, BOTT_Y + 30 );
+    glBegin( GL_QUADS);
+		glVertex2f (0, BOTT_Y);
+		glVertex2f (w, BOTT_Y);
+		glColor4f (colBackgr.r, colBackgr.g, colBackgr.b, 0);
+		glVertex2f (w, BOTT_Y + 30);
+		glVertex2f (0, BOTT_Y + 30);
     glEnd();
 
     glColor4dv ((ETR_DOUBLE*)&colBackgr);
-    glRectf (0, h - TOP_Y, w, h );
+    glRectf (0, h - TOP_Y, w, h);
 
-	glBegin( GL_QUADS );
-		glVertex2f (w, h - TOP_Y );
-		glVertex2f (0, h - TOP_Y );
-		glColor4f (colBackgr.r, colBackgr.g, colBackgr.b, 0 );
-		glVertex2f (0, h - TOP_Y - 30 );
-		glVertex2f (w, h - TOP_Y - 30 );
+	glBegin( GL_QUADS);
+		glVertex2f (w, h - TOP_Y);
+		glVertex2f (0, h - TOP_Y);
+		glColor4f (colBackgr.r, colBackgr.g, colBackgr.b, 0);
+		glVertex2f (0, h - TOP_Y - 30);
+		glVertex2f (w, h - TOP_Y - 30);
     glEnd();
 
-	glColor4f (1, 1, 1, 1 );
+	glColor4f (1, 1, 1, 1);
     glEnable (GL_TEXTURE_2D);
 	if (offs < TOP_Y) y_offset = 0;
 }
@@ -124,10 +123,10 @@ static void DrawBackLogo (int x, int y, ETR_DOUBLE size) {
 	width  = w * size;
 	height = h * size;
 
-	top = param.y_resolution - y;
+	top = Winsys.resolution.height - y;
 	bott = top - height;
 
-	if (x >= 0) left = x; else left = (param.x_resolution - width) / 2;
+	if (x >= 0) left = x; else left = (Winsys.resolution.width - width) / 2;
 	right = left + width;
 
     glColor4f (1.0, 1.0, 1.0, 0.4);
@@ -139,7 +138,7 @@ static void DrawBackLogo (int x, int y, ETR_DOUBLE size) {
 	glEnd();
 }
 
-void CCredits::Keyb (unsigned int key, bool special, bool release, int x, int y){
+void CCredits::Keyb (unsigned int key, bool special, bool release, int x, int y) {
 	if (release) return;
 	switch (key) {
 		case 109: moving = !moving; break;
@@ -148,18 +147,12 @@ void CCredits::Keyb (unsigned int key, bool special, bool release, int x, int y)
 	}
 }
 
-void CCredits::Mouse (int button, int state, int x, int y ){
+void CCredits::Mouse (int button, int state, int x, int y) {
 	if (state == 1) State::manager.RequestEnterState (GameTypeSelect);
 }
 
 void CCredits::Motion(int x, int y) {
-    y = param.y_resolution - y;
-    TVector2 old_pos = cursor_pos;
-    cursor_pos = TVector2(x, y);
-
-    if (old_pos.x != x || old_pos.y != y) {
-		if (param.ui_snow) push_ui_snow (cursor_pos);
-    }
+	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
 void CCredits::Enter() {
@@ -169,13 +162,13 @@ void CCredits::Enter() {
 }
 
 void CCredits::Loop(ETR_DOUBLE time_step) {
-	int ww = param.x_resolution;
-	int hh = param.y_resolution;
+	int ww = Winsys.resolution.width;
+	int hh = Winsys.resolution.height;
 
 	Music.Update ();
 	check_gl_error();
     ClearRenderContext ();
-    set_gl_options (GUI);
+    ScopedRenderMode rm(GUI);
     SetupGuiDisplay ();
 
 //	DrawBackLogo (-1,  AutoYPos (200), 1.0);
@@ -188,7 +181,7 @@ void CCredits::Loop(ETR_DOUBLE time_step) {
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);
 	Tex.Draw (TOP_RIGHT, ww-256, 0, 1);
-	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), param.scale);
+	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), Winsys.scale);
 
 
 	Reshape (ww, hh);
