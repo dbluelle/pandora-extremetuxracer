@@ -1232,6 +1232,9 @@ static void TVector3o_float_array (float dest[3], const TVector3& src)
 
 void InitQuadtree (ETR_DOUBLE *elevation, int nx, int nz,
 				   ETR_DOUBLE scalex, ETR_DOUBLE scalez, const TVector3& view_pos, ETR_DOUBLE detail) {
+#ifdef USE_GLES1
+	currvertexstartindex = 0;
+#endif
 	HeightMapInfo hm;
 
 	hm.Data = elevation;
