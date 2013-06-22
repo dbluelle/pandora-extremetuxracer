@@ -746,6 +746,7 @@ void quadsquare::UpdateAux (const quadcornerdata& cd,
 	}
 }
 #ifdef USE_GLES1
+int currvertexstartindex = 0;
 GLushort VertexIndices[9];
 #else
 GLuint VertexIndices[9];
@@ -758,7 +759,11 @@ void quadsquare::InitVert(int i, int x, int z) {
 
 	int idx = x + RowSize * z;
 
+#ifdef USE_GLES1
+	VertexIndices[i] = idx -currvertexstartindex;
+#else
 	VertexIndices[i] = idx;
+#endif
 	VertexTerrains[i] = Terrain[idx];
 }
 
@@ -835,7 +840,6 @@ void quadsquare::Render (const quadcornerdata& cd, GLubyte *vnc_array) {
 			if (VertexArrayCounter == 0) continue;
 			Course.TerrList[j].texture->Bind();
 			DrawTris ();
-
 			if (TerrList[j].shiny && param.perf_level > 1) {
 				glDisableClientState (GL_COLOR_ARRAY);
 				glColor4f (1.0, 1.0, 1.0, ENV_MAP_ALPHA / 255.0);
@@ -1267,6 +1271,15 @@ void InitQuadtree (ETR_DOUBLE *elevation, int nx, int nz,
 void UpdateQuadtree (const TVector3& view_pos, float detail) {
 	float ViewerLoc[3];
 	TVector3o_float_array (ViewerLoc, view_pos);
+#ifdef USE_GLES1
+	int newpos = (view_pos.z/ root->ScaleZ);
+	if (newpos > 20)
+	{
+		int nx,ny;
+		Course.GetDivisions(&nx,&ny);
+		currvertexstartindex = nx * (newpos-20);
+	}
+#endif
 	root->Update (root_corner_data, ViewerLoc, detail);
 }
 
@@ -1274,6 +1287,7 @@ void RenderQuadtree() {
 	GLubyte *vnc_array;
 	Course.GetGLArrays (&vnc_array);
 #ifdef USE_GLES1
+	vnc_array += currvertexstartindex*STRIDE_GL_ARRAY;
     glEnableClientState (GL_VERTEX_ARRAY);
     glVertexPointer (3, GL_FLOAT, STRIDE_GL_ARRAY, vnc_array);
 
