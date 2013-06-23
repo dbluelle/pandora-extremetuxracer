@@ -1282,6 +1282,8 @@ void UpdateQuadtree (const TVector3& view_pos, float detail) {
 		Course.GetDivisions(&nx,&ny);
 		currvertexstartindex = nx * (newpos-20);
 	}
+	else
+		currvertexstartindex = 0;
 #endif
 	root->Update (root_corner_data, ViewerLoc, detail);
 }
