@@ -269,8 +269,8 @@ void CCourse::FillGlArrays() {
 			FLOATVAL(1) = elevation[(x) + nx*(y)];
 			FLOATVAL(2) = -(GLfloat)y / (ny-1.0) * curr_course->length;
 #ifdef USE_GLES1
-			FLOATVAL(3) = ((GLfloat)x / (nx-1.0) * curr_course->width)/6.0f;
-			FLOATVAL(4) = (-(GLfloat)y / (ny-1.0) * curr_course->length)/6.0f;
+			FLOATVAL(3) = ((GLfloat) (x%12 > 6 ? 12 - (x%12) : x%12) )/6.0f;
+			FLOATVAL(4) = ((GLfloat) (y%12 > 6 ? 12 - (y%12) : y%12) )/6.0f;
 			const TVector3& nml = normals[ x + y * nx ];
 			FLOATVAL(6) = nml.x;
 			FLOATVAL(7) = nml.y;
