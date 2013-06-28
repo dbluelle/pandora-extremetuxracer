@@ -15,6 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "game_over.h"
 #include "audio.h"
 #include "ogl.h"
@@ -88,14 +92,14 @@ void DrawMessageFrame (float x, float y, float w, float h, int line,
 }
 
 
-void GameOverMessage (CControl *ctrl) {
+void GameOverMessage (const CControl *ctrl) {
 	int fwidth = 500;
 
 	float leftframe = (Winsys.resolution.width - fwidth) / 2;
 	float topframe = 80;
 
 	const TColor& backcol = colWhite;
-	const TColor framecol(0.7, 0.7, 1, 1);
+	static const TColor framecol(0.7, 0.7, 1, 1);
 
 	if (param.use_papercut_font > 0) FT.SetSize (28); else FT.SetSize (22);
 	if (g_game.raceaborted) {
@@ -104,13 +108,12 @@ void GameOverMessage (CControl *ctrl) {
 		FT.DrawString (CENTER, topframe+30, Trans.Text(25));
 	} else {
 		DrawMessageFrame (leftframe, topframe, fwidth, 210, 4, backcol, framecol, 0.5);
-		string line;
 
 		if (param.use_papercut_font > 0) FT.SetSize (20); else FT.SetSize (14);
 		if (g_game.race_result >= 0 || g_game.game_type != CUPRACING) FT.SetColor (colDBlue);
 			else FT.SetColor (colDRed);
 
-		line = "Score:  ";
+		string line = "Score:  ";
 		FT.DrawString (leftframe+80, topframe+15, line);
 		line = Int_StrN (g_game.score);
 		line += "  pts";
@@ -199,7 +202,7 @@ void CGameOver::Enter() {
 		} else final_frame = Char.GetKeyframe (g_game.char_id, FINISH);
 
 		if (!g_game.raceaborted) {
-			CControl *ctrl = Players.GetCtrl (g_game.player_id);
+			const CControl *ctrl = Players.GetCtrl (g_game.player_id);
 			final_frame->Init (ctrl->cpos, -0.18);
 		}
 	}
@@ -221,7 +224,7 @@ void CGameOver::Loop(ETR_DOUBLE time_step) {
 
 	update_view (ctrl, 0);
 
-	if (final_frame != NULL) final_frame->Update (time_step, ctrl);
+	if (final_frame != NULL) final_frame->Update (time_step);
 
     SetupViewFrustum (ctrl);
     Env.DrawSkybox (ctrl->viewpos);

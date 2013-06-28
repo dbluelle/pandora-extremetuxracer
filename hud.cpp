@@ -15,6 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "hud.h"
 #include "ogl.h"
 #include "textures.h"
@@ -163,8 +167,8 @@ void draw_partial_tri_fan (ETR_DOUBLE fraction) {
 
 void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 #ifndef USE_GLES1
-    GLfloat xplane[4] = {1.0 / GAUGE_IMG_SIZE, 0.0, 0.0, 0.0 };
-    GLfloat yplane[4] = {0.0, 1.0 / GAUGE_IMG_SIZE, 0.0, 0.0 };
+	static const GLfloat xplane[4] = {1.0 / GAUGE_IMG_SIZE, 0.0, 0.0, 0.0 };
+	static const GLfloat yplane[4] = {0.0, 1.0 / GAUGE_IMG_SIZE, 0.0, 0.0 };
 #endif
     ScopedRenderMode rm(GAUGE_BARS);
 
@@ -298,7 +302,7 @@ void DrawWind (ETR_DOUBLE dir, ETR_DOUBLE speed) {
 	Tex.Draw (SPEED_KNOB, 74, Winsys.resolution.height - 84, 1.0);
 }
 
-void DrawWind2 (float dir, float speed, CControl *ctrl) {
+void DrawWind2 (float dir, float speed, const CControl *ctrl) {
 	if (g_game.wind_id < 1) return;
 
 	Tex.Draw (SPEEDMETER, 0, Winsys.resolution.height-140, 1.0);
@@ -398,10 +402,8 @@ void DrawPercentBar (float fact, float x, float y) {
 	glEnd();
 }
 
-void DrawCoursePosition (CControl *ctrl) {
-	ETR_DOUBLE pl, pw;
-	Course.GetPlayDimensions (&pw, &pl);
-	ETR_DOUBLE fact = ctrl->cpos.z / pl;
+void DrawCoursePosition (const CControl *ctrl) {
+	ETR_DOUBLE fact = ctrl->cpos.z / Course.GetPlayDimensions().y;
 	if (fact > 1.0) fact = 1.0;
     glEnable (GL_TEXTURE_2D);
 	DrawPercentBar (-fact, Winsys.resolution.width - 48, 280-128);
@@ -409,7 +411,7 @@ void DrawCoursePosition (CControl *ctrl) {
 }
 
 // -------------------------------------------------------
-void DrawHud (CControl *ctrl) {
+void DrawHud (const CControl *ctrl) {
 	if (!param.show_hud)
 		return;
 

@@ -37,8 +37,8 @@ void draw_ui_snow ();
 void create_new_particles (const TVector3& loc, TVector3 vel, int num);
 void update_particles (ETR_DOUBLE time_step);
 void clear_particles ();
-void draw_particles (CControl *ctrl);
-void generate_particles (CControl *ctrl, ETR_DOUBLE dtime, const TVector3& pos, ETR_DOUBLE speed);
+void draw_particles (const CControl *ctrl);
+void generate_particles (const CControl *ctrl, ETR_DOUBLE dtime, const TVector3& pos, ETR_DOUBLE speed);
 
 // --------------------------------------------------------------------
 //					snow flakes for short distances
@@ -85,7 +85,7 @@ struct TFlakeArea {
 		float maxSize,
 		float speed,
 		bool  rotate);
-	void Draw(CControl* ctrl) const;
+	void Draw(const CControl* ctrl) const;
 	void Update(float timestep, float xcoeff, float ycoeff, float zcoeff);
 };
 
@@ -94,13 +94,13 @@ private:
 	TVector3 snow_lastpos;
 	vector<TFlakeArea> areas;
 	void MakeSnowFlake (size_t ar, size_t i);
-	void GenerateSnowFlakes (CControl *ctrl);
-	void UpdateAreas (CControl *ctrl);
+	void GenerateSnowFlakes (const CControl *ctrl);
+	void UpdateAreas (const CControl *ctrl);
 public:
-	void Init (int grade, CControl *ctrl);
+	void Init (int grade, const CControl *ctrl);
 	void Reset ();
-	void Update (ETR_DOUBLE timestep, CControl *ctrl);
-	void Draw (CControl *ctrl) const;
+	void Update (ETR_DOUBLE timestep, const CControl *ctrl);
+	void Draw (const CControl *ctrl) const;
 };
 
 // --------------------------------------------------------------------
@@ -145,9 +145,9 @@ struct TCurtain {
 		float start_angle,
 		float min_height,
 		int curt_texture);
-	void SetStartParams(CControl* ctrl);
+	void SetStartParams(const CControl* ctrl);
 	void Draw() const;
-	void Update(float timestep, const TVector3& drift, CControl* ctrl);
+	void Update(float timestep, const TVector3& drift, const CControl* ctrl);
 
 private:
 	static void CurtainVec (float angle, float zdist, float &x, float &z);
@@ -157,11 +157,11 @@ class CCurtain {
 private:
 	vector<TCurtain> curtains;
 
-	void SetStartParams (CControl *ctrl);
+	void SetStartParams (const CControl *ctrl);
 public:
-	void Init (CControl *ctrl);
-	void Update (float timestep, CControl *ctrl);
-	void Draw (CControl *ctrl);
+	void Init (const CControl *ctrl);
+	void Update (float timestep, const CControl *ctrl);
+	void Draw ();
 	void Reset ();
 };
 
@@ -223,10 +223,10 @@ extern CWind Wind;
 // 			Acess functions
 // --------------------------------------------------------------------
 
-void InitSnow (CControl *ctrl);
-void UpdateSnow (ETR_DOUBLE timestep, CControl *ctrl);
-void DrawSnow (CControl *ctrl);
+void InitSnow (const CControl *ctrl);
+void UpdateSnow (ETR_DOUBLE timestep, const CControl *ctrl);
+void DrawSnow (const CControl *ctrl);
 void InitWind ();
-void UpdateWind (ETR_DOUBLE timestep, CControl *ctrl);
+void UpdateWind (ETR_DOUBLE timestep, const CControl *ctrl);
 
 #endif

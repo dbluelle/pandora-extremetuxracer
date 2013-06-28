@@ -15,6 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "intro.h"
 #include "audio.h"
 #include "course_render.h"
@@ -96,7 +100,7 @@ void CIntro::Loop (ETR_DOUBLE time_step) {
     check_gl_error();
 
 	if (startframe->active) {
-		startframe->Update (time_step, ctrl);
+		startframe->Update (time_step);
 	} else State::manager.RequestEnterState (Racing);
 
 	ClearRenderContext ();

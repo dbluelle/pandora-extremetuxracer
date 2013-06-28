@@ -15,6 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "view.h"
 #include "course.h"
 #include "ogl.h"
@@ -58,9 +62,9 @@ void SetCameraDistance (ETR_DOUBLE val) {camera_distance = val;}
 
 void set_view_mode (CControl *ctrl, TViewMode mode) {ctrl->viewmode = mode;}
 
-TVector3 interpolate_view_pos (TVector3 ctrl_pos1, TVector3 ctrl_pos2,
+TVector3 interpolate_view_pos (const TVector3& ctrl_pos1, const TVector3& ctrl_pos2,
 			      ETR_DOUBLE max_vec_angle,
-			      TVector3 pos1, TVector3 pos2,
+			      const TVector3& pos1, const TVector3& pos2,
 			      ETR_DOUBLE dist, ETR_DOUBLE dt,
 			      ETR_DOUBLE time_constant)
 {
@@ -89,7 +93,7 @@ TVector3 interpolate_view_pos (TVector3 ctrl_pos1, TVector3 ctrl_pos2,
     return AddVectors (ctrl_pos2, ScaleVector (dist, vec2));
 }
 
-void interpolate_view_frame (TVector3 up1, TVector3 dir1,
+void interpolate_view_frame (const TVector3& up1, const TVector3& dir1,
 			     TVector3 *p_up2, TVector3 *p_dir2,
 			     ETR_DOUBLE dt, ETR_DOUBLE time_constant)
 {
@@ -343,7 +347,7 @@ static TPlane frustum_planes[6];
 static char p_vertex_code[6];
 
 
-void SetupViewFrustum (CControl *ctrl) {
+void SetupViewFrustum (const CControl *ctrl) {
     ETR_DOUBLE aspect = (ETR_DOUBLE) Winsys.resolution.width /Winsys.resolution.height;
 
 	ETR_DOUBLE near_dist = NEAR_CLIP_DIST;
@@ -389,8 +393,8 @@ clip_result_t clip_aabb_to_view_frustum (const TVector3& min, const TVector3& ma
     bool intersect = false;
 
     for (int i=0; i<6; i++) {
-		TVector3 p(min.x, min.y, min.z);
-		TVector3 n(max.x, max.y, max.z);
+		TVector3 p = min;
+		TVector3 n = max;
 
 		if (p_vertex_code[i] & 4) {
 		    p.x = max.x;
@@ -419,7 +423,7 @@ clip_result_t clip_aabb_to_view_frustum (const TVector3& min, const TVector3& ma
     return NoClip;
 }
 
-const TPlane& get_far_clip_plane() {return frustum_planes[1]; }
-const TPlane& get_left_clip_plane() {return frustum_planes[2]; }
-const TPlane& get_right_clip_plane() {return frustum_planes[3]; }
-const TPlane& get_bottom_clip_plane() {return frustum_planes[5]; }
+const TPlane& get_far_clip_plane() { return frustum_planes[1]; }
+const TPlane& get_left_clip_plane() { return frustum_planes[2]; }
+const TPlane& get_right_clip_plane() { return frustum_planes[3]; }
+const TPlane& get_bottom_clip_plane() { return frustum_planes[5]; }

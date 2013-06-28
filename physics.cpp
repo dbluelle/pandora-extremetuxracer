@@ -15,6 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "physics.h"
 #include "course.h"
 #include "tux.h"
@@ -166,15 +170,17 @@ bool CControl::CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR
     else last_collision = false;
     return hit;
 }
+
 void CControl::AdjustTreeCollision (const TVector3& pos, TVector3 *vel) {
     TVector3 treeLoc;
     ETR_DOUBLE tree_diam;
 	ETR_DOUBLE factor;
 
 	if (CheckTreeCollisions (pos, &treeLoc, &tree_diam)) {
-		TVector3 treeNml;
-        treeNml.x = pos.x - treeLoc.x;
-        treeNml.z = pos.z - treeLoc.z;
+		TVector3 treeNml(
+			pos.x - treeLoc.x,
+			0,
+			pos.z - treeLoc.z);
         NormVector (treeNml);
 
         ETR_DOUBLE speed = NormVector (*vel);
@@ -206,7 +212,7 @@ void CControl::CheckItemCollection (const TVector3& pos) {
 
 		ETR_DOUBLE diam = items[i].diam;
 		ETR_DOUBLE height = items[i].height;
-		TVector3 loc = items[i].pt;
+		const TVector3& loc = items[i].pt;
 
 		TVector3 distvec(loc.x - pos.x, 0.0, loc.z - pos.z);
 		ETR_DOUBLE squared_dist =  (diam / 2. + 0.6);
@@ -252,19 +258,16 @@ void CControl::AdjustPosition (const TPlane& surf_plane, ETR_DOUBLE dist_from_su
 
 void CControl::SetTuxPosition (ETR_DOUBLE speed) {
 	CCharShape *shape = Char.GetShape (g_game.char_id);
-	ETR_DOUBLE playWidth, playLength;
-	ETR_DOUBLE courseWidth, courseLength;
-
-	Course.GetPlayDimensions (&playWidth, &playLength);
-	Course.GetDimensions (&courseWidth, &courseLength);
-	ETR_DOUBLE boundaryWidth = (courseWidth - playWidth) / 2;
+	TVector2 playSize = Course.GetPlayDimensions();
+	TVector2 courseSize = Course.GetDimensions();
+	ETR_DOUBLE boundaryWidth = (courseSize.x - playSize.x) / 2;
 	if (cpos.x < boundaryWidth) cpos.x = boundaryWidth;
-	if (cpos.x > courseWidth - boundaryWidth) cpos.x = courseWidth - boundaryWidth;
+	if (cpos.x > courseSize.x - boundaryWidth) cpos.x = courseSize.x - boundaryWidth;
 	if (cpos.z > 0) cpos.z = 0;
 
 	if (g_game.finish == false) {
 /// ------------------- finish --------------------------------
-		if (-cpos.z >= playLength) {
+		if (-cpos.z >= playSize.y) {
 			if (g_game.use_keyframe) {
 				g_game.finish = true;
 				finish_speed = speed;
@@ -344,10 +347,9 @@ TVector3 CControl::CalcJumpForce () {
     }
     if ((jumping) && (g_game.time - jump_start_time < JUMP_FORCE_DURATION)) {
 		ETR_DOUBLE y = 294 + jump_amt * 294; // jump_amt goes from 0 to 1
-		jumpforce = TVector3 (0, y, 0);
+		jumpforce.y = y;
 
     } else {
-		jumpforce = TVector3 (0, 0, 0);
 		jumping = false;
     }
 	return ScaleVector (1.0, jumpforce); // normally 1.0
@@ -407,7 +409,7 @@ TVector3 CControl::CalcPaddleForce (ETR_DOUBLE speed) {
 
      if (is_paddling) {
 		if (cairborne) {
-			paddleforce = TVector3 (0, 0, -TUX_MASS * EARTH_GRAV / 4.0);
+			paddleforce.z = -TUX_MASS * EARTH_GRAV / 4.0;
 			paddleforce = RotateVector (corientation, paddleforce);
 		} else {
 		    paddleforce = ScaleVector (-1 * min (MAX_PADD_FORCE, MAX_PADD_FORCE

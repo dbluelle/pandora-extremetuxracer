@@ -15,6 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "keyframe.h"
 #include "course.h"
 #include "spx.h"
@@ -202,7 +206,7 @@ void CKeyframe::CalcKeyframe (size_t idx, CCharShape *shape, const TVector3& ref
 
 	shape->ResetRoot ();
 	shape->ResetJoints ();
-    shape->TranslateNode (0, TVector3(pos.x, pos.y, pos.z));
+	shape->TranslateNode (0, pos);
 
     vv = frames[idx].val[4];
     shape->RotateNode ("root", 2, vv);
@@ -250,7 +254,7 @@ void CKeyframe::CalcKeyframe (size_t idx, CCharShape *shape, const TVector3& ref
     shape->RotateNode ("right_ankle", 3, vv);
 }
 
-void CKeyframe::Update (ETR_DOUBLE timestep, CControl *ctrl) {
+void CKeyframe::Update (ETR_DOUBLE timestep) {
 	if (!loaded) return;
 	if (!active) return;
 

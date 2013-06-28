@@ -15,6 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "textures.h"
 #include "spx.h"
 #include "course.h"
@@ -598,7 +602,7 @@ void CTexture::LoadTextureList () {
 			int id = SPIntN (line, "id", -1);
 			CommonTex.resize(max(CommonTex.size(), (size_t)id+1));
 			string texfile = SPStrN (line, "file", "");
-			bool rep = SPIntN (line, "repeat", 0) != 0;
+			bool rep = SPBoolN (line, "repeat", false);
 			if (id >= 0) {
 				CommonTex[id] = new TTexture();
 				if (rep)
@@ -647,7 +651,8 @@ bool CTexture::BindTex (const string& name) {
 // ---------------------------- Draw ----------------------------------
 
 void CTexture::Draw (size_t idx) {
-	CommonTex[idx]->Draw();
+	if(CommonTex.size() > idx)
+		CommonTex[idx]->Draw();
 }
 
 void CTexture::Draw (const string& name) {
@@ -655,7 +660,8 @@ void CTexture::Draw (const string& name) {
 }
 
 void CTexture::Draw (size_t idx, int x, int y, float size) {
-	CommonTex[idx]->Draw(x, y, size, forientation);
+	if(CommonTex.size() > idx)
+		CommonTex[idx]->Draw(x, y, size, forientation);
 }
 
 void CTexture::Draw (const string& name, int x, int y, float size) {
@@ -663,7 +669,8 @@ void CTexture::Draw (const string& name, int x, int y, float size) {
 }
 
 void CTexture::Draw (size_t idx, int x, int y, int width, int height) {
-	CommonTex[idx]->Draw (x, y, width, height, forientation);
+	if(CommonTex.size() > idx)
+		CommonTex[idx]->Draw (x, y, width, height, forientation);
 }
 
 void CTexture::Draw (const string& name, int x, int y, int width, int height) {
@@ -671,7 +678,8 @@ void CTexture::Draw (const string& name, int x, int y, int width, int height) {
 }
 
 void CTexture::DrawFrame (size_t idx, int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col) {
-	CommonTex[idx]->DrawFrame (x, y, w, h, frame, col);
+	if(CommonTex.size() > idx)
+		CommonTex[idx]->DrawFrame (x, y, w, h, frame, col);
 }
 
 void CTexture::DrawFrame (const string& name, int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col) {

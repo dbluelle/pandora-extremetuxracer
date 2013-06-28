@@ -1,3 +1,8 @@
+
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "textures.h"
 #include "course.h"
 #include "ogl.h"
@@ -51,12 +56,12 @@
 
 TTexture* quadsquare::EnvmapTexture = NULL;
 #ifdef USE_GLES1
-GLushort *quadsquare::VertexArrayIndices = (GLushort*) NULL;
+GLushort *quadsquare::VertexArrayIndices = NULL;
 GLushort quadsquare::VertexArrayCounter;
 GLushort quadsquare::VertexArrayMinIdx;
 GLushort quadsquare::VertexArrayMaxIdx;
 #else
-GLuint *quadsquare::VertexArrayIndices = (GLuint*) NULL;
+GLuint *quadsquare::VertexArrayIndices = NULL;
 GLuint quadsquare::VertexArrayCounter;
 GLuint quadsquare::VertexArrayMinIdx;
 GLuint quadsquare::VertexArrayMaxIdx;
@@ -225,7 +230,7 @@ float quadsquare::RecomputeError(const quadcornerdata& cd)
 	MinY = Vertex[0].Y;
 
 	for (int i = 0; i < 4; i++) {
-		float	y = cd.Verts[i].Y;
+		float y = cd.Verts[i].Y;
 		if (y < MinY) MinY = y;
 		if (y > MaxY) MaxY = y;
 	}
@@ -456,7 +461,7 @@ void quadsquare::StaticCullAux(const quadcornerdata& cd, float ThresholdDetail, 
 		}
 	}
 
-	bool	StaticChildren = false;
+	bool StaticChildren = false;
 	for (int i = 0; i < 4; i++) {
 		if (Child[i]) {
 			StaticChildren = true;
@@ -498,14 +503,14 @@ void quadsquare::EnableEdgeVertex(int index, bool IncrementCount, const quadcorn
 		SubEnabledCount[index & 1]++;
 	}
 	quadsquare*	p = this;
-	const quadcornerdata*	pcd = &cd;
+	const quadcornerdata* pcd = &cd;
 	for (;;) {
 		int	ci = pcd->ChildIndex;
 		if (pcd->Parent == NULL || pcd->Parent->Square == NULL) return;
 		p = pcd->Parent->Square;
 		pcd = pcd->Parent;
 
-		bool	SameParent = ((index - ci) & 2) ? true : false;
+		bool SameParent = ((index - ci) & 2) ? true : false;
 
 		ci = ci ^ 1 ^ ((index & 1) << 1);
 
@@ -828,7 +833,7 @@ void quadsquare::Render (const quadcornerdata& cd, GLubyte *vnc_array) {
 	bool fog_on;
 	int nx, ny;
 	Course.GetDivisions (&nx, &ny);
-	TTerrType *TerrList = &Course.TerrList[0];
+	const TTerrType *TerrList = &Course.TerrList[0];
 
 	size_t numTerrains = Course.TerrList.size();
 	//	fog_on = is_fog_on ();
@@ -902,10 +907,6 @@ void quadsquare::Render (const quadcornerdata& cd, GLubyte *vnc_array) {
 
 clip_result_t quadsquare::ClipSquare (const quadcornerdata& cd)
 {
-	TVector3	min, max;
-	clip_result_t clip_result;
-	int	whole = 2 << cd.Level;
-
 	if (cd.xorg >= RowSize-1) {
 		return NotVisible;
 	}
@@ -914,6 +915,8 @@ clip_result_t quadsquare::ClipSquare (const quadcornerdata& cd)
 		return NotVisible;
 	}
 
+	int whole = 2 << cd.Level;
+	TVector3 min, max;
 	min.x = cd.xorg * ScaleX;
 	min.y = MinY;
 	min.z =  cd.zorg * ScaleZ;
@@ -932,7 +935,7 @@ clip_result_t quadsquare::ClipSquare (const quadcornerdata& cd)
 		max.z = tmp;
 	}
 
-	clip_result = clip_aabb_to_view_frustum(min, max);
+	clip_result_t clip_result = clip_aabb_to_view_frustum(min, max);
 
 	if (clip_result == NotVisible || clip_result == SomeClip) {
 		return clip_result;
@@ -1211,8 +1214,8 @@ static int get_root_level (int nx, int nz)
 {
 	int xlev, zlev;
 
-	xlev = (int) (log(nx) / log (2.0));
-	zlev = (int) (log(nz) / log (2.0));
+	xlev = (int) (log(static_cast<double>(nx)) / log (2.0));
+	zlev = (int) (log(static_cast<double>(nz)) / log (2.0));
 	if ((nx >> xlev) << xlev == nx) {
 	} else nx += 1;
 
@@ -1267,7 +1270,7 @@ void InitQuadtree (ETR_DOUBLE *elevation, int nx, int nz,
 	TVector3o_float_array (ViewerLoc, view_pos);
 
 	for (int i = 0; i < 10; i++) {
-		root->Update(root_corner_data, (const float*) ViewerLoc, detail);
+		root->Update(root_corner_data, ViewerLoc, detail);
 	}
 }
 
@@ -1289,8 +1292,7 @@ void UpdateQuadtree (const TVector3& view_pos, float detail) {
 }
 
 void RenderQuadtree() {
-	GLubyte *vnc_array;
-	Course.GetGLArrays (&vnc_array);
+	GLubyte *vnc_array = Course.GetGLArrays();
 #ifdef USE_GLES1
 	vnc_array += currvertexstartindex*STRIDE_GL_ARRAY;
     glEnableClientState (GL_VERTEX_ARRAY);

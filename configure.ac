@@ -2,11 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.61])
-AC_INIT([etr], [0.6], [BUG-REPORT-ADDRESS])
+AC_INIT([etr], [0.6-beta1], [BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([gui.cpp])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([etr_config.h])
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([dist-xz dist-zip])
 
 AC_CANONICAL_HOST
 
@@ -31,12 +31,16 @@ AC_TYPE_SIZE_T
 #
 case "$host_os" in
   *linux*)
-     CXXFLAGS="$CXXFLAGS -DOS_LINUX" ;;
+     AC_DEFINE([OS_LINUX], [1], [Linux build]) ;;
+  *mingw32*)
+     AC_DEFINE([OS_WIN32_MINGW], [1], [MinGW build]) ;;
+  *darwin*)
+     AC_DEFINE([OS_MAC], [1], [Mac OS X build]) ;;
 esac
 
 # Checks for library functions.
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([floor getcwd memmove memset mkdir pow sqrt strchr])
+AC_CHECK_FUNCS([floor getcwd memmove memset mkdir pow sqrt strchr strdup])
 
 AM_PATH_SDL([1.0.0])
 CFLAGS="$CFLAGS $SDL_CFLAGS"
@@ -68,6 +72,8 @@ CXXFLAGS="${CXXFLAGS} -std=c++11"
 
 AC_CONFIG_FILES([
         Makefile
+        build/Makefile
+        build/Installer/Makefile
         data/Makefile
         data/char/Makefile
         data/char/beastie/Makefile

@@ -15,6 +15,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "bh.h"
 #include "course.h"
 #include "textures.h"
@@ -73,23 +77,13 @@ ETR_DOUBLE CCourse::GetCourseAngle () const {
 	return curr_course->angle;
 }
 
-void CCourse::GetDimensions (ETR_DOUBLE *w, ETR_DOUBLE *l) const {
-    *w = curr_course->width;
-    *l = curr_course->length;
-}
-
-void CCourse::GetPlayDimensions (ETR_DOUBLE *pw, ETR_DOUBLE *pl) const {
-    *pw = curr_course->play_width;
-    *pl = curr_course->play_length;
-}
-
 void CCourse::GetDivisions (int *x, int *y) const {
     *x = nx;
     *y = ny;
 }
 
-void CCourse::GetGLArrays (GLubyte **vnc_arr) const {
-	*vnc_arr = vnc_array;
+GLubyte* CCourse::GetGLArrays() const {
+	return vnc_array;
 }
 
 const TPolyhedron& CCourse::GetPoly (size_t type) const {
@@ -265,9 +259,9 @@ void CCourse::FillGlArrays() {
 		for (int y=0; y<ny; y++) {
 			int idx = STRIDE_GL_ARRAY * (y * nx + x);
 
-			FLOATVAL(0) = (GLfloat)x / (nx-1.0) * curr_course->width;
+			FLOATVAL(0) = (GLfloat)x / (nx-1.0) * curr_course->size.x;
 			FLOATVAL(1) = elevation[(x) + nx*(y)];
-			FLOATVAL(2) = -(GLfloat)y / (ny-1.0) * curr_course->length;
+			FLOATVAL(2) = -(GLfloat)y / (ny-1.0) * curr_course->size.y;
 #ifdef USE_GLES1
 			FLOATVAL(3) = ((GLfloat) (x%12 > 6 ? 12 - (x%12) : x%12) )/6.0f;
 			FLOATVAL(4) = ((GLfloat) (y%12 > 6 ? 12 - (y%12) : y%12) )/6.0f;
@@ -404,7 +398,7 @@ bool CCourse::LoadElevMap () {
 			elevation [(nx-1-x) + nx * (ny-1-y)] =
 				((img.data [(x+nx*y) * img.depth + pad]
 			    - base_height_value) / 255.0) * curr_course->scale
-				- (ETR_DOUBLE)(ny-1-y) / ny * curr_course->length * slope;
+				- (ETR_DOUBLE)(ny-1-y) / ny * curr_course->size.y * slope;
 	     }
         pad += (nx * img.depth) % 4;
     }
@@ -431,8 +425,8 @@ void CCourse::LoadItemList () {
 		int z = SPIntN (line, "z", 0);
 		ETR_DOUBLE height = SPFloatN (line, "height", 1);
 		ETR_DOUBLE diam = SPFloatN (line, "diam", 1);
-		ETR_DOUBLE xx = (nx - x) / (ETR_DOUBLE)(nx - 1.0) * curr_course->width;
-		ETR_DOUBLE zz = -(ny - z) / (ETR_DOUBLE)(ny - 1.0) * curr_course->length;
+		ETR_DOUBLE xx = (nx - x) / (ETR_DOUBLE)(nx - 1.0) * curr_course->size.x;
+		ETR_DOUBLE zz = -(ny - z) / (ETR_DOUBLE)(ny - 1.0) * curr_course->size.y;
 
 		string name = SPStrN (line, "name", "");
 		size_t type = ObjectIndex[name];
@@ -524,8 +518,8 @@ bool CCourse::LoadObjectMap () {
 			int type = GetObject (&treeImg.data[imgidx]);
 			if (type >= 0) {
 				cnt++;
-				ETR_DOUBLE xx = (nx - x) / (ETR_DOUBLE)(nx - 1.0) * curr_course->width;
-				ETR_DOUBLE zz = -(ny - y) / (ETR_DOUBLE)(ny - 1.0) * curr_course->length;
+				ETR_DOUBLE xx = (nx - x) / (ETR_DOUBLE)(nx - 1.0) * curr_course->size.x;
+				ETR_DOUBLE zz = -(ny - y) / (ETR_DOUBLE)(ny - 1.0) * curr_course->size.y;
 				if (ObjTypes[type].texture == NULL && ObjTypes[type].drawable) {
 					string terrpath = param.obj_dir + SEP + ObjTypes[type].textureFile;
 					ObjTypes[type].texture = new TTexture();
@@ -612,18 +606,18 @@ bool CCourse::LoadObjectTypes () {
 		ObjTypes[i].textureFile = ObjTypes[i].name;
 		ObjTypes[i].texture = NULL;
 
-		ObjTypes[i].drawable = SPIntN (line, "draw", 1) != 0;
+		ObjTypes[i].drawable = SPBoolN (line, "draw", true);
 		if (ObjTypes[i].drawable) {
 			ObjTypes[i].textureFile = SPStrN (line, "texture", "");
 		}
-		ObjTypes[i].collectable = SPIntN (line, "snap", -1) != 0;
+		ObjTypes[i].collectable = SPBoolN (line, "snap", -1) != 0;
 		if (ObjTypes[i].collectable == 0) {
 			ObjTypes[i].collectable = -1;
 		}
 
-		ObjTypes[i].collidable = SPIntN (line, "coll", 0) != 0;
-		ObjTypes[i].reset_point = SPIntN (line, "reset", 0) != 0;
-		ObjTypes[i].use_normal = SPIntN (line, "usenorm", 0) != 0;
+		ObjTypes[i].collidable = SPBoolN (line, "coll", false);
+		ObjTypes[i].reset_point = SPBoolN (line, "reset", false);
+		ObjTypes[i].use_normal = SPBoolN (line, "usenorm", false);
 
 		if (ObjTypes[i].use_normal) {
 			ObjTypes[i].normal = SPVector3N (line, "norm", TVector3(0, 1, 0));
@@ -673,14 +667,10 @@ bool CCourse::LoadTerrainTypes () {
 		TerrList[i].col = SPColor3N (line, "col", TColor3(1, 1, 1));
 		TerrList[i].friction = SPFloatN (line, "friction", 0.5);
 		TerrList[i].depth = SPFloatN (line, "depth", 0.01);
-		TerrList[i].particles = SPIntN (line, "part", 0) != 0;
-		TerrList[i].trackmarks = SPIntN (line, "trackmarks", 0) != 0;
+		TerrList[i].particles = SPBoolN (line, "part", false);
+		TerrList[i].trackmarks = SPBoolN (line, "trackmarks", false);
 		TerrList[i].texture = NULL;
-		if (SPIntN (line, "shiny", 0) > 0) {
-			TerrList[i].shiny = true;
-		} else {
-			TerrList[i].shiny = false;
-		}
+		TerrList[i].shiny = SPBoolN(line, "shiny", false);
 		TerrList[i].vol_type = SPIntN (line, "vol_type", 1);
 	}
 	return true;
@@ -739,11 +729,11 @@ bool CCourse::LoadCourseList () {
 
 	CourseList.resize(list.Count());
 	for (size_t i=0; i<list.Count(); i++) {
-		string line = list.Line(i);
-		CourseList[i].name = SPStrN (line, "name", "noname");
-		CourseList[i].dir = SPStrN (line, "dir", "nodir");
+		const string& line1 = list.Line(i);
+		CourseList[i].name = SPStrN (line1, "name", "noname");
+		CourseList[i].dir = SPStrN (line1, "dir", "nodir");
 
-		string desc = SPStrN (line, "desc", "");
+		string desc = SPStrN (line1, "desc", "");
 		FT.AutoSizeN (2);
 		vector<string> desclist = FT.MakeLineList (desc.c_str(), 335 * Winsys.scale - 16.0);
 		size_t cnt = desclist.size();
@@ -769,20 +759,20 @@ bool CCourse::LoadCourseList () {
 				Message ("could not load course.dim");
 			}
 
-			line = paramlist.Line (0);
-			CourseList[i].author = SPStrN (line, "author", "unknown");
-			CourseList[i].width = SPFloatN (line, "width", 100);
-			CourseList[i].length = SPFloatN (line, "length", 1000);
-			CourseList[i].play_width = SPFloatN (line, "play_width", 90);
-			CourseList[i].play_length = SPFloatN (line, "play_length", 900);
-			CourseList[i].angle = SPFloatN (line, "angle", 10);
-			CourseList[i].scale = SPFloatN (line, "scale", 10);
-			CourseList[i].startx = SPFloatN (line, "startx", 50);
-			CourseList[i].starty = SPFloatN (line, "starty", 5);
-			CourseList[i].env = Env.GetEnvIdx (SPStrN (line, "env", "etr"));
-			CourseList[i].music_theme = Music.GetThemeIdx (SPStrN (line, "theme", "normal"));
-			CourseList[i].use_keyframe = SPIntN (line, "use_keyframe", 0) != 0;
-			CourseList[i].finish_brake = SPFloatN (line, "finish_brake", 20);
+			const string& line2 = paramlist.Line (0);
+			CourseList[i].author = SPStrN (line2, "author", "unknown");
+			CourseList[i].size.x = SPFloatN (line2, "width", 100);
+			CourseList[i].size.y = SPFloatN (line2, "length", 1000);
+			CourseList[i].play_size.x = SPFloatN (line2, "play_width", 90);
+			CourseList[i].play_size.y = SPFloatN (line2, "play_length", 900);
+			CourseList[i].angle = SPFloatN (line2, "angle", 10);
+			CourseList[i].scale = SPFloatN (line2, "scale", 10);
+			CourseList[i].start.x = SPFloatN (line2, "startx", 50);
+			CourseList[i].start.y = SPFloatN (line2, "starty", 5);
+			CourseList[i].env = Env.GetEnvIdx (SPStrN (line2, "env", "etr"));
+			CourseList[i].music_theme = Music.GetThemeIdx (SPStrN (line2, "theme", "normal"));
+			CourseList[i].use_keyframe = SPBoolN (line2, "use_keyframe", false);
+			CourseList[i].finish_brake = SPFloatN (line2, "finish_brake", 20);
 			paramlist.Clear ();	// the list is used several times
 		}
 	}
@@ -826,8 +816,8 @@ bool CCourse::LoadCourse (size_t idx) {
 		curr_course = &CourseList[idx];
 		CourseDir = param.common_course_dir + SEP + curr_course->dir;
 
-		start_pt.x = CourseList[idx].startx;
-		start_pt.y = -CourseList[idx].starty;
+		start_pt.x = CourseList[idx].start.x;
+		start_pt.y = -CourseList[idx].start.y;
 		base_height_value = 127;
 
 		g_game.use_keyframe = CourseList[idx].use_keyframe;
@@ -849,7 +839,7 @@ bool CCourse::LoadCourse (size_t idx) {
 		// ................................................................
 		string itemfile = CourseDir + SEP + "items.lst";
 		bool itemsexists = FileExists (itemfile);
-		CControl *ctrl = Players.GetCtrl (g_game.player_id);
+		const CControl *ctrl = Players.GetCtrl (g_game.player_id);
 
 		if (itemsexists && !g_game.force_treemap) {
 			SaveItemsFlag = false;
@@ -864,8 +854,8 @@ bool CCourse::LoadCourse (size_t idx) {
 		init_track_marks ();
 		InitQuadtree (
 			elevation, nx, ny,
-			curr_course->width / (nx - 1.0),
-			-curr_course->length / (ny - 1.0),
+			curr_course->size.x / (nx - 1.0),
+			-curr_course->size.y / (ny - 1.0),
 			ctrl->viewpos,
 			param.course_detail_level);
 	}
@@ -905,12 +895,12 @@ void CCourse::MirrorCourseData () {
     }
 
     for (size_t i=0; i<CollArr.size(); i++) {
-		CollArr[i].pt.x = curr_course->width - CollArr[i].pt.x;
+		CollArr[i].pt.x = curr_course->size.x - CollArr[i].pt.x;
 		CollArr[i].pt.y = FindYCoord (CollArr[i].pt.x, CollArr[i].pt.z);
     }
 
     for (size_t i=0; i<NocollArr.size(); i++) {
-		NocollArr[i].pt.x = curr_course->width - NocollArr[i].pt.x;
+		NocollArr[i].pt.x = curr_course->size.x - NocollArr[i].pt.x;
 		NocollArr[i].pt.y = FindYCoord (NocollArr[i].pt.x, NocollArr[i].pt.z);
     }
 
@@ -918,17 +908,17 @@ void CCourse::MirrorCourseData () {
 
     ResetQuadtree ();
     if (nx > 0 && ny > 0) {
-		CControl *ctrl = Players.GetCtrl (g_game.player_id);
-		InitQuadtree (elevation, nx, ny, curr_course->width/(nx-1),
-			- curr_course->length/(ny-1), ctrl->viewpos, param.course_detail_level);
+		const CControl *ctrl = Players.GetCtrl (g_game.player_id);
+		InitQuadtree (elevation, nx, ny, curr_course->size.x/(nx-1),
+			- curr_course->size.y/(ny-1), ctrl->viewpos, param.course_detail_level);
     }
 
-    start_pt.x = curr_course->width - start_pt.x;
+    start_pt.x = curr_course->size.x - start_pt.x;
 }
 
 void CCourse::MirrorCourse () {
-		MirrorCourseData ();
-		init_track_marks ();
+	MirrorCourseData ();
+	init_track_marks ();
 }
 
 // ********************************************************************
@@ -938,8 +928,8 @@ void CCourse::MirrorCourse () {
 void CCourse::GetIndicesForPoint
 		(ETR_DOUBLE x, ETR_DOUBLE z, int *x0, int *y0, int *x1, int *y1) const {
 
-	ETR_DOUBLE xidx = x / curr_course->width * ((ETR_DOUBLE) nx - 1.);
-	ETR_DOUBLE yidx = -z / curr_course->length *  ((ETR_DOUBLE) ny - 1.);
+	ETR_DOUBLE xidx = x / curr_course->size.x * ((ETR_DOUBLE) nx - 1.);
+	ETR_DOUBLE yidx = -z / curr_course->size.y *  ((ETR_DOUBLE) ny - 1.);
 
     if (xidx < 0) xidx = 0;
     else if (xidx > nx-1) xidx = nx-1;
@@ -968,8 +958,8 @@ void CCourse::FindBarycentricCoords (ETR_DOUBLE x, ETR_DOUBLE z, TIndex2 *idx0,
     ETR_DOUBLE dx, ex, dz, ez, qx, qz, invdet;
 
     GetIndicesForPoint (x, z, &x0, &y0, &x1, &y1);
-    xidx = x / curr_course->width * ((ETR_DOUBLE) nx - 1.);
-    yidx = -z / curr_course->length * ((ETR_DOUBLE) ny - 1.);
+    xidx = x / curr_course->size.x * ((ETR_DOUBLE) nx - 1.);
+    yidx = -z / curr_course->size.y * ((ETR_DOUBLE) ny - 1.);
 
     if ((x0 + y0) % 2 == 0) {
 		if (yidx - y0 < xidx - x0) {
@@ -1005,8 +995,8 @@ void CCourse::FindBarycentricCoords (ETR_DOUBLE x, ETR_DOUBLE z, TIndex2 *idx0,
     *v = (qz * dx - qx * dz) * invdet;
 }
 
-#define COURSE_VERTX(x,y) TVector3 ( (ETR_DOUBLE)(x)/(nx-1.)*curr_course->width, \
-                       ELEV((x),(y)), -(ETR_DOUBLE)(y)/(ny-1.)*curr_course->length )
+#define COURSE_VERTX(_x, _y) TVector3 ( (ETR_DOUBLE)(_x)/(nx-1.)*curr_course->size.x, \
+                       ELEV((_x),(_y)), -(ETR_DOUBLE)(_y)/(ny-1.)*curr_course->size.y )
 
 TVector3 CCourse::FindCourseNormal (ETR_DOUBLE x, ETR_DOUBLE z) const {
 
@@ -1018,29 +1008,29 @@ TVector3 CCourse::FindCourseNormal (ETR_DOUBLE x, ETR_DOUBLE z) const {
     ETR_DOUBLE u, v;
     FindBarycentricCoords (x, z, &idx0, &idx1, &idx2, &u, &v);
 
-	TVector3 n0 = Course.nmls[ idx0.i + nx * idx0.j ];
-	TVector3 n1 = Course.nmls[ idx1.i + nx * idx1.j ];
-	TVector3 n2 = Course.nmls[ idx2.i + nx * idx2.j ];
+	const TVector3& n0 = Course.nmls[ idx0.i + nx * idx0.j ];
+	const TVector3& n1 = Course.nmls[ idx1.i + nx * idx1.j ];
+	const TVector3& n2 = Course.nmls[ idx2.i + nx * idx2.j ];
 
 	TVector3 p0 = COURSE_VERTX (idx0.i, idx0.j);
 	TVector3 p1 = COURSE_VERTX (idx1.i, idx1.j);
 	TVector3 p2 = COURSE_VERTX (idx2.i, idx2.j);
 
 	TVector3 smooth_nml = AddVectors (
-	ScaleVector (u, n0),
-	AddVectors (ScaleVector (v, n1), ScaleVector (1.-u-v, n2)));
-
+				ScaleVector (u, n0),
+				AddVectors (ScaleVector (v, n1), ScaleVector (1.-u-v, n2)));
+	
 	TVector3 tri_nml = CrossProduct (
-	SubtractVectors (p1, p0), SubtractVectors (p2, p0));
+				SubtractVectors (p1, p0), SubtractVectors (p2, p0));
     NormVector (tri_nml);
 
 	ETR_DOUBLE min_bary = min (u, min (v, 1. - u - v));
 	ETR_DOUBLE interp_factor = min (min_bary / NORM_INTERPOL, 1.0);
 
 	TVector3 interp_nml = AddVectors (
-	ScaleVector (interp_factor, tri_nml),
-	ScaleVector (1.-interp_factor, smooth_nml));
-    NormVector (interp_nml);
+				ScaleVector (interp_factor, tri_nml),
+				ScaleVector (1.-interp_factor, smooth_nml));
+	NormVector (interp_nml);
 
     return interp_nml;
 }

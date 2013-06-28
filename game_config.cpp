@@ -35,6 +35,10 @@ Then edit the below functions:
 	new entry.
 */
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "game_config.h"
 #include "spx.h"
 #include "translation.h"
@@ -52,7 +56,7 @@ void LoadConfigFile () {
 	for (size_t i=0; i<list.Count(); i++) {
 		const string& line = list.Line(i);
 
-		param.fullscreen = SPIntN (line, "fullscreen", 0) != 0;
+		param.fullscreen = SPBoolN (line, "fullscreen", false);
 		param.res_type = SPIntN (line, "res_type", 0);
 		param.perf_level = SPIntN (line, "detail_level", 0);
 		param.language = SPIntN (line, "language", 0);
@@ -68,13 +72,13 @@ void LoadConfigFile () {
 		param.tux_shadow_sphere_divisions = SPIntN (line, "tux_shadow_sphere_div", 3);
 		param.course_detail_level = SPIntN (line, "course_detail_level", 75);
 
-		param.use_papercut_font = SPIntN (line, "use_papercut_font", true);
-		param.ice_cursor = SPIntN (line, "ice_cursor", 1) != 0;
-		param.full_skybox = SPIntN (line, "full_skybox", 0) != 0;
+		param.use_papercut_font = SPIntN (line, "use_papercut_font", 1);
+		param.ice_cursor = SPBoolN (line, "ice_cursor", true);
+		param.full_skybox = SPBoolN (line, "full_skybox", false);
 		param.audio_freq = SPIntN (line, "audio_freq", 22050);
 		param.audio_buffer_size = SPIntN (line, "audio_buffer_size", 512);
-		param.restart_on_res_change = SPIntN (line, "restart_on_res_change", 0);
-		param.use_quad_scale = SPIntN (line, "use_quad_scale", 0);
+		param.restart_on_res_change = SPBoolN (line, "restart_on_res_change", false);
+		param.use_quad_scale = SPBoolN (line, "use_quad_scale", false);
 
 		param.menu_music = SPStrN (line, "menu_music", "start_1");
 		param.credits_music = SPStrN (line, "credits_music", "credits_1");
@@ -106,8 +110,8 @@ void SetConfigDefaults () {
 	param.use_papercut_font = 1;
 	param.ice_cursor = true;
 	param.full_skybox = false;
-	param.restart_on_res_change = 0;
-	param.use_quad_scale = 0;
+	param.restart_on_res_change = false;
+	param.use_quad_scale = false;
 
 	param.menu_music = "start_1";
 	param.credits_music = "credits_1";
@@ -126,8 +130,7 @@ void AddIntItem (CSPList &list, const string& tag, int val) {
 }
 
 void AddComment (CSPList &list, const string& comment) {
-	string line;
-	line = "# " + comment;
+	string line = "# " + comment;
 	list.Add (line);
 }
 
@@ -277,7 +280,7 @@ void SaveConfigFile () {
 
 // --------------------------------------------------------------------
 
-void InitConfig (char *arg0) {
+void InitConfig (const char *arg0) {
 #if defined (OS_WIN32_MINGW) || defined (OS_WIN32_MSC)
 	// the progdir is always the current dir
 	param.config_dir = "config";
@@ -288,7 +291,7 @@ void InitConfig (char *arg0) {
 #if 0
 	char buff[256];
 
-	if (strcmp (arg0, "./etr") == 0) { 		// start from work directory
+	if (strcmp (arg0, "./etr") == 0) {		// start from work directory
 		char *s = getcwd (buff, 256);
 		if (s==NULL) {};
 	} else {                                        // start with full path
@@ -343,14 +346,13 @@ void InitConfig (char *arg0) {
 	param.show_hud = true;
 
 	if (FileExists (param.configfile)) {
-//		SetConfigDefaults ();
 		LoadConfigFile ();
 	} else {
 		SetConfigDefaults ();
 		SaveConfigFile ();
 	}
-	string playerfile = param.config_dir + SEP + PLAYER_FILE;
+	/*string playerfile = param.config_dir + SEP + PLAYER_FILE;
 	if (FileExists (playerfile)) {
 	} else {
-	}
+	}*/
 }

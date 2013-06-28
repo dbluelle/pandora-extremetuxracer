@@ -14,6 +14,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "audio.h"
 #include "spx.h"
 
@@ -194,7 +198,7 @@ void CSound::HaltAll () {
 
 void Hook () {
 	Mix_HaltMusic();
-	PrintString ("halted");
+	PrintStr ("halted");
 }
 
 CMusic::CMusic () {

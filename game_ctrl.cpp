@@ -14,6 +14,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "game_ctrl.h"
 #include "spx.h"
 #include "course.h"
@@ -152,10 +156,6 @@ bool CEvents::IsUnlocked (size_t event, size_t cup) const {
 
 CPlayers Players;
 
-CPlayers::CPlayers () {
-	currPlayer = 0;
-}
-
 CPlayers::~CPlayers() {
 	ResetControls();
 	for(size_t i = 0; i < avatars.size(); i++)
@@ -237,20 +237,21 @@ void CPlayers::SavePlayers () const {
 }
 
 const string& CPlayers::GetCurrUnlocked () const {
-	return plyr[currPlayer].funlocked;
+	return plyr[g_game.player_id].funlocked;
 }
 
 void CPlayers::AddPassedCup (const string& cup) {
-	if (SPIntN (plyr[currPlayer].funlocked, cup, -1) > 0) return;
-	plyr[currPlayer].funlocked += " ";
-	plyr[currPlayer].funlocked += cup;
+	if (SPIntN (plyr[g_game.player_id].funlocked, cup, -1) > 0) return;
+	plyr[g_game.player_id].funlocked += " ";
+	plyr[g_game.player_id].funlocked += cup;
 }
 
-CControl *CPlayers::GetCtrl () const {
-	return plyr[currPlayer].ctrl;
+CControl *CPlayers::GetCtrl (size_t player) {
+	if (player >= plyr.size()) return NULL;
+	return plyr[player].ctrl;
 }
 
-CControl *CPlayers::GetCtrl (size_t player) const {
+const CControl *CPlayers::GetCtrl (size_t player) const {
 	if (player >= plyr.size()) return NULL;
 	return plyr[player].ctrl;
 }

@@ -1,4 +1,18 @@
-SUBDIRS = data
+
+EXTRA_DIST = \
+	GPLv3.rtf
+	Installer.wixproj
+	config.wxi
+	extremetuxracer.wxs
+	productInfo.wxi
+SUBDIRS = Installer
+
+EXTRA_DIST = \
+	ETR.sln
+	ExtremeTuxRacer.vcxproj
+	ExtremeTuxRacer.vcxproj.filters
+	Installer.sln
+SUBDIRS = build data
 
 bin_PROGRAMS = etr
 
@@ -98,6 +112,7 @@ noinst_HEADERS =	\
 	track_marks.h	\
 	translation.h	\
 	tux.h		\
+	version.h	\
 	view.h		\
 	winsys.h
 

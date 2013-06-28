@@ -34,8 +34,8 @@ GNU General Public License for more details.
 #endif
 #define ELEV(x,y) (elevation[(x) + nx*(y)] )
 #define NORM_INTERPOL 0.05
-#define XCD(x) ((ETR_DOUBLE)(x) / (nx-1.0) * curr_course->width)
-#define ZCD(y) (-(ETR_DOUBLE)(y) / (ny-1.0) * curr_course->length)
+#define XCD(_x) ((ETR_DOUBLE)(_x) / (nx-1.0) * curr_course->size.x)
+#define ZCD(_y) (-(ETR_DOUBLE)(_y) / (ny-1.0) * curr_course->size.y)
 #define NMLPOINT(x,y) TVector3(XCD(x), ELEV(x,y), ZCD(y) )
 
 
@@ -69,14 +69,11 @@ struct TCourse {
 	string desc[MAX_DESCRIPTION_LINES];
 	size_t num_lines;
 	TTexture* preview;
-	ETR_DOUBLE width;
-	ETR_DOUBLE length;
-	ETR_DOUBLE play_width;
-	ETR_DOUBLE play_length;
-	ETR_DOUBLE angle;
+	TVector2 size;
+	TVector2 play_size;
+ 	ETR_DOUBLE angle;
 	ETR_DOUBLE scale;
-	ETR_DOUBLE startx;
-	ETR_DOUBLE starty;
+	TVector2 start;
 	size_t env;
 	size_t music_theme;
  	bool use_keyframe;
@@ -163,11 +160,11 @@ public:
 	bool LoadTerrainTypes ();
 	bool LoadObjectTypes ();
 	void MakeStandardPolyhedrons ();
-	void GetGLArrays (GLubyte **vnc_array) const;
+	GLubyte* GetGLArrays() const;
 	void FillGlArrays();
 
-	void GetDimensions (ETR_DOUBLE *w, ETR_DOUBLE *l) const;
-	void GetPlayDimensions (ETR_DOUBLE *pw, ETR_DOUBLE *pl) const;
+	const TVector2& GetDimensions() const { return curr_course->size; }
+	const TVector2& GetPlayDimensions() const { return curr_course->play_size; }
 	void GetDivisions (int *nx, int *ny) const;
 	ETR_DOUBLE GetCourseAngle () const;
 	ETR_DOUBLE GetBaseHeight (ETR_DOUBLE distance) const;

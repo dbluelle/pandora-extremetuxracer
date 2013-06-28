@@ -14,6 +14,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "spx.h"
 
 #include <sstream>
@@ -115,23 +119,11 @@ int Str_IntN (const string &s, const int def) {
 }
 
 bool Str_BoolN (const string &s, const bool def) {
-	int val;
-	istringstream is(s);
-	is >> val;
-	if (is.fail()) return def;
-	return (val != 0);
-}
-
-bool Str_BoolNX (const string &s, const bool def) {
-	static const string decode = "[0]0[1]1[true]1[false]0";
-	string valstr;
-	if (def == true) valstr = SPStrN (decode, s, "1");
-	else valstr = SPStrN (decode, s, "0");
-	int val;
-	istringstream is(valstr);
-	is >> val;
-	if (is.fail()) return def;
-	return (val != 0);
+	if(s == "0" || s == "false")
+		return false;
+	if(s == "1" || s == "true")
+		return true;
+	return Str_IntN(s, (int)def) != 0; // Try to parse as int
 }
 
 float Str_FloatN (const string &s, const float def) {
@@ -232,13 +224,9 @@ int SPIntN (const string &s, const string &tag, const int def) {
 }
 
 bool SPBoolN (const string &s, const string &tag, const bool def) {
-	return (Str_BoolN (SPItemN (s, tag), def));
-}
-
-bool SPBoolNX (const string &s, const string &tag, const bool def) {
 	string item = SPItemN (s, tag);
 	STrimN (item);
-	return Str_BoolNX (item, def);
+	return Str_BoolN (item, def);
 }
 
 float SPFloatN (const string &s, const string &tag, const float def) {
@@ -450,7 +438,7 @@ bool CSPList::Load (const string &filepath) {
 
 	bool backflag = false;
 	if (!tempfile) {
-		Message ("CSPList::Load - unable to open","");
+		Message ("CSPList::Load - unable to open " + filepath, "");
 		return false;
 	} else {
 		while (getline(tempfile, line)) {
@@ -499,7 +487,7 @@ bool CSPList::Load (const string& dir, const string& filename) {
 bool CSPList::Save (const string &filepath) const {
 	std::ofstream tempfile(filepath.c_str());
 	if (!tempfile) {
-		Message ("CSPList::Save - unable to open","");
+		Message ("CSPList::Save - unable to open " + filepath, "");
 		return false;
 	} else {
 		for (size_t i=0; i<flines.size(); i++) {

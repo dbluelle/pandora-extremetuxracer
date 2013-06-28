@@ -22,18 +22,23 @@ GNU General Public License for more details.
 //		compiler flags
 // --------------------------------------------------------------------
 
+#ifndef HAVE_CONFIG_H
+// These are detected by configure
 #define HAVE_SDL
 #define HAVE_SDL_MIXER
 #define HAVE_SDL_IMAGE
-#define HAVE_SDL_JOYSTICK
 #define STDC_HEADERS
-#define TIME_WITH_SYS_TIME
 #define HAVE_GETCWD
-#define HAVE_GETTIMEOFDAY
 #define HAVE_STRDUP
+#define HAVE_SYS_TIME_H
+#endif
+
+
+#define HAVE_SDL_JOYSTICK
+#define TIME_WITH_SYS_TIME
+#define HAVE_GETTIMEOFDAY
 #define HAVE_GL_GLEXT_H
 #define HAVE_GL_GLX_H
-#define HAVE_SYS_TIME_H
 #define USE_STENCIL_BUFFER
 
 // --------------------------------------------------------------------
@@ -96,21 +101,33 @@ void glesCleanUp();
 #include "SDL/SDL_image.h"
 #include "SDL/SDL_mixer.h"
 
+#ifndef HAVE_CONFIG_H
 #ifdef _WIN32 // Windows platform
-	#ifdef _MSC_VER // MSVC compiler
-		#include <windows.h>
-		#include "glext.h"
-		#define OS_WIN32_MSC
-		#pragma warning (disable:4244)
-		#pragma warning (disable:4305)
-		#define SEP "\\"
-		#undef DrawText
-	#else // Assume MinGW compiler
-		#include <dirent.h>
-		#include <GL/glext.h>
-		#define OS_WIN32_MINGW
-		#define SEP "/"
-	#endif
+#ifdef _MSC_VER // MSVC compiler
+#define OS_WIN32_MSC
+#else // Assume MinGW compiler
+#define OS_WIN32_MINGW
+#endif
+#else // Assume Unix platform (Linux, Mac OS X, BSD, ...)
+#ifdef __APPLE__
+#define OS_MAC
+#elif defined(__linux__)
+#define OS_LINUX
+#endif
+#endif
+#endif // CONFIG_H
+
+#if defined OS_WIN32_MSC // Windows platform
+	#include <windows.h>
+	#include "glext.h"
+	#pragma warning (disable:4244)
+	#pragma warning (disable:4305)
+	#define SEP "\\"
+	#undef DrawText
+#elif defined OS_WON32_MINGW
+	#include <dirent.h>
+	#include <GL/glext.h>
+	#define SEP "/"
 #else // Assume Unix platform (Linux, Mac OS X, BSD, ...)
 	#include <unistd.h>
 	#include <sys/types.h>
@@ -119,11 +136,6 @@ void glesCleanUp();
 	#include <sys/time.h>
 	#include <GL/glx.h>
 	#define SEP "/"
-	#ifdef __APPLE__
-		#define OS_MAC
-	#elif defined(__linux__)
-		#define OS_LINUX
-	#endif
 #endif
 
 // --------------------------------------------------------------------
@@ -144,4 +156,4 @@ using namespace std;
 
 extern TGameData g_game;
 
-#endif
+#endif // BH_H

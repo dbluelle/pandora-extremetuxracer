@@ -14,6 +14,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 ---------------------------------------------------------------------*/
 
+#ifdef HAVE_CONFIG_H
+#include <etr_config.h>
+#endif
+
 #include "score.h"
 #include "ogl.h"
 #include "textures.h"
@@ -66,7 +70,7 @@ void CScore::PrintScorelist (size_t list_idx) const {
 	const TScoreList *list = &Scorelist[list_idx];
 
 	if (list->numScores < 1) {
-		PrintString ("no entries in this score list");
+		PrintStr ("no entries in this score list");
 	} else {
 		for (int i=0; i<list->numScores; i++) {
 			string line = "player: " + list->scores[i].player;
@@ -78,7 +82,7 @@ void CScore::PrintScorelist (size_t list_idx) const {
 	}
 }
 
-TScoreList *CScore::GetScorelist (size_t list_idx) {
+const TScoreList *CScore::GetScorelist (size_t list_idx) const {
 	if (list_idx >= Scorelist.size()) return NULL;
 	return &Scorelist[list_idx];
 }
@@ -92,7 +96,7 @@ bool CScore::SaveHighScore () const {
 			int num = lst->numScores;
 			if (num > 0) {
 				for (int sc=0; sc<num; sc++) {
-					TScore score = lst->scores[sc];
+					const TScore& score = lst->scores[sc];
 					string line = "*[course] " + Course.CourseList[li].dir;
 					line += " [plyr] " + score.player;
 					line += " [pts] " + Int_StrN (score.points);
@@ -145,10 +149,8 @@ int CScore::CalcRaceResult () {
 	if (g_game.time <= g_game.time_req.z &&
 		g_game.herring >= g_game.herring_req.k) g_game.race_result = 2;
 
-	ETR_DOUBLE ll, ww;
-	Course.GetDimensions (&ww, &ll);
 	ETR_DOUBLE herringpt = g_game.herring * 10;
-	ETR_DOUBLE timept = ll - (g_game.time * 10);
+	ETR_DOUBLE timept = Course.GetDimensions().y - (g_game.time * 10);
 	g_game.score = (int)(herringpt + timept);
 	if (g_game.score < 0) g_game.score = 0;
 
@@ -263,7 +265,7 @@ void CScore::Loop (ETR_DOUBLE timestep ) {
 	FT.SetColor (colWhite);
 	FT.DrawString (area.left+20, frametop, CourseList[course->GetValue()].name);
 
-	TScoreList *list = Score.GetScorelist (course->GetValue());
+	const TScoreList *list = Score.GetScorelist (course->GetValue());
 
 	FT.SetColor (colWhite);
 	if (list != NULL) {
@@ -271,8 +273,7 @@ void CScore::Loop (ETR_DOUBLE timestep ) {
 		if (list->numScores < 1) {
 			FT.DrawString (CENTER, area.top + 140, Trans.Text(63));
 		} else {
-			if (list->numScores > MAX_SCORES) list->numScores = MAX_SCORES;
-			for (int i=0; i<list->numScores; i++) {
+			for (int i=0; i<min(MAX_SCORES, list->numScores); i++) {
 				int y = listtop + i*linedist;
 				FT.DrawString (area.left, y, ordinals[i]);
 				FT.DrawString (area.left + dd1, y, Int_StrN (list->scores[i].points));
