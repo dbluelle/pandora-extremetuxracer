@@ -174,11 +174,7 @@ void FTFont::Render (const char* string) {
     pen.X(0); pen.Y(0);
 
     while (*c) {
-#ifdef USE_GLES1
-        if(CheckGlyph (*c)) pen += glyphList->Render (*c, *(c + 1), pen);
-#else
         if(CheckGlyph (*c)) pen = glyphList->Render (*c, *(c + 1), pen);
-#endif
         ++c;
     }
 }
@@ -187,11 +183,7 @@ void FTFont::Render (const wchar_t* string) {
     const wchar_t* c = string;
     pen.X(0); pen.Y(0);
     while (*c) {
-#ifdef USE_GLES1
-        if(CheckGlyph (*c)) pen += glyphList->Render (*c, *(c + 1), pen);
-#else
         if(CheckGlyph (*c)) pen = glyphList->Render (*c, *(c + 1), pen);
-#endif
         ++c;
     }
 }
@@ -564,26 +556,6 @@ const FTPoint& FTTextureGlyph::Render (const FTPoint& pen) {
         activeTextureID = glTextureID;
     }
 
-#ifdef USE_GLES1
-        glTexCoord2f (uv[0].X(), uv[0].Y());
-        glVertex2f (pen.X()+pos.X(), pen.Y()+pos.Y());
-
-        glTexCoord2f (uv[0].X(), uv[1].Y());
-        glVertex2f (pen.X()+pos.X(), pen.Y()+pos.Y() - destHeight);
-
-        glTexCoord2f (uv[1].X(), uv[1].Y());
-        glVertex2f (pen.X()+destWidth + pos.X(), pen.Y()+pos.Y() - destHeight);
-
-        glTexCoord2f (uv[0].X(), uv[0].Y());
-        glVertex2f (pen.X()+pos.X(), pen.Y()+pos.Y());
-
-
-        glTexCoord2f (uv[1].X(), uv[0].Y());
-        glVertex2f (pen.X()+destWidth + pos.X(), pen.Y()+pos.Y());
-
-        glTexCoord2f (uv[1].X(), uv[1].Y());
-        glVertex2f (pen.X()+destWidth + pos.X(), pen.Y()+pos.Y() - destHeight);
-#else
     glTranslatef (pen.X(),  pen.Y(), 0.0f);
     glBegin (GL_QUADS);
         glTexCoord2f (uv[0].X(), uv[0].Y());
@@ -598,7 +570,6 @@ const FTPoint& FTTextureGlyph::Render (const FTPoint& pen) {
         glTexCoord2f (uv[1].X(), uv[0].Y());
         glVertex2f (destWidth + pos.X(), pos.Y());
     glEnd();
-#endif
     return advance;
 }
 
@@ -684,7 +655,12 @@ FTGlyph* FTGLTextureFont::MakeGlyph (unsigned int glyphIndex) {
 
 void FTGLTextureFont::CalculateTextureSize() {
     if (!maximumGLTextureSize) {
+#ifdef PANDORA
+		// workaround bug in PowerVR drivers
+		maximumGLTextureSize=512;
+#else
         glGetIntegerv (GL_MAX_TEXTURE_SIZE, (GLint*)&maximumGLTextureSize);
+#endif
     }
 
     textureWidth = NextPowerOf2 ((remGlyphs * glyphWidth) +  (padding * 2));
@@ -731,41 +707,27 @@ bool FTGLTextureFont::FaceSize (const unsigned int size, const unsigned int res)
 void FTGLTextureFont::Render (const char* string) {
 #ifdef USE_GLES1
     glPushAttrib (GL_COLOR_BUFFER_BIT);
-    glEnable(GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_ONE
-	glBegin(GL_TRIANGLES);
-	FTTextureGlyph::ResetActiveTexture();
-    FTFont::Render (string);
-    glEnd();
-    glPopAttrib();
 #else
     glPushAttrib (GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
+#endif
     glEnable(GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_ONE
     FTTextureGlyph::ResetActiveTexture();
     FTFont::Render (string);
     glPopAttrib();
-#endif
 }
 
 void FTGLTextureFont::Render (const wchar_t* string) {
 #ifdef USE_GLES1
     glPushAttrib (GL_COLOR_BUFFER_BIT);
-    glEnable(GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_ONE
-	glBegin(GL_TRIANGLES);
-	FTTextureGlyph::ResetActiveTexture();
-    FTFont::Render (string);
-    glEnd();
-    glPopAttrib();
 #else
     glPushAttrib (GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
+#endif
     glEnable(GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // GL_ONE
     FTTextureGlyph::ResetActiveTexture();
     FTFont::Render (string);
     glPopAttrib();
-#endif
 }
 
 // --------------------------------------------------------------------
