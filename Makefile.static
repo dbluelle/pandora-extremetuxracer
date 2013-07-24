@@ -7,9 +7,9 @@
 # OS_MAC
 
 # ----------------- Pandora ---------------------------------------------
-CFLAGS = -mcpu=cortex-a8 -mtune=cortex-a8 -mfloat-abi=softfp -ffast-math -mfpu=neon -Wall -O2  -DPANDORA -DUSE_GLES1 -fsingle-precision-constant -I/usr/local/oecore-x86_64/sysroots/armv7a-angstrom-linux-gnueabi/usr/include/freetype2
+CFLAGS = -mcpu=cortex-a8 -mtune=cortex-a8 -mfloat-abi=softfp -ffast-math -mfpu=neon -Wall -O3  -DPANDORA -DUSE_GLES1 -fsingle-precision-constant -I/usr/local/oecore-x86_64/sysroots/armv7a-angstrom-linux-gnueabi/usr/include/freetype2
 LDFLAGS = -lGLES_CM -lGLUES_CM -lEGL -lX11 -lSDL -lSDL_image -lSDL_mixer -lfreetype -lm -lstdc++
-CC = arm-angstrom-linux-gnueabi-gcc
+CC = arm-angstrom-linux-gnueabi-g++
 
 # ----------------- Linux ---------------------------------------------
 #CFLAGS = -Wall -O2 -DOS_LINUX -I/usr/include/freetype2
