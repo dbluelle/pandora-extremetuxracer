@@ -1,6 +1,6 @@
 <PXML xmlns="http://openpandora.org/namespaces/PXML">
 <package id="extremetuxracer">
-<version major="0" minor="6" release="0" build="20130629" type="beta"/>
+<version major="0" minor="6" release="0" build="20130726" type="beta"/>
 <author name="dbluelle" />
 <titles>
 <title lang="en_US">
@@ -16,7 +16,7 @@ High speed downhill racing game where you slide down a mountain while collecting
 </package>
 <application id="extremetuxracer">
 <exec command="start.sh"/>
-<version major="0" minor="6" release="0" build="20130629" type="beta"/>
+<version major="0" minor="6" release="0" build="20130726" type="beta"/>
 <osversion major="1" minor="0" release="0" build="0"/>
 <author name="dbluelle" />
 <titles>
