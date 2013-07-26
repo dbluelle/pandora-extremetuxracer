@@ -147,31 +147,4 @@ public:
 	void UpdatePlayerPos (ETR_DOUBLE timestep);
 };
 
-// STRUCTURE OF PHYSICS.CPP
-
-// ------------------- init -------------------------------------------
-// void InitSimulation ()
-
-// ----------------- collision ----------------------------------------
-// bool  CheckTreeCollisions (TVector3 pos, TVector3 *tree_loc, ETR_DOUBLE *tree_diam)
-// void  AdjustTreeCollision (TVector3 pos, TVector3 *vel)
-// void  CheckItemCollection (TVector3 pos)
-
-// ----------------- position and vlelocity ---------------------------
-// ETR_DOUBLE AdjustVelocity (TVector3 *vel, TVector3 pos, TPlane surf_plane,
-// 	   ETR_DOUBLE dist_from_surface)
-// void   AdjustPosition (TVector3 *pos, TPlane surf_plane, ETR_DOUBLE dist_from_surface)
-// void   SetTuxPosition (TVector3 new_pos)
-
-// ----------------- forces -------------------------------------------
-// TVector3 AdjustRollNormal (TVector3 vel, ETR_DOUBLE fric_coeff, TVector3 nml)
-// TVector3 CalcAirForce (TVector3 player_vel)
-// TVector3 CalcSpringForce (ETR_DOUBLE compression, TVector3 vel, TVector3 surf_nml)
-// TVector3 CalcNetForce (TVector3 pos, TVector3 vel)
-
-// ------------------ ODE solver and port function
-// static ETR_DOUBLE adjust_time_step_size (ETR_DOUBLE h, TVector3 vel)
-// void   SolveOdeSystem (ETR_DOUBLE timestep)
-// void   UpdatePlayerPos (ETR_DOUBLE timestep)
-
 #endif
