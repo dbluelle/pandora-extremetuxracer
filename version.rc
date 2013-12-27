@@ -1,4 +1,4 @@
-#include "version.h"
+#include "src/version.h"
 #include "winresrc.h"
 
 VS_VERSION_INFO VERSIONINFO
@@ -47,4 +47,4 @@ BEGIN
     END
 END
 
-IDI_ICON1               ICON    DISCARDABLE     "resources\etracericon.ico"
+IDI_ICON1 ICON DISCARDABLE "resources\etracericon.ico"

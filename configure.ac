@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.61])
-AC_INIT([etr], [0.6-beta1], [BUG-REPORT-ADDRESS])
-AC_CONFIG_SRCDIR([gui.cpp])
+AC_INIT([etr], [0.6.99], [https://sourceforge.net/apps/phpbb/extremetuxracer])
+AC_CONFIG_SRCDIR([src/gui.cpp])
 AC_CONFIG_HEADERS([etr_config.h])
 
 AM_INIT_AUTOMAKE([dist-xz dist-zip])
@@ -46,32 +46,38 @@ AM_PATH_SDL([1.0.0])
 CFLAGS="$CFLAGS $SDL_CFLAGS"
 LIBS="$LIBS $SDL_LIBS"
 
-AC_CHECK_HEADER([SDL_image.h], [],
-[AC_MSG_ERROR([SDL_image.h not found])])
+PKG_CHECK_MODULES([SDLIMAGE], [SDL_image],
+[
+  CFLAGS="${CFLAGS} $SDLIMAGE_CFLAGS"
+  LIBS="${LIBS} $SDLIMAGE_LIBS"
+],
+[AC_MSG_ERROR([SDL_image not found])])
 
-AC_CHECK_LIB([SDL_image], [IMG_Load], [],
-[AC_MSG_ERROR([SDL_image library not found])])
+PKG_CHECK_MODULES([SDLMIXER], [SDL_mixer],
+[
+  CFLAGS="${CFLAGS} $SDLMIXER_CFLAGS"
+  LIBS="${LIBS} $SDLMIXER_LIBS"
+],
+[AC_MSG_ERROR([SDL_mixer not found])])
 
-LIBS="$LIBS -lSDL_image"
+AC_CHECK_LIB([GL], [glBegin], [],
+[AC_MSG_ERROR([libGL not found])])
 
-AC_CHECK_HEADER([SDL_mixer.h], [],
-[AC_MSG_ERROR([SDL_mixer.h not found])])
+LIBS="$LIBS -lGL"
 
-AC_CHECK_LIB([SDL_mixer], [Mix_OpenAudio], [],
-[AC_MSG_ERROR([SDL_mixer library not found])])
+AC_CHECK_LIB([GLU], [gluBeginCurve], [],
+[AC_MSG_ERROR([libGLU not found])])
 
-LIBS="$LIBS -lSDL_mixer"
+LIBS="$LIBS -lGLU"
 
 CPPFLAGS="${CPPFLAGS} -DETR_DATA_DIR=\\\"$datadir\\\""
-
-# TODO: Proper checks instead of hardcoding
-LIBS="$LIBS -lGL -lGLU"
 
 # Request c++11 compatibility
 CXXFLAGS="${CXXFLAGS} -std=c++11"
 
 AC_CONFIG_FILES([
         Makefile
+        src/Makefile
         build/Makefile
         build/Installer/Makefile
         data/Makefile
@@ -124,5 +130,7 @@ AC_CONFIG_FILES([
         data/terrains/Makefile
         data/textures/Makefile
         data/translations/Makefile
+        doc/Makefile
+        resources/Makefile
 ])
 AC_OUTPUT
