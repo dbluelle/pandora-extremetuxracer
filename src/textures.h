@@ -44,7 +44,7 @@ GNU General Public License for more details.
 #define TUXBONUS 21
 #define MOUSECURSOR 22
 #define SNOW_PART 23
-#define ENV_MAP 24
+
 #define T_ENERGY_MASK 25
 #define T_MASK_OUTLINE 26
 #define NUMERIC_FONT 27
@@ -53,54 +53,16 @@ GNU General Public License for more details.
 #define RANDOM_BUTT 30
 #define T_YELLHERRING 31
 #define T_TIME 32
-#define STARS 33
-#define HERRING_ICON2 34
+
+
 #define SPEED_KNOB 35
-#define CUPICON 36
 #define CHECKBOX 37
 #define CHECKMARK_SMALL 38
-#define CHECKMARK 39
-#define T_WIDGETS 40
+
+
 #define T_SNOW1 41
 #define T_SNOW2 42
 #define T_SNOW3 43
-
-#define BF_TYPE 0x4D42             // "MB"
-
-struct TTgaHeader {
-    char tfType;
-    char tfColorMapType;
-    char tfImageType;
-    char tfColorMapSpec[5];
-    short tfOrigX;
-    short tfOrigY;
-    short tfWidth;
-    short tfHeight;
-    char tfBpp;
-    char tfImageDes;
-};
-
-struct TBmpHeader {
-    unsigned short  bfType;           // identifier of bmp format
-    unsigned long   bfSize;           // size of file, including the headers
-    unsigned short  bfReserved1;      // reserved, always 0
-    unsigned short  bfReserved2;      // reserved, always 0
-    unsigned long   bfOffBits;        // offset to bitmap data
-};
-
-struct TBmpInfo {
-    unsigned long   biSize;           // size of info header, normally 40
-    long            biWidth;          // width
-    long            biHeight;         // height
-    unsigned short  biPlanes;         // number of color planes, normally 1
-    unsigned short  biBitCount;       // Number of bits per pixel (8 * depth)
-    unsigned long   biCompression;    // type of compression, normally 0 = no compr.
-    unsigned long   biSizeImage;      // size of data
-    long            biXPelsPerMeter;  // normally 0
-    long            biYPelsPerMeter;  // normally 0
-    unsigned long   biClrUsed;        // normally 0
-    unsigned long   biClrImportant;   // normally 0
-};
 
 
 // --------------------------------------------------------------------
@@ -110,40 +72,34 @@ struct TBmpInfo {
 class CImage {
 private:
 public:
-    CImage ();
+	CImage ();
 	~CImage ();
 
 	unsigned char *data;
 	int nx;
-    int ny;
-    int depth;
-    int pitch;
+	int ny;
+	int depth;
+	int pitch;
 
 	void DisposeData ();
 
 	// load:
-	bool LoadPng (const char *filepath, bool mirroring, bool needsquared = false);
-	bool LoadPng (const char *dir, const char *filepath, bool mirroring, bool needsquared = false);
+	bool LoadPng (const char *filepath, bool mirroring,bool needsquared = false);
+	bool LoadPng (const char *dir, const char *filepath, bool mirroring,bool needsquared = false);
 
 	// write:
 	bool ReadFrameBuffer_PPM ();
 	void ReadFrameBuffer_TGA ();
 	void ReadFrameBuffer_BMP ();
 	void WritePPM (const char *filepath);
-	void WritePPM (const char *dir, const char *filename);
 	void WriteTGA (const char *filepath);
-	void WriteTGA (const char *dir, const char *filename);
-
-	// versions with explicite header
-	void WriteTGA_H (const char *filepath);
-	void WriteTGA_H (const char *dir, const char *filename);
 	void WriteBMP (const char *filepath);
-	void WriteBMP (const char *dir, const char *filename);
 };
 
 // --------------------------------------------------------------------
 //				class CTexture
 // --------------------------------------------------------------------
+
 class TTexture {
 	TTexture(const TTexture&);
 	TTexture& operator=(const TTexture&);
@@ -177,7 +133,7 @@ private:
 
 	void DrawNumChr (char c, int x, int y, int w, int h, const TColor& col);
 public:
-    CTexture ();
+	CTexture ();
 	~CTexture ();
 	void LoadTextureList ();
 	void FreeTextureList ();
@@ -200,14 +156,12 @@ public:
 	void DrawFrame (const string& name, int x, int y, ETR_DOUBLE w, ETR_DOUBLE h, int frame, const TColor& col);
 
 	void SetOrientation (Orientation orientation);
-	void DrawNumStr (const char *s, int x, int y, float size, const TColor& col);
+	void DrawNumStr (const string& s, int x, int y, float size, const TColor& col);
 };
 
 extern CTexture Tex;
 
 void ScreenshotN ();
-void TGAScreenshot2 (const char *destFile);
-void BMPScreenshot (const char *destFile);
 
 
 #endif

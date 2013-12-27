@@ -20,6 +20,7 @@ GNU General Public License for more details.
 #include "bh.h"
 #include <vector>
 #include <map>
+#include <SDL/SDL_mixer.h>
 
 // --------------------------------------------------------------------
 //				class CAudio
@@ -41,10 +42,12 @@ public:
 // --------------------------------------------------------------------
 
 struct TSound {
-    Mix_Chunk *chunk;
-    int channel;
-    int loop_count;
+	Mix_Chunk *chunk;
+	int channel;
+	int loop_count;
 	bool active;
+
+	void Play (int loop);
 };
 
 class CSound {
@@ -52,7 +55,7 @@ private:
 	vector<TSound> sounds;
 	map<string, size_t> SoundIndex;
 public:
-	size_t LoadChunk (const std::string& name, const char *filename);
+	bool LoadChunk (const std::string& name, const char *filename);
 	void LoadSoundList ();
 	size_t GetSoundIdx (const string& name) const;
 
@@ -87,17 +90,19 @@ private:
 	vector<Mix_Music*> musics;
 	map<string, size_t> MusicIndex;
 
-	struct Situation {size_t situation[SITUATION_COUNT];};
+	struct Situation {Mix_Music* situation[SITUATION_COUNT];};
 	vector<Situation> themes;
 	map<string, size_t> ThemesIndex;
 
 	int loop_count;			// we need only 1 variable for all pieces
-	int curr_musid;			// ID of current music piece
+	Mix_Music* curr_music;	// current music piece
 	int curr_volume;
+
+	bool Play (Mix_Music* music, int loop, int volume);
 public:
 	CMusic ();
 
-	size_t LoadPiece (const string& name, const char *filename);
+	bool LoadPiece (const string& name, const char *filename);
 	void LoadMusicList ();
 	size_t GetMusicIdx (const string& name) const;
 	size_t GetThemeIdx (const string& theme) const;
@@ -109,7 +114,6 @@ public:
 	bool Play (size_t musid, int loop, int volume);
 	bool Play (const string& name, int loop, int volume);
 	bool PlayTheme (size_t theme, ESituation situation);
-	void Refresh (const string& name);
 	void Halt ();
 	void FreeMusics ();
 };

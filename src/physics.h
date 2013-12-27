@@ -19,6 +19,7 @@ GNU General Public License for more details.
 #define PHYSICS_H
 
 #include "bh.h"
+#include "mathlib.h"
 
 #define MAX_PADDLING_SPEED (60.0 / 3.6)   /* original 60 */
 #define PADDLE_FACT 1.0 /* original 1.0 */
@@ -37,7 +38,7 @@ GNU General Public License for more details.
 #define WIND_FACTOR 1.5
 
 #define MIN_FRICT_SPEED 2.8
-#define MAX_FRICT_FORCE 800
+#define MAX_FRICT_FORCE 800.0f
 #define MAX_TURN_ANGLE 45
 #define MAX_TURN_PERP 400
 #define MAX_TURN_PEN 0.15
@@ -52,6 +53,9 @@ GNU General Public License for more details.
 #define MAX_POS_ERR 0.005
 #define MAX_VEL_ERR	0.05
 
+#define MAX_ROLL_ANGLE 30
+#define BRAKING_ROLL_ANGLE 55
+
 // constants for finish stage
 #define FIN_AIR_GRAV 500
 #define FIN_GRAV 500
@@ -59,16 +63,16 @@ GNU General Public License for more details.
 #define FIN_BRAKE 12
 
 struct TForce {
-	TVector3 surfnml;
-	TVector3 rollnml;
-	TVector3 pos;
-	TVector3 vel;
-	TVector3 frictdir;
+	TVector3d surfnml;
+	TVector3d rollnml;
+	TVector3d pos;
+	TVector3d vel;
+	TVector3d frictdir;
 
 	ETR_DOUBLE frict_coeff;
 	ETR_DOUBLE comp_depth;
 	ETR_DOUBLE surfdistance;
-    ETR_DOUBLE compression;
+	ETR_DOUBLE compression;
 };
 
 class CControl {
@@ -77,68 +81,68 @@ private:
 	ETR_DOUBLE ode_time_step;
 	ETR_DOUBLE finish_speed;
 
-	bool     CheckTreeCollisions (const TVector3& pos, TVector3 *tree_loc, ETR_DOUBLE *tree_diam);
-	void     AdjustTreeCollision (const TVector3& pos, TVector3 *vel);
-	void     CheckItemCollection (const TVector3& pos);
+	bool     CheckTreeCollisions (const TVector3d& pos, TVector3d *tree_loc, ETR_DOUBLE *tree_diam);
+	void     AdjustTreeCollision (const TVector3d& pos, TVector3d *vel);
+	void     CheckItemCollection (const TVector3d& pos);
 
-	TVector3 CalcRollNormal (ETR_DOUBLE speed);
-	TVector3 CalcAirForce ();
-	TVector3 CalcSpringForce ();
-	TVector3 CalcNormalForce ();
-	TVector3 CalcJumpForce ();
-	TVector3 CalcFrictionForce (ETR_DOUBLE speed, const TVector3& nmlforce);
-	TVector3 CalcPaddleForce (ETR_DOUBLE speed);
-	TVector3 CalcBrakeForce (ETR_DOUBLE speed);
-	TVector3 CalcGravitationForce ();
-	TVector3 CalcNetForce (const TVector3& pos, const TVector3& vel);
-	TVector3 CalcFinishForce (const TVector3& pos, const TVector3& vel);
+	TVector3d CalcRollNormal (ETR_DOUBLE speed);
+	TVector3d CalcAirForce ();
+	TVector3d CalcSpringForce ();
+	TVector3d CalcNormalForce ();
+	TVector3d CalcJumpForce ();
+	TVector3d CalcFrictionForce (ETR_DOUBLE speed, const TVector3d& nmlforce);
+	TVector3d CalcPaddleForce (ETR_DOUBLE speed);
+	TVector3d CalcBrakeForce (ETR_DOUBLE speed);
+	TVector3d CalcGravitationForce ();
+	TVector3d CalcNetForce (const TVector3d& pos, const TVector3d& vel);
+	TVector3d CalcFinishForce (const TVector3d& pos, const TVector3d& vel);
 
 	void     AdjustVelocity (const TPlane& surf_plane);
 	void     AdjustPosition (const TPlane& surf_plane, ETR_DOUBLE dist_from_surface);
 	void     SetTuxPosition (ETR_DOUBLE speed);
-	ETR_DOUBLE   AdjustTimeStep (ETR_DOUBLE h, TVector3 vel);
+	ETR_DOUBLE   AdjustTimeStep (ETR_DOUBLE h, const TVector3d& vel);
 	void     SolveOdeSystem (ETR_DOUBLE timestep);
 public:
 	CControl ();
 
 	// view:
 	TViewMode viewmode;
-    TVector3 viewpos;
-    TVector3 plyr_pos;
-    TVector3 viewdir;
-    TVector3 viewup;
-    TMatrix view_mat;
-    bool view_init;
+	TVector3d viewpos;
+	TVector3d plyr_pos;
+	TVector3d viewdir;
+	TVector3d viewup;
+	TMatrix<4, 4> view_mat;
+	bool view_init;
 	// main:
-	TVector3 cpos;
-    TVector3 cvel;
-	TVector3 last_pos;
-    TVector3 cnet_force;
-    TVector3 cdirection;
+	TVector3d cpos;
+	TVector3d cvel;
+	TVector3d last_pos;
+	TVector3d cnet_force;
+	TVector3d cdirection;
 	TQuaternion corientation;
 	ETR_DOUBLE way;
 
-    bool orientation_initialized;
-    TVector3 plane_nml;
+	bool orientation_initialized;
+	TVector3d plane_nml;
 	// steering:
-    ETR_DOUBLE turn_fact;
-    ETR_DOUBLE turn_animation;
+	ETR_DOUBLE turn_fact;
+	ETR_DOUBLE turn_animation;
 	ETR_DOUBLE paddle_time;
-    ETR_DOUBLE jump_amt;
-    ETR_DOUBLE jump_start_time;
-    bool   is_paddling;
-    bool   is_braking;
-    bool   begin_jump;
-    bool   jumping;
-    bool   jump_charging;
+	ETR_DOUBLE jump_amt;
+	ETR_DOUBLE jump_start_time;
+	bool   is_paddling;
+	bool   is_braking;
+	bool   begin_jump;
+	bool   jumping;
+	bool   jump_charging;
 	// trick:
-    bool   front_flip;
-    bool   back_flip;
-    bool   cairborne;
-    bool   roll_left;
-    bool   roll_right;
-    ETR_DOUBLE roll_factor;
-    ETR_DOUBLE flip_factor;
+	bool   front_flip;
+	bool   back_flip;
+	bool   cairborne;
+	bool   roll_left;
+	bool   roll_right;
+	ETR_DOUBLE roll_factor;
+	ETR_DOUBLE flip_factor;
 	// pseudo constants:
 	ETR_DOUBLE minSpeed;
 	ETR_DOUBLE minFrictspeed;

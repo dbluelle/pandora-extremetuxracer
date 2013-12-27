@@ -34,22 +34,22 @@ GNU General Public License for more details.
 
 
 enum track_types_t {
-    TRACK_HEAD,
-    TRACK_MARK,
-    TRACK_TAIL,
-    NUM_TRACK_TYPES
+	TRACK_HEAD,
+	TRACK_MARK,
+	TRACK_TAIL,
+	NUM_TRACK_TYPES
 };
 
 struct track_quad_t {
-    TVector3 v1, v2, v3, v4;
-    TVector2 t1, t2, t3, t4;
-    TVector3 n1, n2, n3, n4;
-    track_types_t track_type;
-    ETR_DOUBLE alpha;
+	TVector3d v1, v2, v3, v4;
+	TVector2d t1, t2, t3, t4;
+	TVector3d n1, n2, n3, n4;
+	track_types_t track_type;
+	ETR_DOUBLE alpha;
 };
 
 struct track_marks_t {
-    list<track_quad_t> quads;
+	list<track_quad_t> quads;
 	list<track_quad_t>::iterator current_mark;
 };
 
@@ -68,15 +68,15 @@ void SetTrackIDs(int id1, int id2, int id3) {
 
 void init_track_marks() {
 	track_marks.quads.clear();
-    track_marks.current_mark = track_marks.quads.begin();
-    continuing_track = false;
+	track_marks.current_mark = track_marks.quads.begin();
+	continuing_track = false;
 }
 
 template<typename T>
 static T incrementRingIterator(T q) {
 	T ret = q;
 	++ret;
-	if(ret == track_marks.quads.end() || track_marks.quads.size() == MAX_TRACK_MARKS)
+	if (ret == track_marks.quads.end() || track_marks.quads.size() == MAX_TRACK_MARKS)
 		ret = track_marks.quads.begin();
 	return ret;
 }
@@ -84,9 +84,9 @@ static T incrementRingIterator(T q) {
 template<typename T>
 static T decrementRingIterator(T q) {
 	T ret = q;
-	if(ret == track_marks.quads.begin() && track_marks.quads.size() == MAX_TRACK_MARKS)
+	if (ret == track_marks.quads.begin() && track_marks.quads.size() == MAX_TRACK_MARKS)
 		ret = track_marks.quads.end();
-	else if(ret == track_marks.quads.begin())
+	else if (ret == track_marks.quads.begin())
 		return track_marks.quads.end();
 	--ret;
 	return ret;
@@ -100,9 +100,9 @@ void DrawTrackmarks() {
 	if (param.perf_level < 3)
 		return;
 
-    TTexture* textures[NUM_TRACK_TYPES];
+	TTexture* textures[NUM_TRACK_TYPES];
 
-    TColor track_colour = colWhite;
+	TColor track_colour = colWhite;
 	ScopedRenderMode rm(TRACK_MARKS);
 
 	textures[TRACK_HEAD] = Tex.GetTexture (trackid1);
@@ -119,85 +119,86 @@ void DrawTrackmarks() {
 		if ((q->track_type == TRACK_HEAD) || (q->track_type == TRACK_TAIL)) {
 			glBegin(GL_QUADS);
 
-			glNormal3f (q->n1.x, q->n1.y, q->n1.z);
-			glTexCoord2f (q->t1.x, q->t1.y);
-			glVertex3f (q->v1.x, q->v1.y, q->v1.z);
+			glNormal3(q->n1);
+			glTexCoord2(q->t1);
+			glVertex3(q->v1);
 
-			glNormal3f (q->n2.x, q->n2.y, q->n2.z);
-			glTexCoord2f (q->t2.x, q->t2.y);
-			glVertex3f (q->v2.x, q->v2.y, q->v2.z);
+			glNormal3(q->n2);
+			glTexCoord2(q->t2);
+			glVertex3(q->v2);
 
-			glNormal3f (q->n4.x, q->n4.y, q->n4.z);
-			glTexCoord2f (q->t4.x, q->t4.y);
-			glVertex3f (q->v4.x, q->v4.y, q->v4.z);
+			glNormal3(q->n4);
+			glTexCoord2(q->t4);
+			glVertex3(q->v4);
 
-			glNormal3f (q->n3.x, q->n3.y, q->n3.z);
-			glTexCoord2f (q->t3.x, q->t3.y);
-			glVertex3f (q->v3.x, q->v3.y, q->v3.z);
+			glNormal3(q->n3);
+			glTexCoord2(q->t3);
+			glVertex3(q->v3);
 
 			glEnd();
 
 		} else {
 			glBegin(GL_QUAD_STRIP);
-				glNormal3f (q->n2.x, q->n2.y, q->n2.z);
-				glTexCoord2f (q->t2.x, q->t2.y);
-				glVertex3f (q->v2.x, q->v2.y, q->v2.z);
+			glNormal3(q->n2);
+			glTexCoord2(q->t2);
+			glVertex3(q->v2);
 
-				glNormal3f (q->n1.x, q->n1.y, q->n1.z);
-				glTexCoord2f (q->t1.x, q->t1.y);
-				glVertex3f (q->v1.x, q->v1.y, q->v1.z);
+			glNormal3(q->n1);
+			glTexCoord2(q->t1);
+			glVertex3(q->v1);
 
-				glNormal3f (q->n4.x, q->n4.y, q->n4.z);
-				glTexCoord2f (q->t4.x, q->t4.y);
-				glVertex3f (q->v4.x, q->v4.y, q->v4.z);
+			glNormal3(q->n4);
+			glTexCoord2(q->t4);
+			glVertex3(q->v4);
 
-				glNormal3f (q->n3.x, q->n3.y, q->n3.z);
-				glTexCoord2f (q->t3.x, q->t3.y);
-				glVertex3f (q->v3.x, q->v3.y, q->v3.z);
+			glNormal3(q->n3);
+			glTexCoord2(q->t3);
+			glVertex3(q->v3);
 
-				list<track_quad_t>::const_iterator qnext = q; ++qnext;
-				while (qnext != track_marks.quads.end() && qnext->track_type != TRACK_TAIL) {
-					q = qnext;
-					track_colour.a = q->alpha;
-					set_material (track_colour, colBlack, 1.0);
+			list<track_quad_t>::const_iterator qnext = q;
+			++qnext;
+			while (qnext != track_marks.quads.end() && qnext->track_type != TRACK_TAIL) {
+				q = qnext;
+				track_colour.a = q->alpha;
+				set_material (track_colour, colBlack, 1.0);
 
-					glNormal3f (q->n4.x, q->n4.y, q->n4.z);
-					glTexCoord2f (q->t4.x, q->t4.y);
-					glVertex3f (q->v4.x, q->v4.y, q->v4.z);
+				glNormal3(q->n4);
+				glTexCoord2(q->t4);
+				glVertex3(q->v4);
 
-					glNormal3f (q->n3.x, q->n3.y, q->n3.z);
-					glTexCoord2f (q->t3.x, q->t3.y);
-					glVertex3f (q->v3.x, q->v3.y, q->v3.z);
+				glNormal3(q->n3);
+				glTexCoord2(q->t3);
+				glVertex3(q->v3);
 
-					++qnext;
-				}
+				++qnext;
+			}
 			glEnd();
 		}
-    }
+	}
 }
 
 void break_track_marks() {
 	list<track_quad_t>::iterator q = track_marks.current_mark;
 	if (q != track_marks.quads.end()) {
 		q->track_type = TRACK_TAIL;
-		q->t1 = TVector2(0.0, 0.0);
-		q->t2 = TVector2(1.0, 0.0);
-		q->t3 = TVector2(0.0, 1.0);
-		q->t4 = TVector2(1.0, 1.0);
+		q->t1 = TVector2d(0.0, 0.0);
+		q->t2 = TVector2d(1.0, 0.0);
+		q->t3 = TVector2d(0.0, 1.0);
+		q->t4 = TVector2d(1.0, 1.0);
 		list<track_quad_t>::iterator qprev = decrementRingIterator(q);
 		if (qprev != track_marks.quads.end()) {
 			qprev->t3.y = max((int)(qprev->t3.y+0.5), (int)(qprev->t1.y+1));
 			qprev->t4.y = max((int)(qprev->t3.y+0.5), (int)(qprev->t1.y+1));
 		}
-    }
-    continuing_track = false;
+	}
+	continuing_track = false;
 }
 
 // --------------------------------------------------------------------
 //                      add_track_mark
 // --------------------------------------------------------------------
 void add_track_mark(const CControl *ctrl, int *id) {
-    if (param.perf_level < 3)
+	if (param.perf_level < 3)
 		return;
 
 	TTerrType *TerrList = &Course.TerrList[0];
@@ -213,86 +214,85 @@ void add_track_mark(const CControl *ctrl, int *id) {
 		return;
 	}
 
-	TVector3 vel = ctrl->cvel;
-    ETR_DOUBLE speed = NormVector (vel);
-    if (speed < SPEED_TO_START_TRENCH) {
+	ETR_DOUBLE speed = ctrl->cvel.Length();
+	if (speed < SPEED_TO_START_TRENCH) {
 		break_track_marks();
 		return;
-    }
+	}
 
-    TVector3 width_vector = CrossProduct (ctrl->cdirection, TVector3 (0, 1, 0));
-    ETR_DOUBLE magnitude = NormVector (width_vector);
-    if (magnitude == 0) {
+	TVector3d width_vector = CrossProduct (ctrl->cdirection, TVector3d (0, 1, 0));
+	ETR_DOUBLE magnitude = width_vector.Norm();
+	if (magnitude == 0) {
 		break_track_marks();
 		return;
-    }
+	}
 
-    TVector3 left_vector = ScaleVector (TRACK_WIDTH/2.0, width_vector);
-    TVector3 right_vector = ScaleVector (-TRACK_WIDTH/2.0, width_vector);
-    TVector3 left_wing =  SubtractVectors (ctrl->cpos, left_vector);
-    TVector3 right_wing = SubtractVectors (ctrl->cpos, right_vector);
-    ETR_DOUBLE left_y = Course.FindYCoord (left_wing.x, left_wing.z);
-    ETR_DOUBLE right_y = Course.FindYCoord (right_wing.x, right_wing.z);
+	TVector3d left_vector = TRACK_WIDTH/2.0 * width_vector;
+	TVector3d right_vector = -TRACK_WIDTH/2.0 * width_vector;
+	TVector3d left_wing =  ctrl->cpos - left_vector;
+	TVector3d right_wing = ctrl->cpos - right_vector;
+	ETR_DOUBLE left_y = Course.FindYCoord (left_wing.x, left_wing.z);
+	ETR_DOUBLE right_y = Course.FindYCoord (right_wing.x, right_wing.z);
 
 	if (fabs(left_y-right_y) > MAX_TRACK_DEPTH) {
 		break_track_marks();
 		return;
-    }
+	}
 
-    TPlane surf_plane = Course.GetLocalCoursePlane (ctrl->cpos);
-    ETR_DOUBLE dist_from_surface = DistanceToPlane (surf_plane, ctrl->cpos);
+	TPlane surf_plane = Course.GetLocalCoursePlane (ctrl->cpos);
+	ETR_DOUBLE dist_from_surface = DistanceToPlane (surf_plane, ctrl->cpos);
 	// comp_depth = get_compression_depth(Snow);
 	ETR_DOUBLE comp_depth = 0.1;
-    if (dist_from_surface >= (2 * comp_depth)) {
+	if (dist_from_surface >= (2 * comp_depth)) {
 		break_track_marks();
 		return;
-    }
+	}
 
-	if(track_marks.quads.size() < MAX_TRACK_MARKS)
+	if (track_marks.quads.size() < MAX_TRACK_MARKS)
 		track_marks.quads.push_back(track_quad_t());
 	list<track_quad_t>::iterator qprev = track_marks.current_mark;
-	if(track_marks.current_mark == track_marks.quads.end())
+	if (track_marks.current_mark == track_marks.quads.end())
 		track_marks.current_mark = track_marks.quads.begin();
 	else
 		track_marks.current_mark = incrementRingIterator(track_marks.current_mark);
 	list<track_quad_t>::iterator q = track_marks.current_mark;
 
-    if (!continuing_track) {
+	if (!continuing_track) {
 		q->track_type = TRACK_HEAD;
-		q->v1 = TVector3 (left_wing.x, left_y + TRACK_HEIGHT, left_wing.z);
-		q->v2 = TVector3 (right_wing.x, right_y + TRACK_HEIGHT, right_wing.z);
-		q->v3 = TVector3 (left_wing.x, left_y + TRACK_HEIGHT, left_wing.z);
-		q->v4 = TVector3 (right_wing.x, right_y + TRACK_HEIGHT, right_wing.z);
+		q->v1 = TVector3d (left_wing.x, left_y + TRACK_HEIGHT, left_wing.z);
+		q->v2 = TVector3d (right_wing.x, right_y + TRACK_HEIGHT, right_wing.z);
+		q->v3 = TVector3d (left_wing.x, left_y + TRACK_HEIGHT, left_wing.z);
+		q->v4 = TVector3d (right_wing.x, right_y + TRACK_HEIGHT, right_wing.z);
 		q->n1 = Course.FindCourseNormal (q->v1.x, q->v1.z);
 		q->n2 = Course.FindCourseNormal (q->v2.x, q->v2.z);
-		q->t1 = TVector2(0.0, 0.0);
-		q->t2 = TVector2(1.0, 0.0);
-    } else {
+		q->t1 = TVector2d(0.0, 0.0);
+		q->t2 = TVector2d(1.0, 0.0);
+	} else {
 		q->track_type = TRACK_TAIL;
 		if (qprev != track_marks.quads.end()) {
-		    q->v1 = qprev->v3;
-	    	q->v2 = qprev->v4;
-		    q->n1 = qprev->n3;
-		    q->n2 = qprev->n4;
-		    q->t1 = qprev->t3;
-		    q->t2 = qprev->t4;
-	if (qprev->track_type == TRACK_TAIL) qprev->track_type = TRACK_MARK;
+			q->v1 = qprev->v3;
+			q->v2 = qprev->v4;
+			q->n1 = qprev->n3;
+			q->n2 = qprev->n4;
+			q->t1 = qprev->t3;
+			q->t2 = qprev->t4;
+			if (qprev->track_type == TRACK_TAIL) qprev->track_type = TRACK_MARK;
 		}
-		q->v3 = TVector3 (left_wing.x, left_y + TRACK_HEIGHT, left_wing.z);
-		q->v4 = TVector3 (right_wing.x, right_y + TRACK_HEIGHT, right_wing.z);
+		q->v3 = TVector3d (left_wing.x, left_y + TRACK_HEIGHT, left_wing.z);
+		q->v4 = TVector3d (right_wing.x, right_y + TRACK_HEIGHT, right_wing.z);
 		q->n3 = Course.FindCourseNormal (q->v3.x, q->v3.z);
 		q->n4 = Course.FindCourseNormal (q->v4.x, q->v4.z);
 		ETR_DOUBLE tex_end = speed*g_game.time_step/TRACK_WIDTH;
 		if (q->track_type == TRACK_HEAD) {
-		    q->t3= TVector2 (0.0, 1.0);
-		    q->t4= TVector2 (1.0, 1.0);
+			q->t3= TVector2d (0.0, 1.0);
+			q->t4= TVector2d (1.0, 1.0);
 		} else {
-		    q->t3 = TVector2 (0.0, q->t1.y + tex_end);
-		    q->t4 = TVector2 (1.0, q->t2.y + tex_end);
+			q->t3 = TVector2d (0.0, q->t1.y + tex_end);
+			q->t4 = TVector2d (1.0, q->t2.y + tex_end);
 		}
-    }
-    q->alpha = min ((2*comp_depth-dist_from_surface)/(4*comp_depth), 1.0);
-    continuing_track = true;
+	}
+	q->alpha = min ((2*comp_depth-dist_from_surface)/(4*comp_depth), 1.0);
+	continuing_track = true;
 }
 
 void UpdateTrackmarks(const CControl *ctrl) {
@@ -305,7 +305,7 @@ void UpdateTrackmarks(const CControl *ctrl) {
 	add_track_mark (ctrl, &trackid);
 	if (trackid >= 0 && TerrList[trackid].trackmarks) {
 		SetTrackIDs (TerrList[trackid].starttex,
-					TerrList[trackid].tracktex,
-					TerrList[trackid].stoptex);
+		             TerrList[trackid].tracktex,
+		             TerrList[trackid].stoptex);
 	}
 }

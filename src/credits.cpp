@@ -63,8 +63,8 @@ void CCredits::LoadCreditList () {
 }
 
 void CCredits::DrawCreditsText (ETR_DOUBLE time_step) {
-    ETR_DOUBLE w = (ETR_DOUBLE)Winsys.resolution.width;
-    ETR_DOUBLE h = (ETR_DOUBLE)Winsys.resolution.height;
+	int w = Winsys.resolution.width;
+	int h = Winsys.resolution.height;
 	ETR_DOUBLE offs = 0.0;
 	if (moving) y_offset += time_step * 30;
 
@@ -83,71 +83,44 @@ void CCredits::DrawCreditsText (ETR_DOUBLE time_step) {
 	}
 
 
-    glDisable (GL_TEXTURE_2D);
-	glColor4dv ((ETR_DOUBLE*)&colBackgr);
-    glRectf (0, 0, w, BOTT_Y);
+	glDisable (GL_TEXTURE_2D);
+	glColor(colBackgr);
+	glRecti (0, 0, w, BOTT_Y);
 
-    glBegin( GL_QUADS);
-		glVertex2f (0, BOTT_Y);
-		glVertex2f (w, BOTT_Y);
-		glColor4f (colBackgr.r, colBackgr.g, colBackgr.b, 0);
-		glVertex2f (w, BOTT_Y + 30);
-		glVertex2f (0, BOTT_Y + 30);
-    glEnd();
+	glBegin( GL_QUADS );
+	glVertex2i(0, BOTT_Y);
+	glVertex2i(w, BOTT_Y);
+	glColor(colBackgr, 0);
+	glVertex2i(w, BOTT_Y + 30);
+	glVertex2i(0, BOTT_Y + 30);
+	glEnd();
 
-    glColor4dv ((ETR_DOUBLE*)&colBackgr);
-    glRectf (0, h - TOP_Y, w, h);
+	glColor(colBackgr);
+	glRecti (0, h - TOP_Y, w, h);
 
-	glBegin( GL_QUADS);
-		glVertex2f (w, h - TOP_Y);
-		glVertex2f (0, h - TOP_Y);
-		glColor4f (colBackgr.r, colBackgr.g, colBackgr.b, 0);
-		glVertex2f (0, h - TOP_Y - 30);
-		glVertex2f (w, h - TOP_Y - 30);
-    glEnd();
-
-	glColor4f (1, 1, 1, 1);
-    glEnable (GL_TEXTURE_2D);
-	if (offs < TOP_Y) y_offset = 0;
-}
-
-static void DrawBackLogo (int x, int y, ETR_DOUBLE size) {
-	GLint w, h;
-	GLfloat width, height, top, bott, left, right;
+	glBegin( GL_QUADS );
+	glVertex2i(w, h - TOP_Y);
+	glVertex2i(0, h - TOP_Y);
+	glColor(colBackgr, 0);
+	glVertex2i(0, h - TOP_Y - 30);
+	glVertex2i (w, h - TOP_Y - 30);
+	glEnd();
 
 	glEnable (GL_TEXTURE_2D);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	Tex.GetTexture(T_TITLE)->Bind();
-
-#ifndef USE_GLES1
-	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
-	glGetTexLevelParameteriv (GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
-#endif
-
-	width  = w * size;
-	height = h * size;
-
-	top = Winsys.resolution.height - y;
-	bott = top - height;
-
-	if (x >= 0) left = x; else left = (Winsys.resolution.width - width) / 2;
-	right = left + width;
-
-    glColor4f (1.0, 1.0, 1.0, 0.4);
-	glBegin (GL_QUADS);
-	    glTexCoord2f (0, 0); glVertex2f (left, bott);
-	    glTexCoord2f (1, 0); glVertex2f (right, bott);
-	    glTexCoord2f (1, 1); glVertex2f (right, top);
-	    glTexCoord2f (0, 1); glVertex2f (left, top);
-	glEnd();
+	if (offs < TOP_Y) y_offset = 0;
 }
 
 void CCredits::Keyb (unsigned int key, bool special, bool release, int x, int y) {
 	if (release) return;
 	switch (key) {
-		case 109: moving = !moving; break;
-		case 9: param.ui_snow = !param.ui_snow; break;
-		default: State::manager.RequestEnterState (GameTypeSelect);
+		case SDLK_m:
+			moving = !moving;
+			break;
+		case SDLK_u:
+			param.ui_snow = !param.ui_snow;
+			break;
+		default:
+			State::manager.RequestEnterState (GameTypeSelect);
 	}
 }
 
@@ -171,16 +144,15 @@ void CCredits::Loop(ETR_DOUBLE time_step) {
 
 	Music.Update ();
 	check_gl_error();
-    ClearRenderContext ();
-    ScopedRenderMode rm(GUI);
-    SetupGuiDisplay ();
+	ClearRenderContext ();
+	ScopedRenderMode rm(GUI);
+	SetupGuiDisplay ();
 
-//	DrawBackLogo (-1,  AutoYPos (200), 1.0);
 	DrawCreditsText (time_step);
 	if (param.ui_snow) {
 		update_ui_snow (time_step);
 		draw_ui_snow();
-    }
+	}
 	Tex.Draw (BOTTOM_LEFT, 0, hh-256, 1);
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);
@@ -189,5 +161,5 @@ void CCredits::Loop(ETR_DOUBLE time_step) {
 
 
 	Reshape (ww, hh);
-    Winsys.SwapBuffers();
+	Winsys.SwapBuffers();
 }

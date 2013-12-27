@@ -19,10 +19,11 @@ GNU General Public License for more details.
 #define WINSYS_H
 
 #include "bh.h"
+#include <SDL/SDL.h>
 
 #define NUM_RESOLUTIONS 10
 
-extern TVector2 cursor_pos;
+extern TVector2i cursor_pos;
 
 struct TScreenRes {
 	int width, height;

@@ -37,30 +37,27 @@ void InitGame (int argc, char **argv) {
 	g_game.toolmode = NONE;
 	g_game.argument = 0;
 	if (argc == 4) {
-		g_game.group_arg = argv[1];
-		if (g_game.group_arg == "--char") g_game.argument = 4;
-		g_game.dir_arg = argv[2];
-		g_game.file_arg = argv[3];
+		string group_arg = argv[1];
+		if (group_arg == "--char") g_game.argument = 4;
+		Tools.SetParameter(argv[2], argv[3]);
 	} else if (argc == 2) {
-		g_game.group_arg = argv[1];
-		if (g_game.group_arg == "9") g_game.argument = 9;
+		string group_arg = argv[1];
+		if (group_arg == "9") g_game.argument = 9;
 	}
 
-	g_game.player_id = 0;
+	g_game.player = NULL;
 	g_game.start_player = 0;
-	g_game.course_id = 0;
-	g_game.mirror_id = false;
-	g_game.char_id = 0;
+	g_game.course = NULL;
+	g_game.mirrorred = false;
+	g_game.character = NULL;
 	g_game.location_id = 0;
 	g_game.light_id = 0;
 	g_game.snow_id = 0;
 	g_game.cup = 0;
-	g_game.race_id = 0;
 	g_game.theme_id = 0;
 	g_game.force_treemap = 0;
 	g_game.treesize = 3;
 	g_game.treevar = 3;
-	g_game.loopdelay = 1;
 }
 
 // ====================================================================
@@ -68,19 +65,19 @@ void InitGame (int argc, char **argv) {
 // ====================================================================
 
 #if defined ( OS_WIN32_MINGW )
-	#undef main
+#undef main
 #endif
 
 int main( int argc, char **argv ) {
 	// ****************************************************************
 	cout << "\n----------- Extreme Tux Racer " ETR_VERSION_STRING " ----------------";
-    cout << "\n----------- (C) 2010 Extreme Tuxracer Team  --------\n\n";
+	cout << "\n----------- (C) 2010-2013 Extreme Tuxracer Team  --------\n\n";
 
 	srand (time (NULL));
 	InitConfig (argv[0]);
 	InitGame (argc, argv);
 	Winsys.Init ();
-    InitOpenglExtensions ();
+	InitOpenglExtensions ();
 	// for checking the joystick and the OpgenGL version (the info is
 	// written on the console):
 	//	Winsys.PrintJoystickInfo ();
@@ -95,17 +92,19 @@ int main( int argc, char **argv ) {
 	Music.SetVolume (param.music_volume);
 
 	switch (g_game.argument) {
-		case 0: State::manager.Run(SplashScreen); break;
+		case 0:
+			State::manager.Run(SplashScreen);
+			break;
 		case 4:
 			g_game.toolmode = TUXSHAPE;
 			State::manager.Run(Tools);
 			break;
-		case 9: State::manager.Run(OglTest); break;
+		case 9:
+			State::manager.Run(OglTest);
+			break;
 	}
 
 	Winsys.Quit();
-#ifdef USE_GLES1
-	glesCleanUp();
-#endif
-    return 0;
+
+	return 0;
 }

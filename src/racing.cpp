@@ -36,6 +36,8 @@ GNU General Public License for more details.
 #include "reset.h"
 #include "winsys.h"
 #include "physics.h"
+#include "tux.h"
+#include <algorithm>
 
 #define MAX_JUMP_AMT 1.0
 #define ROLL_DECAY 0.2
@@ -46,7 +48,7 @@ CRacing Racing;
 static bool right_turn;
 static bool left_turn;
 static bool stick_turn;
-static ETR_DOUBLE stick_turnfact;
+static float stick_turnfact;
 static bool key_paddling;
 static bool stick_paddling;
 static bool key_charging;
@@ -72,50 +74,89 @@ void CRacing::Keyb (unsigned int key, bool special, bool release, int x, int y) 
 		case SDLK_HOME: trick_modifier = !release; break;		
 #endif
 		// steering flipflops
-		case SDLK_UP: key_paddling = !release; break;
-		case SDLK_DOWN: key_braking = !release; break;
-		case SDLK_LEFT: left_turn = !release; break;
-		case SDLK_RIGHT: right_turn = !release; break;
-		case SDLK_SPACE: key_charging = !release; break;
-		case SDLK_t: trick_modifier = !release; break;
+		case SDLK_UP:
+			key_paddling = !release;
+			break;
+		case SDLK_DOWN:
+			key_braking = !release;
+			break;
+		case SDLK_LEFT:
+			left_turn = !release;
+			break;
+		case SDLK_RIGHT:
+			right_turn = !release;
+			break;
+		case SDLK_SPACE:
+			key_charging = !release;
+			break;
+		case SDLK_t:
+			trick_modifier = !release;
+			break;
 		// mode changing and other actions
-		case SDLK_ESCAPE: if (!release) {
-			g_game.raceaborted = true;
-			g_game.race_result = -1;
-			State::manager.RequestEnterState (GameOver);
-		} break;
-		case SDLK_p: if (!release) State::manager.RequestEnterState (Paused); break;
-		case SDLK_r: if (!release) State::manager.RequestEnterState (Reset); break;
-		case SDLK_s: if (!release) ScreenshotN (); break;
+		case SDLK_ESCAPE:
+			if (!release) {
+				g_game.raceaborted = true;
+				g_game.race_result = -1;
+				State::manager.RequestEnterState (GameOver);
+			}
+			break;
+		case SDLK_p:
+			if (!release) State::manager.RequestEnterState (Paused);
+			break;
+		case SDLK_r:
+			if (!release) State::manager.RequestEnterState (Reset);
+			break;
+		case SDLK_s:
+			if (!release) ScreenshotN ();
+			break;
 
 		// view changing
-		case SDLK_1: if (!release) {
-			set_view_mode (Players.GetCtrl (g_game.player_id), ABOVE);
-			param.view_mode = ABOVE;
-		} break;
-		case SDLK_2: if (!release) {
-			set_view_mode (Players.GetCtrl (g_game.player_id), FOLLOW);
-			param.view_mode = FOLLOW;
-		} break;
-		case SDLK_3: if (!release) {
-			set_view_mode (Players.GetCtrl (g_game.player_id), BEHIND);
-			param.view_mode = BEHIND;
-		} break;
+		case SDLK_1:
+			if (!release) {
+				set_view_mode (g_game.player->ctrl, ABOVE);
+				param.view_mode = ABOVE;
+			}
+			break;
+		case SDLK_2:
+			if (!release) {
+				set_view_mode (g_game.player->ctrl, FOLLOW);
+				param.view_mode = FOLLOW;
+			}
+			break;
+		case SDLK_3:
+			if (!release) {
+				set_view_mode (g_game.player->ctrl, BEHIND);
+				param.view_mode = BEHIND;
+			}
+			break;
 
 		// toggle
-		case SDLK_h:  if (!release) param.show_hud = !param.show_hud; break;
-		case SDLK_f:  if (!release) param.display_fps = !param.display_fps; break;
-		case SDLK_F5: if (!release) sky = !sky; break;
-		case SDLK_F6: if (!release) fog = !fog; break;
-		case SDLK_F7: if (!release) terr = !terr; break;
-		case SDLK_F8: if (!release) trees = !trees; break;
+		case SDLK_h:
+			if (!release) param.show_hud = !param.show_hud;
+			break;
+		case SDLK_f:
+			if (!release) param.display_fps = !param.display_fps;
+			break;
+		case SDLK_F5:
+			if (!release) sky = !sky;
+			break;
+		case SDLK_F6:
+			if (!release) fog = !fog;
+			break;
+		case SDLK_F7:
+			if (!release) terr = !terr;
+			break;
+		case SDLK_F8:
+			if (!release) trees = !trees;
+			break;
 	}
 }
 
-void CRacing::Jaxis (int axis, ETR_DOUBLE value) {
+void CRacing::Jaxis (int axis, float value) {
 	if (axis == 0) { 	// left and right
 		stick_turn = ((value < -0.2) || (value > 0.2));
-		if (stick_turn) stick_turnfact = value; else stick_turnfact = 0.0;
+		if (stick_turn) stick_turnfact = value;
+		else stick_turnfact = 0.0;
 	} else if (axis == 1) {	// paddling and braking
 		stick_paddling = (value < -0.3);
 		stick_braking = (value > 0.3);
@@ -131,20 +172,20 @@ void CRacing::Jbutt (int button, int state) {
 }
 
 void CalcJumpEnergy (ETR_DOUBLE time_step) {
-    CControl *ctrl = Players.GetCtrl (g_game.player_id);
+	CControl *ctrl = g_game.player->ctrl;
 
 	if (ctrl->jump_charging) {
 		ctrl->jump_amt = min (MAX_JUMP_AMT, g_game.time - charge_start_time);
 	} else if (ctrl->jumping) {
 		ctrl->jump_amt *=  (1.0 - (g_game.time - ctrl->jump_start_time) /
-			JUMP_FORCE_DURATION);
+		                    JUMP_FORCE_DURATION);
 	} else {
 		ctrl->jump_amt = 0;
 	}
 }
 
-int CalcSoundVol (ETR_DOUBLE fact) {
-	ETR_DOUBLE vv = (ETR_DOUBLE) param.sound_volume * fact;
+int CalcSoundVol (float fact) {
+	float vv = (float) param.sound_volume * fact;
 	if (vv > 120) vv = 120;
 	return (int) vv;
 }
@@ -159,27 +200,27 @@ void SetSoundVolumes () {
 }
 
 // ---------------------------- init ----------------------------------
-void CRacing::Enter (void) {
-    CControl *ctrl = Players.GetCtrl (g_game.player_id);
+void CRacing::Enter() {
+	CControl *ctrl = g_game.player->ctrl;
 
-    if (param.view_mode < 0 || param.view_mode >= NUM_VIEW_MODES) {
+	if (param.view_mode < 0 || param.view_mode >= NUM_VIEW_MODES) {
 		param.view_mode = ABOVE;
-    }
-    set_view_mode (ctrl, (TViewMode)param.view_mode);
-    left_turn = right_turn = trick_modifier = false;
+	}
+	set_view_mode (ctrl, (TViewMode)param.view_mode);
+	left_turn = right_turn = trick_modifier = false;
 
-    ctrl->turn_fact = 0.0;
-    ctrl->turn_animation = 0.0;
-    ctrl->is_braking = false;
-    ctrl->is_paddling = false;
-    ctrl->jumping = false;
-    ctrl->jump_charging = false;
+	ctrl->turn_fact = 0.0;
+	ctrl->turn_animation = 0.0;
+	ctrl->is_braking = false;
+	ctrl->is_paddling = false;
+	ctrl->jumping = false;
+	ctrl->jump_charging = false;
 
 	lastsound = -1;
 	newsound = -1;
 
 	if (State::manager.PreviousState() != &Paused) ctrl->Init ();
-    g_game.raceaborted = false;
+	g_game.raceaborted = false;
 
 	SetSoundVolumes ();
 	Music.PlayTheme (g_game.theme_id, MUS_RACING);
@@ -192,22 +233,19 @@ void CRacing::Enter (void) {
 // this function is not used yet.
 int SlideVolume (CControl *ctrl, ETR_DOUBLE speed, int typ) {
 	if (typ == 1) {	// only at paddling or braking
-	return (int)(MIN ((((pow(ctrl->turn_fact, 2) * 128)) +
-		 (ctrl->is_braking ? 128:0) +
-		 (ctrl->jumping ? 128:0) + 20) * (speed / 10), 128));
+		return (int)(min ((((pow(ctrl->turn_fact, 2) * 128)) +
+		                   (ctrl->is_braking ? 128:0) +
+		                   (ctrl->jumping ? 128:0) + 20) * (speed / 10), 128.0f));
 	} else { 	// always
 		return (int)(128 * pow((speed/2),2));
 	}
 }
 
 void PlayTerrainSound (CControl *ctrl, bool airborne) {
-	int terridx = -1;
-	TTerrType *TerrList = &Course.TerrList[0];
-
 	if (airborne == false) {
-		terridx = Course.GetTerrainIdx (ctrl->cpos.x, ctrl->cpos.z, 0.5);
+		int terridx = Course.GetTerrainIdx (ctrl->cpos.x, ctrl->cpos.z, 0.5);
 		if (terridx >= 0) {
-			newsound = (int)Sound.GetSoundIdx (TerrList[terridx].sound);
+			newsound = (int)Course.TerrList[terridx].sound;
 		} else newsound = -1;
 	} else newsound = -1;
 	if ((newsound != lastsound) && (lastsound >= 0)) Sound.Halt (lastsound);
@@ -221,47 +259,46 @@ void CalcSteeringControls (CControl *ctrl, ETR_DOUBLE time_step) {
 	if (stick_turn) {
 		ctrl->turn_fact = stick_turnfact;
 		ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
-		ctrl->turn_animation = min (1.0, max (-1.0, ctrl->turn_animation));
+		ctrl->turn_animation = clamp (-1.0, ctrl->turn_animation, 1.0);
 	} else if (left_turn ^ right_turn) {
 		if (left_turn) ctrl->turn_fact = -1.0;
 		else ctrl->turn_fact = 1.0;
 		ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
-		ctrl->turn_animation = min (1.0, max (-1.0, ctrl->turn_animation));
+		ctrl->turn_animation = clamp (-1.0, ctrl->turn_animation, 1.0);
 	} else {
 		ctrl->turn_fact = 0.0;
 		if (time_step < ROLL_DECAY) {
-	    	ctrl->turn_animation *= 1.0 - time_step / ROLL_DECAY;
+			ctrl->turn_animation *= 1.0 - time_step / ROLL_DECAY;
 		} else {
-	    	ctrl->turn_animation = 0.0;
+			ctrl->turn_animation = 0.0;
 		}
 	}
 
 	bool paddling = key_paddling || stick_paddling;
-    if (paddling && ctrl->is_paddling == false) {
+	if (paddling && ctrl->is_paddling == false) {
 		ctrl->is_paddling = true;
 		ctrl->paddle_time = g_game.time;
-    }
+	}
 
 	bool braking = key_braking || stick_braking;
-    ctrl->is_braking = braking;
+	ctrl->is_braking = braking;
 
 	bool charge = key_charging || stick_charging;
 	bool invcharge = !key_charging && !stick_charging;
 	CalcJumpEnergy (time_step);
-    if ((charge) && !ctrl->jump_charging && !ctrl->jumping) {
+	if ((charge) && !ctrl->jump_charging && !ctrl->jumping) {
 		ctrl->jump_charging = true;
 		charge_start_time = g_game.time;
-    }
-    if ((invcharge) && ctrl->jump_charging) {
+	}
+	if ((invcharge) && ctrl->jump_charging) {
 		ctrl->jump_charging = false;
 		ctrl->begin_jump = true;
-    }
+	}
 }
 
 void CalcFinishControls (CControl *ctrl, ETR_DOUBLE timestep, bool airborne) {
-	TVector3 movdir = ctrl->cvel;
-	ETR_DOUBLE speed = NormVector (movdir);
-	ETR_DOUBLE dir_angle = atan (movdir.x / movdir.z) * 57.3;
+	ETR_DOUBLE speed = ctrl->cvel.Length();
+	ETR_DOUBLE dir_angle = RADIANS_TO_ANGLES(atan(ctrl->cvel.x / ctrl->cvel.z));
 
 	if (fabs (dir_angle) > 5 && speed > 5) {
 		ctrl->turn_fact = dir_angle / 20;
@@ -271,7 +308,7 @@ void CalcFinishControls (CControl *ctrl, ETR_DOUBLE timestep, bool airborne) {
 	} else {
 		ctrl->turn_fact = 0;
 		if (timestep < ROLL_DECAY) {
-	    	ctrl->turn_animation *= 1.0 - timestep / ROLL_DECAY;
+			ctrl->turn_animation *= 1.0 - timestep / ROLL_DECAY;
 		} else ctrl->turn_animation = 0.0;
 	}
 }
@@ -292,14 +329,14 @@ void CalcTrickControls (CControl *ctrl, ETR_DOUBLE time_step, bool airborne) {
 			ctrl->roll_factor = 0;
 			ctrl->roll_left = ctrl->roll_right = false;
 		}
-    }
+	}
 	if (ctrl->front_flip || ctrl->back_flip) {
 		ctrl->flip_factor += (ctrl->back_flip ? -1 : 1) * 0.15 * time_step / 0.05;
 		if (ctrl->flip_factor > 1 || ctrl->flip_factor < -1) {
 			ctrl->flip_factor = 0;
 			ctrl->front_flip = ctrl->back_flip = false;
 		}
-    }
+	}
 }
 
 // ====================================================================
@@ -307,18 +344,18 @@ void CalcTrickControls (CControl *ctrl, ETR_DOUBLE time_step, bool airborne) {
 // ====================================================================
 
 void CRacing::Loop (ETR_DOUBLE time_step) {
-    CControl *ctrl = Players.GetCtrl (g_game.player_id);
+	CControl *ctrl = g_game.player->ctrl;
 	ETR_DOUBLE ycoord = Course.FindYCoord (ctrl->cpos.x, ctrl->cpos.z);
 	bool airborne = (bool) (ctrl->cpos.y > (ycoord + JUMP_MAX_START_HEIGHT));
 
-    check_gl_error();
-    ClearRenderContext ();
+	check_gl_error();
+	ClearRenderContext ();
 	Env.SetupFog ();
 	Music.Update ();
 	CalcTrickControls (ctrl, time_step, airborne);
 
 	if (!g_game.finish) CalcSteeringControls (ctrl, time_step);
-		else CalcFinishControls (ctrl, time_step, airborne);
+	else CalcFinishControls (ctrl, time_step, airborne);
 	PlayTerrainSound (ctrl, airborne);
 
 //  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -329,7 +366,7 @@ void CRacing::Loop (ETR_DOUBLE time_step) {
 	update_view (ctrl, time_step);
 	UpdateTrackmarks (ctrl);
 
-    SetupViewFrustum (ctrl);
+	SetupViewFrustum (ctrl);
 	if (sky) Env.DrawSkybox (ctrl->viewpos);
 	if (fog) Env.DrawFog ();
 	void SetupLight ();
@@ -339,19 +376,19 @@ void CRacing::Loop (ETR_DOUBLE time_step) {
 	if (param.perf_level > 2) {
 		update_particles (time_step);
 		draw_particles (ctrl);
-    }
-	Char.Draw (g_game.char_id);
-	UpdateWind (time_step, ctrl);
+	}
+	g_game.character->shape->Draw();
+	UpdateWind (time_step);
 	UpdateSnow (time_step, ctrl);
 	DrawSnow (ctrl);
 	DrawHud (ctrl);
 
 	Reshape (Winsys.resolution.width, Winsys.resolution.height);
-    Winsys.SwapBuffers ();
+	Winsys.SwapBuffers ();
 	if (g_game.finish == false) g_game.time += time_step;
 }
 // ---------------------------------- term ------------------
 void CRacing::Exit() {
 	Sound.HaltAll ();
-    break_track_marks ();
+	break_track_marks ();
 }

@@ -19,6 +19,7 @@ GNU General Public License for more details.
 #define PARTICLES_H
 
 #include "bh.h"
+#include "mathlib.h"
 #include <vector>
 
 // --------------------------------------------------------------------
@@ -27,29 +28,28 @@ GNU General Public License for more details.
 
 void init_ui_snow ();
 void update_ui_snow (ETR_DOUBLE time_step);
-void push_ui_snow (const TVector2& pos);
+void push_ui_snow (const TVector2i& pos);
 void draw_ui_snow ();
 
 // --------------------------------------------------------------------
 //					snow particles during race
 // --------------------------------------------------------------------
 
-void create_new_particles (const TVector3& loc, TVector3 vel, int num);
+void create_new_particles (const TVector3d& loc, const TVector3d& vel, int num);
 void update_particles (ETR_DOUBLE time_step);
 void clear_particles ();
 void draw_particles (const CControl *ctrl);
-void generate_particles (const CControl *ctrl, ETR_DOUBLE dtime, const TVector3& pos, ETR_DOUBLE speed);
+void generate_particles (const CControl *ctrl, ETR_DOUBLE dtime, const TVector3d& pos, ETR_DOUBLE speed);
 
 // --------------------------------------------------------------------
 //					snow flakes for short distances
 // --------------------------------------------------------------------
 
 struct TFlake {
-    TVector3 pt;
-    float   size;
-    TVector3 vel;
-    TVector2 tex_min;
-    TVector2 tex_max;
+	TVector3d pt;
+	float   size;
+	TVector3d vel;
+	const GLfloat* tex;
 
 	void Draw(const TPlane& lp, const TPlane& rp, bool rotate_flake, float dir_angle) const;
 };
@@ -75,23 +75,23 @@ struct TFlakeArea {
 	vector<TFlake> flakes;
 
 	TFlakeArea(
-		int num_flakes,
-		float xrange,
-		float ytop,
-		float yrange,
-		float zback,
-		float zrange,
-		float minSize,
-		float maxSize,
-		float speed,
-		bool  rotate);
+	    int num_flakes,
+	    float xrange,
+	    float ytop,
+	    float yrange,
+	    float zback,
+	    float zrange,
+	    float minSize,
+	    float maxSize,
+	    float speed,
+	    bool  rotate);
 	void Draw(const CControl* ctrl) const;
 	void Update(float timestep, float xcoeff, float ycoeff, float zcoeff);
 };
 
 class CFlakes {
 private:
-	TVector3 snow_lastpos;
+	TVector3d snow_lastpos;
 	vector<TFlakeArea> areas;
 	void MakeSnowFlake (size_t ar, size_t i);
 	void GenerateSnowFlakes (const CControl *ctrl);
@@ -116,7 +116,7 @@ public:
 #define MAX_CURTAIN_ROWS 8
 
 struct TCurtainElement {
-    TVector3 pt;
+	TVector3d pt;
 	float angle;
 	float height;
 	float zrandom;
@@ -138,16 +138,16 @@ struct TCurtain {
 	int texture;
 
 	TCurtain(
-		int num_rows,
-		float z_dist,
-		float tex_size,
-		float base_speed,
-		float start_angle,
-		float min_height,
-		int curt_texture);
+	    int num_rows,
+	    float z_dist,
+	    float tex_size,
+	    float base_speed,
+	    float start_angle,
+	    float min_height,
+	    int curt_texture);
 	void SetStartParams(const CControl* ctrl);
 	void Draw() const;
-	void Update(float timestep, const TVector3& drift, const CControl* ctrl);
+	void Update(float timestep, const TVector3d& drift, const CControl* ctrl);
 
 private:
 	static void CurtainVec (float angle, float zdist, float &x, float &z);
@@ -196,7 +196,7 @@ private:
 
 	float WSpeed;
 	float WAngle;
-	TVector3 WVector;
+	TVector3d WVector;
 
 	float DestSpeed;
 	float DestAngle;
@@ -214,7 +214,7 @@ public:
 	bool Windy () const { return windy; }
 	float Angle () const { return WAngle; }
 	float Speed () const { return WSpeed; }
-	const TVector3& WindDrift () const { return WVector; }
+	const TVector3d& WindDrift () const { return WVector; }
 };
 
 extern CWind Wind;
@@ -227,6 +227,6 @@ void InitSnow (const CControl *ctrl);
 void UpdateSnow (ETR_DOUBLE timestep, const CControl *ctrl);
 void DrawSnow (const CControl *ctrl);
 void InitWind ();
-void UpdateWind (ETR_DOUBLE timestep, const CControl *ctrl);
+void UpdateWind (ETR_DOUBLE timestep);
 
 #endif

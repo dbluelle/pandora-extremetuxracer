@@ -30,6 +30,7 @@ GNU General Public License for more details.
 #include "particles.h"
 #include "textures.h"
 #include "game_ctrl.h"
+#include "tux.h"
 #include "racing.h"
 #include "winsys.h"
 #include "physics.h"
@@ -39,67 +40,62 @@ CPaused Paused;
 static bool sky = true;
 static bool fog = true;
 static bool terr = true;
+static bool trees = true;
 
 void CPaused::Keyb (unsigned int key, bool special, bool release, int x, int y) {
-    if (release) return;
+	if (release) return;
 	switch (key) {
-		case SDLK_s: ScreenshotN (); break;
-		case SDLK_F5: sky = !sky; break;
-		case SDLK_F6: fog = !fog; break;
-		case SDLK_F7: terr = !terr; break;
-		default: State::manager.RequestEnterState (Racing);
+		case SDLK_s:
+			ScreenshotN ();
+			break;
+		case SDLK_F5:
+			sky = !sky;
+			break;
+		case SDLK_F6:
+			fog = !fog;
+			break;
+		case SDLK_F7:
+			terr = !terr;
+			break;
+		case SDLK_F8:
+			trees = !trees;
+			break;
+		default:
+			State::manager.RequestEnterState (Racing);
 	}
 }
 
 void CPaused::Mouse (int button, int state, int x, int y) {
-    State::manager.RequestEnterState (Racing);
-}
-
-void PausedSetupDisplay () {
-    ETR_DOUBLE offset = 0.0;
-
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho (0, Winsys.resolution.width,  0, Winsys.resolution.height, -1.0, 1.0);
-    glMatrixMode (GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef (offset, offset, -1.0);
-    glColor4f (1.0, 1.0, 1.0, 1.0);
+	State::manager.RequestEnterState (Racing);
 }
 
 // ====================================================================
 
 void CPaused::Loop (ETR_DOUBLE time_step) {
-    CControl *ctrl = Players.GetCtrl (g_game.player_id);
-    int width = Winsys.resolution.width;
-    int height = Winsys.resolution.height;
-    check_gl_error();
+	CControl *ctrl = g_game.player->ctrl;
+	int width = Winsys.resolution.width;
+	int height = Winsys.resolution.height;
+	check_gl_error();
 
 	Music.Update ();
 	ClearRenderContext ();
-    Env.SetupFog ();
-    ctrl->UpdatePlayerPos (0);
-    update_view (ctrl, 0);
-    SetupViewFrustum (ctrl);
+	Env.SetupFog ();
+	update_view (ctrl, 0);
+	SetupViewFrustum (ctrl);
 
-    if (sky) Env.DrawSkybox (ctrl->viewpos);
-    if (fog) Env.DrawFog ();
+	if (sky) Env.DrawSkybox (ctrl->viewpos);
+	if (fog) Env.DrawFog ();
 	Env.SetupLight ();
-    if (terr) RenderCourse();
-    DrawTrackmarks ();
-    DrawTrees();
+	if (terr) RenderCourse();
+	DrawTrackmarks ();
+	if (trees) DrawTrees();
 
-	UpdateWind (time_step, ctrl);
-	UpdateSnow (time_step, ctrl);
 	DrawSnow (ctrl);
 
-    if (param.perf_level > 2) draw_particles (ctrl);
-	Char.Draw (g_game.char_id);
+	if (param.perf_level > 2) draw_particles (ctrl);
+	g_game.character->shape->Draw();
 
-	ScopedRenderMode rm(GUI);
-	SetupGuiDisplay ();
-	PausedSetupDisplay ();
 	DrawHud (ctrl);
-    Reshape (width, height);
-    Winsys.SwapBuffers ();
+	Reshape (width, height);
+	Winsys.SwapBuffers ();
 }

@@ -1,5 +1,5 @@
 #include "bh.h"
-
+#include <cstdlib>
 /*
 This is an limited implementation based on this game need.
 Only these flags are managed :

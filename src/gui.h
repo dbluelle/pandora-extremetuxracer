@@ -25,12 +25,27 @@ GNU General Public License for more details.
 #define CRSR_PERIODE 0.4
 
 
+struct TRect {
+	int left;
+	int top;
+	int width;
+	int height;
+};
+
+struct TArea {
+	int left;
+	int right;
+	int top;
+	int bottom;
+};
+
+
 class TTexture;
 
 class TWidget {
 protected:
 	TRect mouseRect;
-	TVector2 position;
+	TVector2i position;
 	bool active;
 	bool visible;
 public:
@@ -42,8 +57,8 @@ public:
 	virtual void Key(unsigned int key, unsigned int mod, bool released) {}
 	virtual void MouseMove(int x, int y);
 	bool focussed() const { return focus; }
-	void SetActive(bool a) { active = a; if(!a) focus = false; }
-	void SetVisible(bool v) { visible = v; if(!v) focus = false; }
+	void SetActive(bool a) { active = a; if (!a) focus = false; }
+	void SetVisible(bool v) { visible = v; if (!v) focus = false; }
 	bool GetActive() const { return active; }
 	bool GetVisible() const { return visible; }
 };
@@ -83,8 +98,7 @@ public:
 		: TWidget(x, y, 32, 32)
 		, tag(tag_)
 		, width(width_)
-		, checked(false)
-	{
+		, checked(false) {
 		mouseRect.left = x+width-32;
 	}
 	void Draw() const;
@@ -149,7 +163,7 @@ TUpDown* AddUpDown(int x, int y, int minimum, int maximum, int value, int distan
 void DrawGUI();
 TWidget* ClickGUI(int x, int y);
 TWidget* MouseMoveGUI(int x, int y);
-TWidget* KeyGUI(unsigned int key, unsigned int spec, bool released);
+TWidget* KeyGUI(unsigned int key, unsigned int mod, bool released);
 void SetFocus(TWidget* widget);
 void IncreaseFocus();
 void DecreaseFocus();
@@ -158,9 +172,7 @@ void ResetGUI();
 // --------------------------------------------------------------------
 
 void DrawFrameX (int x, int y, int w, int h, int line,
-			const TColor& backcol, const TColor& framecol, ETR_DOUBLE transp);
-void DrawLevel (int x, int y, int level, ETR_DOUBLE fact);
-void DrawBonus (int x, int y, size_t max, size_t num);
+                 const TColor& backcol, const TColor& framecol, ETR_DOUBLE transp);
 void DrawBonusExt (int y, size_t numraces, size_t num);
 void DrawCursor ();
 

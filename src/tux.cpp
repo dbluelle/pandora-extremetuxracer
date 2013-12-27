@@ -30,6 +30,8 @@ still shaped with spheres.
 #include "textures.h"
 #include "course.h"
 #include "physics.h"
+#include <GL/glu.h>
+#include <algorithm>
 
 #define MAX_ARM_ANGLE2 30.0
 #define MAX_PADDLING_ANGLE2 35.0
@@ -41,9 +43,9 @@ still shaped with spheres.
 #define SHADOW_HEIGHT 0.03 // ->0.05
 
 #ifdef USE_STENCIL_BUFFER
-	static const TColor shad_col(0.0, 0.0, 0.0, 0.3);
+static const TColor shad_col(0.0, 0.0, 0.0, 0.3);
 #else
-	static const TColor shad_col(0.0, 0.0, 0.0, 0.1);
+static const TColor shad_col(0.0, 0.0, 0.0, 0.1);
 #endif
 
 static const TCharMaterial TuxDefMat = {TColor(0.5, 0.5, 0.5, 1.0), TColor(0.0, 0.0, 0.0, 1.0), 0.0};
@@ -90,21 +92,21 @@ TCharNode *CCharShape::GetNode (size_t node_name) {
 }
 
 void CCharShape::CreateRootNode () {
-    TCharNode *node = new TCharNode;
+	TCharNode *node = new TCharNode;
 	node->node_name = 0;
 	node->parent = NULL;
 	node->parent_name = 99;
-    node->next = NULL;
+	node->next = NULL;
 	node->next_name = 99;
-    node->child = NULL;
+	node->child = NULL;
 	node->child_name = 99;
-    node->mat = NULL;
-    node->joint = "root";
-    node->render_shadow = false;
+	node->mat = NULL;
+	node->joint = "root";
+	node->render_shadow = false;
 	node->visible = false;
 	node->action = NULL;
-    MakeIdentityMatrix (node->trans);
-	MakeIdentityMatrix (node->invtrans);
+	node->trans.SetIdentity();
+	node->invtrans.SetIdentity();
 
 	NodeIndex.clear();
 	NodeIndex["root"] = 0;
@@ -113,22 +115,19 @@ void CCharShape::CreateRootNode () {
 	numNodes = 1;
 }
 
-bool CCharShape::CreateCharNode
-		(int parent_name, size_t node_name, const string& joint,
-		const string& name, const string& order, bool shadow) {
-
+bool CCharShape::CreateCharNode(int parent_name, size_t node_name, const string& joint, const string& name, const string& order, bool shadow) {
 	TCharNode *parent = GetNode (parent_name);
 	if (parent == NULL) {
 		Message ("wrong parent node");
 		return false;
 	}
-    TCharNode *node = new TCharNode;
+	TCharNode *node = new TCharNode;
 	node->node_name = node_name;
-    node->parent = parent;
+	node->parent = parent;
 	node->parent_name = parent_name;
-    node->next  = NULL;
+	node->next  = NULL;
 	node->next_name = 99;
-    node->child = NULL;
+	node->child = NULL;
 	node->child_name = 99;
 
 	if (useActions) {
@@ -140,14 +139,14 @@ bool CCharShape::CreateCharNode
 	} else
 		node->action = NULL;
 
-    node->mat   = NULL;
+	node->mat   = NULL;
 	node->node_idx = numNodes;
 	node->visible = false;
 	node->render_shadow = shadow;
-    node->joint = joint;
+	node->joint = joint;
 
-    MakeIdentityMatrix (node->trans);
-    MakeIdentityMatrix (node->invtrans);
+	node->trans.SetIdentity();
+	node->invtrans.SetIdentity();
 
 	if (!joint.empty()) NodeIndex[joint] = node_name;
 	Nodes[numNodes] = node;
@@ -165,10 +164,10 @@ bool CCharShape::CreateCharNode
 /// -------------------------------------------------------------------
 
 	numNodes++;
-    return true;
+	return true;
 }
 
-void CCharShape::AddAction (size_t node_name, int type, const TVector3& vec, ETR_DOUBLE val) {
+void CCharShape::AddAction (size_t node_name, int type, const TVector3d& vec, ETR_DOUBLE val) {
 	size_t idx = GetNodeIdx (node_name);
 	TCharAction *act = Nodes[idx]->action;
 	act->type[act->num] = type;
@@ -177,19 +176,19 @@ void CCharShape::AddAction (size_t node_name, int type, const TVector3& vec, ETR
 	act->num++;
 }
 
-bool CCharShape::TranslateNode (size_t node_name, const TVector3& vec) {
+bool CCharShape::TranslateNode (size_t node_name, const TVector3d& vec) {
 	TCharNode *node = GetNode (node_name);
 	if (node == NULL) return false;
 
-    TMatrix TransMatrix;
+	TMatrix<4, 4> TransMatrix;
 
-    MakeTranslationMatrix (TransMatrix, vec.x, vec.y, vec.z);
-    MultiplyMatrices (node->trans, node->trans, TransMatrix);
-	MakeTranslationMatrix (TransMatrix, -vec.x, -vec.y, -vec.z);
-	MultiplyMatrices (node->invtrans, TransMatrix, node->invtrans);
+	TransMatrix.SetTranslationMatrix(vec.x, vec.y, vec.z);
+	node->trans = node->trans * TransMatrix;
+	TransMatrix.SetTranslationMatrix(-vec.x, -vec.y, -vec.z);
+	node->invtrans = TransMatrix * node->invtrans;
 
 	if (newActions && useActions) AddAction (node_name, 0, vec, 0);
-    return true;
+	return true;
 }
 
 bool CCharShape::RotateNode (size_t node_name, int axis, ETR_DOUBLE angle) {
@@ -198,21 +197,27 @@ bool CCharShape::RotateNode (size_t node_name, int axis, ETR_DOUBLE angle) {
 
 	if (axis > 3) return false;
 
-	TMatrix rotMatrix;
+	TMatrix<4, 4> rotMatrix;
 	char caxis = '0';
 	switch (axis) {
-		case 1: caxis = 'x'; break;
-		case 2: caxis = 'y'; break;
-		case 3: caxis = 'z'; break;
+		case 1:
+			caxis = 'x';
+			break;
+		case 2:
+			caxis = 'y';
+			break;
+		case 3:
+			caxis = 'z';
+			break;
 	}
 
-    MakeRotationMatrix (rotMatrix, angle, caxis);
-    MultiplyMatrices (node->trans, node->trans, rotMatrix);
-	MakeRotationMatrix (rotMatrix, -angle, caxis);
-	MultiplyMatrices (node->invtrans, rotMatrix, node->invtrans);
+	rotMatrix.SetRotationMatrix(angle, caxis);
+	node->trans = node->trans * rotMatrix;
+	rotMatrix.SetRotationMatrix(-angle, caxis);
+	node->invtrans = rotMatrix * node->invtrans;
 
-	if (newActions && useActions) AddAction (node_name, axis, NullVec, angle);
-    return true;
+	if (newActions && useActions) AddAction (node_name, axis, NullVec3, angle);
+	return true;
 }
 
 bool CCharShape::RotateNode (const string& node_trivialname, int axis, ETR_DOUBLE angle) {
@@ -221,26 +226,16 @@ bool CCharShape::RotateNode (const string& node_trivialname, int axis, ETR_DOUBL
 	return RotateNode (i->second, axis, angle);
 }
 
-void CCharShape::ScaleNode (size_t node_name, const TVector3& vec) {
+void CCharShape::ScaleNode (size_t node_name, const TVector3d& vec) {
 	TCharNode *node = GetNode(node_name);
 	if (node == NULL) return;
 
-    TMatrix matrix;
+	TMatrix<4, 4> matrix;
 
-	MakeIdentityMatrix (matrix);
-    MultiplyMatrices (node->trans, node->trans, matrix);
-	MakeIdentityMatrix (matrix);
-	MultiplyMatrices (node->invtrans, matrix, node->invtrans);
-
-    MakeScalingMatrix (matrix, vec.x, vec.y, vec.z);
-    MultiplyMatrices (node->trans, node->trans, matrix);
-	MakeScalingMatrix (matrix, 1.0 / vec.x, 1.0 / vec.y, 1.0 / vec.z);
-	MultiplyMatrices (node->invtrans, matrix, node->invtrans);
-
-	MakeIdentityMatrix (matrix);
-    MultiplyMatrices (node->trans, node->trans, matrix);
-	MakeIdentityMatrix (matrix);
-	MultiplyMatrices (node->invtrans, matrix, node->invtrans);
+	matrix.SetScalingMatrix(vec.x, vec.y, vec.z);
+	node->trans = node->trans * matrix;
+	matrix.SetScalingMatrix(1.0 / vec.x, 1.0 / vec.y, 1.0 / vec.z);
+	node->invtrans = matrix * node->invtrans;
 
 	if (newActions && useActions) AddAction (node_name, 4, vec, 0);
 }
@@ -252,12 +247,11 @@ bool CCharShape::VisibleNode (size_t node_name, float level) {
 	node->visible = (level > 0);
 
 	if (node->visible) {
-    	node->divisions =
-			MIN (MAX_SPHERE_DIV, MAX (MIN_SPHERE_DIV,
-			ROUND_TO_NEAREST (param.tux_sphere_divisions * level / 10)));
-	    node->radius = 1.0;
+		node->divisions =
+		    clamp (MIN_SPHERE_DIV, ROUND_TO_NEAREST (param.tux_sphere_divisions * level / 10), MAX_SPHERE_DIV);
+		node->radius = 1.0;
 	}
-	if (newActions && useActions) AddAction (node_name, 5, NullVec, level);
+	if (newActions && useActions) AddAction (node_name, 5, NullVec3, level);
 	return true;
 }
 
@@ -275,8 +269,8 @@ bool CCharShape::ResetNode (size_t node_name) {
 	TCharNode *node = GetNode(node_name);
 	if (node == NULL) return false;
 
-    MakeIdentityMatrix (node->trans);
-    MakeIdentityMatrix (node->invtrans);
+	node->trans.SetIdentity();
+	node->invtrans.SetIdentity();
 	return true;
 }
 
@@ -286,31 +280,27 @@ bool CCharShape::ResetNode (const string& node_trivialname) {
 	return ResetNode (i->second);
 }
 
-bool CCharShape::TransformNode (size_t node_name, const TMatrix mat, const TMatrix invmat) {
+bool CCharShape::TransformNode(size_t node_name, const TMatrix<4, 4>& mat, const TMatrix<4, 4>& invmat) {
 	TCharNode *node = GetNode(node_name);
 	if (node == NULL) return false;
 
-    MultiplyMatrices (node->trans, node->trans, mat);
-	MultiplyMatrices (node->invtrans, invmat, node->invtrans);
-    return true;
-}
-
-void CCharShape::ResetRoot () {
-	ResetNode (0);
+	node->trans = node->trans * mat;
+	node->invtrans = invmat * node->invtrans;
+	return true;
 }
 
 void CCharShape::ResetJoints () {
-    ResetNode ("left_shldr");
-    ResetNode ("right_shldr");
-    ResetNode ("left_hip");
-    ResetNode ("right_hip");
-    ResetNode ("left_knee");
-    ResetNode ("right_knee");
-    ResetNode ("left_ankle");
-    ResetNode ("right_ankle");
-    ResetNode ("tail");
-    ResetNode ("neck");
-    ResetNode ("head");
+	ResetNode ("left_shldr");
+	ResetNode ("right_shldr");
+	ResetNode ("left_hip");
+	ResetNode ("right_hip");
+	ResetNode ("left_knee");
+	ResetNode ("right_knee");
+	ResetNode ("left_ankle");
+	ResetNode ("right_ankle");
+	ResetNode ("tail");
+	ResetNode ("neck");
+	ResetNode ("head");
 }
 
 void CCharShape::Reset () {
@@ -348,23 +338,22 @@ TCharMaterial* CCharShape::GetMaterial (const string& mat_name) {
 }
 
 void CCharShape::CreateMaterial (const string& line) {
-	TVector3 diff = SPVector3N (line, "diff", TVector3 (0,0,0));
-	TVector3 spec = SPVector3N (line, "spec", TVector3 (0,0,0));
+	TVector3d diff = SPVector3d(line, "diff");
+	TVector3d spec = SPVector3d(line, "spec");
 	float exp = SPFloatN (line, "exp", 50);
-	std::string mat = SPItemN (line, "mat");
-	STrimN(mat);
+	std::string mat = SPStrN(line, "mat");
 
 	Materials.push_back(TCharMaterial());
-    Materials.back().diffuse.r = diff.x;
-    Materials.back().diffuse.g = diff.y;
-    Materials.back().diffuse.b = diff.z;
-    Materials.back().diffuse.a = 1.0;
-    Materials.back().specular.r = spec.x;
-    Materials.back().specular.g = spec.y;
-    Materials.back().specular.b = spec.z;
-    Materials.back().specular.a = 1.0;
-    Materials.back().exp = exp;
-	if(useActions)
+	Materials.back().diffuse.r = diff.x;
+	Materials.back().diffuse.g = diff.y;
+	Materials.back().diffuse.b = diff.z;
+	Materials.back().diffuse.a = 1.0;
+	Materials.back().specular.r = spec.x;
+	Materials.back().specular.g = spec.y;
+	Materials.back().specular.b = spec.z;
+	Materials.back().specular.a = 1.0;
+	Materials.back().exp = exp;
+	if (useActions)
 		Materials.back().matline = line;
 
 	MaterialIndex[mat] = Materials.size()-1;
@@ -375,17 +364,17 @@ void CCharShape::CreateMaterial (const string& line) {
 // --------------------------------------------------------------------
 
 void CCharShape::DrawCharSphere (int num_divisions) {
-    GLUquadricObj *qobj = gluNewQuadric();
-    gluQuadricDrawStyle (qobj, GLU_FILL);
-    gluQuadricOrientation (qobj, GLU_OUTSIDE);
-    gluQuadricNormals (qobj, GLU_SMOOTH);
-    gluSphere (qobj, 1.0, (GLint)2.0 * num_divisions, num_divisions);
-    gluDeleteQuadric (qobj);
+	GLUquadricObj *qobj = gluNewQuadric();
+	gluQuadricDrawStyle (qobj, GLU_FILL);
+	gluQuadricOrientation (qobj, GLU_OUTSIDE);
+	gluQuadricNormals (qobj, GLU_SMOOTH);
+	gluSphere (qobj, 1.0, (GLint)2.0 * num_divisions, num_divisions);
+	gluDeleteQuadric (qobj);
 }
 
 void CCharShape::DrawNodes (const TCharNode *node) {
-    glPushMatrix();
-    glMultMatrixd ((ETR_DOUBLE *) node->trans);
+	glPushMatrix();
+	glMultMatrix(node->trans);
 
 	if (node->node_name == highlight_node) highlighted = true;
 	const TCharMaterial *mat;
@@ -396,26 +385,26 @@ void CCharShape::DrawNodes (const TCharNode *node) {
 		else mat = &TuxDefMat;
 	}
 
-    if (node->visible == true) {
+	if (node->visible == true) {
 		set_material (mat->diffuse, mat->specular, mat->exp);
 
 		DrawCharSphere (node->divisions);
-    }
+	}
 // -------------- recursive loop -------------------------------------
-    TCharNode *child = node->child;
-    while (child != NULL) {
-        DrawNodes (child);
+	TCharNode *child = node->child;
+	while (child != NULL) {
+		DrawNodes (child);
 		if (child->node_name == highlight_node) highlighted = false;
-        child = child->next;
-    }
+		child = child->next;
+	}
 // -------------------------------------------------------------------
-    glPopMatrix();
+	glPopMatrix();
 }
 
 void CCharShape::Draw () {
-    static const float dummy_color[] = {0.0, 0.0, 0.0, 1.0};
+	static const float dummy_color[] = {0.0, 0.0, 0.0, 1.0};
 
-    glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, dummy_color);
+	glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, dummy_color);
 	ScopedRenderMode rm(TUX);
 	glEnable (GL_NORMALIZE);
 
@@ -446,38 +435,49 @@ bool CCharShape::Load (const string& dir, const string& filename, bool with_acti
 		const string& line = list.Line(i);
 		int node_name = SPIntN (line, "node", -1);
 		int parent_name = SPIntN (line, "par", -1);
-		string mat_name = SPStrN (line, "mat", "");
-		string name = SPStrN (line, "joint", "");
-		string fullname = SPStrN (line, "name", "");
+		string mat_name = SPStrN (line, "mat");
+		string name = SPStrN (line, "joint");
+		string fullname = SPStrN (line, "name");
 
 		if (SPIntN (line, "material", 0) > 0) {
 			CreateMaterial (line);
 		} else {
-			ETR_DOUBLE visible = SPFloatN (line, "vis", -1.0);
+			float visible = SPFloatN (line, "vis", -1.0);
 			bool shadow = SPBoolN (line, "shad", false);
-			string order = SPStrN (line, "order", "");
+			string order = SPStrN (line, "order");
 			CreateCharNode (parent_name, node_name, name, fullname, order, shadow);
-			TVector3 rot = SPVector3N (line, "rot", NullVec);
+			TVector3d rot = SPVector3d(line, "rot");
 			MaterialNode (node_name, mat_name);
 			for (size_t ii = 0; ii < order.size(); ii++) {
 				int act = order[ii]-48;
 				switch (act) {
 					case 0: {
-						TVector3 trans = SPVector3N (line, "trans", TVector3 (0,0,0));
+						TVector3d trans = SPVector3d(line, "trans");
 						TranslateNode (node_name, trans);
 						break;
 					}
-					case 1: RotateNode (node_name, 1, rot.x); break;
-					case 2: RotateNode (node_name, 2, rot.y); break;
-					case 3: RotateNode (node_name, 3, rot.z); break;
+					case 1:
+						RotateNode (node_name, 1, rot.x);
+						break;
+					case 2:
+						RotateNode (node_name, 2, rot.y);
+						break;
+					case 3:
+						RotateNode (node_name, 3, rot.z);
+						break;
 					case 4: {
-						TVector3 scale = SPVector3N (line, "scale", TVector3 (1,1,1));
+						TVector3d scale = SPVector3(line, "scale", TVector3d(1, 1, 1));
 						ScaleNode (node_name, scale);
 						break;
 					}
-					case 5: VisibleNode (node_name, visible); break;
-					case 9: RotateNode (node_name, 2, rot.z); break;
-					default: break;
+					case 5:
+						VisibleNode (node_name, visible);
+						break;
+					case 9:
+						RotateNode (node_name, 2, rot.z);
+						break;
+					default:
+						break;
 				}
 			}
 		}
@@ -486,163 +486,153 @@ bool CCharShape::Load (const string& dir, const string& filename, bool with_acti
 	return true;
 }
 
-TVector3 CCharShape::AdjustRollvector (const CControl *ctrl, TVector3 vel, const TVector3& zvec) {
-    TMatrix rot_mat;
-    vel = ProjectToPlane (zvec, vel);
-    NormVector (vel);
-    if (ctrl->is_braking) {
-		RotateAboutVectorMatrix (rot_mat, vel, ctrl->turn_fact * BRAKING_ROLL_ANGLE);
-    } else {
-		RotateAboutVectorMatrix (rot_mat, vel, ctrl->turn_fact * MAX_ROLL_ANGLE);
-    }
-    return TransformVector (rot_mat, zvec);
+TVector3d CCharShape::AdjustRollvector (const CControl *ctrl, const TVector3d& vel_, const TVector3d& zvec) {
+	TMatrix<4, 4> rot_mat;
+	TVector3d vel = ProjectToPlane(zvec, vel_);
+	vel.Norm();
+	if (ctrl->is_braking) {
+		rot_mat = RotateAboutVectorMatrix (vel, ctrl->turn_fact * BRAKING_ROLL_ANGLE);
+	} else {
+		rot_mat = RotateAboutVectorMatrix (vel, ctrl->turn_fact * MAX_ROLL_ANGLE);
+	}
+	return TransformVector (rot_mat, zvec);
 }
 
 void CCharShape::AdjustOrientation (CControl *ctrl, ETR_DOUBLE dtime,
-		 ETR_DOUBLE dist_from_surface, const TVector3& surf_nml) {
-    TVector3 new_y, new_z;
-    TMatrix cob_mat, inv_cob_mat;
-    TMatrix rot_mat;
-    static const TVector3 minus_z_vec(0, 0, -1);
-    static const TVector3 y_vec(0, 1, 0);
+                                    ETR_DOUBLE dist_from_surface, const TVector3d& surf_nml) {
+	TVector3d new_y, new_z;
+	static const TVector3d minus_z_vec(0, 0, -1);
+	static const TVector3d y_vec(0, 1, 0);
 
-    if (dist_from_surface > 0) {
-		new_y = ScaleVector (1, ctrl->cvel);
-		NormVector (new_y);
-		new_z = ProjectToPlane (new_y, TVector3(0, -1, 0));
-		NormVector (new_z);
+	if (dist_from_surface > 0) {
+		new_y = ctrl->cvel;
+		new_y.Norm();
+		new_z = ProjectToPlane (new_y, TVector3d(0, -1, 0));
+		new_z.Norm();
 		new_z = AdjustRollvector (ctrl, ctrl->cvel, new_z);
-    } else {
-		new_z = ScaleVector (-1, surf_nml);
+	} else {
+		new_z = -1.0 * surf_nml;
 		new_z = AdjustRollvector (ctrl, ctrl->cvel, new_z);
-		new_y = ProjectToPlane (surf_nml, ScaleVector (1, ctrl->cvel));
-		NormVector(new_y);
-    }
+		new_y = ProjectToPlane (surf_nml, ctrl->cvel);
+		new_y.Norm();
+	}
 
-    TVector3 new_x = CrossProduct (new_y, new_z);
-    MakeBasismatrix_Inv (cob_mat, inv_cob_mat, new_x, new_y, new_z);
-    TQuaternion new_orient = MakeQuaternionFromMatrix (cob_mat);
+	TVector3d new_x = CrossProduct (new_y, new_z);
+	TMatrix<4, 4> cob_mat(new_x, new_y, new_z);
+	TQuaternion new_orient = MakeQuaternionFromMatrix (cob_mat);
 
-    if (!ctrl->orientation_initialized) {
+	if (!ctrl->orientation_initialized) {
 		ctrl->orientation_initialized = true;
 		ctrl->corientation = new_orient;
-    }
+	}
 
-    ETR_DOUBLE time_constant = dist_from_surface > 0 ? TO_AIR_TIME : TO_TIME;
+	ETR_DOUBLE time_constant = dist_from_surface > 0 ? TO_AIR_TIME : TO_TIME;
 
-    ctrl->corientation = InterpolateQuaternions (
-			ctrl->corientation, new_orient,
-			min (dtime / time_constant, 1.0));
+	ctrl->corientation = InterpolateQuaternions (
+	                         ctrl->corientation, new_orient,
+	                         min (dtime / time_constant, 1.0));
 
-    ctrl->plane_nml = RotateVector (ctrl->corientation, minus_z_vec);
-    ctrl->cdirection = RotateVector (ctrl->corientation, y_vec);
-    MakeMatrixFromQuaternion (cob_mat, ctrl->corientation);
+	ctrl->plane_nml = RotateVector (ctrl->corientation, minus_z_vec);
+	ctrl->cdirection = RotateVector (ctrl->corientation, y_vec);
+	cob_mat = MakeMatrixFromQuaternion(ctrl->corientation);
 
-    // Trick rotations
-    new_y = TVector3 (cob_mat[1][0], cob_mat[1][1], cob_mat[1][2]);
-    RotateAboutVectorMatrix (rot_mat, new_y, (ctrl->roll_factor * 360));
-    MultiplyMatrices (cob_mat, rot_mat, cob_mat);
-    new_x = TVector3 (cob_mat[0][0], cob_mat[0][1], cob_mat[0][2]);
-    RotateAboutVectorMatrix (rot_mat, new_x, ctrl->flip_factor * 360);
-    MultiplyMatrices (cob_mat, rot_mat, cob_mat);
+	// Trick rotations
+	new_y = TVector3d (cob_mat[1][0], cob_mat[1][1], cob_mat[1][2]);
+	TMatrix<4, 4> rot_mat = RotateAboutVectorMatrix(new_y, (ctrl->roll_factor * 360));
+	cob_mat = rot_mat * cob_mat;
+	new_x = TVector3d (cob_mat[0][0], cob_mat[0][1], cob_mat[0][2]);
+	rot_mat = RotateAboutVectorMatrix (new_x, ctrl->flip_factor * 360);
+	cob_mat = rot_mat * cob_mat;
 
-	TransposeMatrix (cob_mat, inv_cob_mat);
-	TransformNode (0, cob_mat, inv_cob_mat);
+	TransformNode (0, cob_mat, cob_mat.GetTransposed());
 }
 
 void CCharShape::AdjustJoints (ETR_DOUBLE turnFact, bool isBraking,
-			ETR_DOUBLE paddling_factor, ETR_DOUBLE speed,
-			const TVector3& net_force, ETR_DOUBLE flap_factor) {
-    ETR_DOUBLE turning_angle[2];
-    ETR_DOUBLE paddling_angle = 0;
-    ETR_DOUBLE ext_paddling_angle = 0;
-    ETR_DOUBLE kick_paddling_angle = 0;
-    ETR_DOUBLE braking_angle = 0;
-    ETR_DOUBLE force_angle = 0;
-    ETR_DOUBLE turn_leg_angle = 0;
-    ETR_DOUBLE flap_angle = 0;
+                               ETR_DOUBLE paddling_factor, ETR_DOUBLE speed,
+                               const TVector3d& net_force, ETR_DOUBLE flap_factor) {
+	ETR_DOUBLE turning_angle[2];
+	ETR_DOUBLE paddling_angle = 0;
+	ETR_DOUBLE ext_paddling_angle = 0;
+	ETR_DOUBLE kick_paddling_angle = 0;
+	ETR_DOUBLE braking_angle = 0;
+	ETR_DOUBLE force_angle = 0;
+	ETR_DOUBLE turn_leg_angle = 0;
+	ETR_DOUBLE flap_angle = 0;
 
-    if (isBraking) braking_angle = MAX_ARM_ANGLE2;
+	if (isBraking) braking_angle = MAX_ARM_ANGLE2;
 
-    paddling_angle = MAX_PADDLING_ANGLE2 * sin(paddling_factor * M_PI);
-    ext_paddling_angle = MAX_EXT_PADDLING_ANGLE2 * sin(paddling_factor * M_PI);
-    kick_paddling_angle = MAX_KICK_PADDLING_ANGLE2 * sin(paddling_factor * M_PI * 2.0);
+	paddling_angle = MAX_PADDLING_ANGLE2 * sin(paddling_factor * M_PI);
+	ext_paddling_angle = MAX_EXT_PADDLING_ANGLE2 * sin(paddling_factor * M_PI);
+	kick_paddling_angle = MAX_KICK_PADDLING_ANGLE2 * sin(paddling_factor * M_PI * 2.0);
 
-    turning_angle[0] = MAX(-turnFact,0.0) * MAX_ARM_ANGLE2;
-    turning_angle[1] = MAX(turnFact,0.0) * MAX_ARM_ANGLE2;
-    flap_angle = MAX_ARM_ANGLE2 * (0.5 + 0.5 * sin (M_PI * flap_factor * 6 - M_PI / 2));
-    force_angle = max (-20.0, min (20.0, -net_force.z / 300.0));
-    turn_leg_angle = turnFact * 10;
+	turning_angle[0] = max(-turnFact,0.0) * MAX_ARM_ANGLE2;
+	turning_angle[1] = max(turnFact,0.0) * MAX_ARM_ANGLE2;
+	flap_angle = MAX_ARM_ANGLE2 * (0.5 + 0.5 * sin (M_PI * flap_factor * 6 - M_PI / 2));
+	force_angle = clamp (-20.0, -net_force.z / 300.0, 20.0);
+	turn_leg_angle = turnFact * 10;
 
 	ResetJoints ();
 
-    RotateNode ("left_shldr", 3,
-		    MIN (braking_angle + paddling_angle + turning_angle[0], MAX_ARM_ANGLE2) + flap_angle);
-    RotateNode ("right_shldr", 3,
-		    MIN (braking_angle + paddling_angle + turning_angle[1], MAX_ARM_ANGLE2) + flap_angle);
+	RotateNode ("left_shldr", 3,
+	            min (braking_angle + paddling_angle + turning_angle[0], MAX_ARM_ANGLE2) + flap_angle);
+	RotateNode ("right_shldr", 3,
+	            min (braking_angle + paddling_angle + turning_angle[1], MAX_ARM_ANGLE2) + flap_angle);
 
-    RotateNode ("left_shldr", 2, -ext_paddling_angle);
-    RotateNode ("right_shldr", 2, ext_paddling_angle);
-    RotateNode ("left_hip", 3, -20 + turn_leg_angle + force_angle);
-    RotateNode ("right_hip", 3, -20 - turn_leg_angle + force_angle);
+	RotateNode ("left_shldr", 2, -ext_paddling_angle);
+	RotateNode ("right_shldr", 2, ext_paddling_angle);
+	RotateNode ("left_hip", 3, -20 + turn_leg_angle + force_angle);
+	RotateNode ("right_hip", 3, -20 - turn_leg_angle + force_angle);
 
-    RotateNode ("left_knee", 3,
-		-10 + turn_leg_angle - MIN (35, speed) + kick_paddling_angle + force_angle);
-    RotateNode ("right_knee", 3,
-		-10 - turn_leg_angle - MIN (35, speed) - kick_paddling_angle + force_angle);
+	RotateNode ("left_knee", 3,
+	            -10 + turn_leg_angle - min (35.0f, speed) + kick_paddling_angle + force_angle);
+	RotateNode ("right_knee", 3,
+	            -10 - turn_leg_angle - min (35.0f, speed) - kick_paddling_angle + force_angle);
 
-    RotateNode ("left_ankle", 3, -20 + MIN (50, speed));
-    RotateNode ("right_ankle", 3, -20 + MIN (50, speed));
-    RotateNode ("tail", 3, turnFact * 20);
-    RotateNode ("neck", 3, -50);
-    RotateNode ("head", 3, -30);
-    RotateNode ("head", 2, -turnFact * 70);
+	RotateNode ("left_ankle", 3, -20 + min (50.0f, speed));
+	RotateNode ("right_ankle", 3, -20 + min (50.0f, speed));
+	RotateNode ("tail", 3, turnFact * 20);
+	RotateNode ("neck", 3, -50);
+	RotateNode ("head", 3, -30);
+	RotateNode ("head", 2, -turnFact * 70);
 }
 
 // --------------------------------------------------------------------
 //				collision
 // --------------------------------------------------------------------
 
-bool CCharShape::CheckPolyhedronCollision (const TCharNode *node, const TMatrix modelMatrix,
-		const TMatrix invModelMatrix, const TPolyhedron& ph) {
+bool CCharShape::CheckPolyhedronCollision(const TCharNode *node, const TMatrix<4, 4>& modelMatrix,
+        const TMatrix<4, 4>& invModelMatrix, const TPolyhedron& ph) {
+	bool hit = false;
 
-    TMatrix newModelMatrix, newInvModelMatrix;
-    bool hit = false;
+	TMatrix<4, 4> newModelMatrix = modelMatrix * node->trans;
+	TMatrix<4, 4> newInvModelMatrix = node->invtrans * invModelMatrix;
 
-    MultiplyMatrices (newModelMatrix, modelMatrix, node->trans);
-    MultiplyMatrices (newInvModelMatrix, node->invtrans, invModelMatrix);
+	if (node->visible) {
+		TPolyhedron newph = ph;
+		TransPolyhedron (newInvModelMatrix, newph);
+		hit = IntersectPolyhedron (newph);
+	}
 
-    if (node->visible) {
-        TPolyhedron newph = CopyPolyhedron (ph);
-        TransPolyhedron (newInvModelMatrix, newph);
-        hit = IntersectPolyhedron (newph);
-        FreePolyhedron (newph);
-    }
-
-    if (hit == true) return hit;
-    const TCharNode *child = node->child;
-    while (child != NULL) {
-        hit = CheckPolyhedronCollision (child, newModelMatrix, newInvModelMatrix, ph);
-        if (hit == true) return hit;
-        child = child->next;
-    }
-    return false;
+	if (hit == true) return hit;
+	const TCharNode *child = node->child;
+	while (child != NULL) {
+		hit = CheckPolyhedronCollision (child, newModelMatrix, newInvModelMatrix, ph);
+		if (hit == true) return hit;
+		child = child->next;
+	}
+	return false;
 }
 
 bool CCharShape::CheckCollision (const TPolyhedron& ph) {
-    TMatrix mat, invmat;
-
-    MakeIdentityMatrix (mat);
-    MakeIdentityMatrix (invmat);
-
 	TCharNode *node = GetNode(0);
 	if (node == NULL) return false;
-    return CheckPolyhedronCollision (node, mat, invmat, ph);
+	const TMatrix<4, 4>& identity = TMatrix<4, 4>::getIdentity();
+	return CheckPolyhedronCollision(node, identity, identity, ph);
 }
 
-bool CCharShape::Collision (const TVector3& pos, const TPolyhedron& ph) {
+bool CCharShape::Collision (const TVector3d& pos, const TPolyhedron& ph) {
 	ResetNode (0);
-	TranslateNode (0, TVector3 (pos.x, pos.y, pos.z));
+	TranslateNode (0, TVector3d (pos.x, pos.y, pos.z));
 	return CheckCollision (ph);
 }
 
@@ -650,27 +640,27 @@ bool CCharShape::Collision (const TVector3& pos, const TPolyhedron& ph) {
 //				shadow
 // --------------------------------------------------------------------
 
-void CCharShape::DrawShadowVertex (ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z, const TMatrix mat) {
-    TVector3 pt(x, y, z);
-    pt = TransformPoint (mat, pt);
-    ETR_DOUBLE old_y = pt.y;
-    TVector3 nml = Course.FindCourseNormal (pt.x, pt.z);
-    pt.y = Course.FindYCoord (pt.x, pt.z) + SHADOW_HEIGHT;
-    if (pt.y > old_y) pt.y = old_y;
-    glNormal3f (nml.x, nml.y, nml.z);
-    glVertex3f (pt.x, pt.y, pt.z);
+void CCharShape::DrawShadowVertex(ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z, const TMatrix<4, 4>& mat) {
+	TVector3d pt(x, y, z);
+	pt = TransformPoint (mat, pt);
+	ETR_DOUBLE old_y = pt.y;
+	TVector3d nml = Course.FindCourseNormal (pt.x, pt.z);
+	pt.y = Course.FindYCoord (pt.x, pt.z) + SHADOW_HEIGHT;
+	if (pt.y > old_y) pt.y = old_y;
+	glNormal3(nml);
+	glVertex3(pt);
 }
 
-void CCharShape::DrawShadowSphere (const TMatrix mat) {
-    ETR_DOUBLE theta, phi, d_theta, d_phi, eps, twopi;
-    ETR_DOUBLE x, y, z;
-    int div = param.tux_shadow_sphere_divisions;
+void CCharShape::DrawShadowSphere(const TMatrix<4, 4>& mat) {
+	ETR_DOUBLE theta, phi, d_theta, d_phi, eps, twopi;
+	ETR_DOUBLE x, y, z;
+	int div = param.tux_shadow_sphere_divisions;
 
-    eps = 1e-15;
-    twopi = M_PI * 2.0;
-    d_theta = d_phi = M_PI / div;
+	eps = 1e-15;
+	twopi = M_PI * 2.0;
+	d_theta = d_phi = M_PI / div;
 
-    for (phi = 0.0; phi + eps < M_PI; phi += d_phi) {
+	for (phi = 0.0; phi + eps < M_PI; phi += d_phi) {
 		ETR_DOUBLE cos_theta, sin_theta;
 		ETR_DOUBLE sin_phi, cos_phi;
 		ETR_DOUBLE sin_phi_d_phi, cos_phi_d_phi;
@@ -680,97 +670,92 @@ void CCharShape::DrawShadowSphere (const TMatrix mat) {
 		sin_phi_d_phi = sin (phi + d_phi);
 		cos_phi_d_phi = cos (phi + d_phi);
 
-        if (phi <= eps) {
+		if (phi <= eps) {
 			glBegin (GL_TRIANGLE_FAN);
-				DrawShadowVertex (0., 0., 1., mat);
+			DrawShadowVertex (0., 0., 1., mat);
 
-				for (theta = 0.0; theta + eps < twopi; theta += d_theta) {
-					sin_theta = sin (theta);
-					cos_theta = cos (theta);
+			for (theta = 0.0; theta + eps < twopi; theta += d_theta) {
+				sin_theta = sin (theta);
+				cos_theta = cos (theta);
 
-					x = cos_theta * sin_phi_d_phi;
-					y = sin_theta * sin_phi_d_phi;
-					z = cos_phi_d_phi;
-					DrawShadowVertex (x, y, z, mat);
-				}
-				x = sin_phi_d_phi;
-				y = 0.0;
+				x = cos_theta * sin_phi_d_phi;
+				y = sin_theta * sin_phi_d_phi;
 				z = cos_phi_d_phi;
 				DrawShadowVertex (x, y, z, mat);
-            glEnd();
-        } else if (phi + d_phi + eps >= M_PI) {
+			}
+			x = sin_phi_d_phi;
+			y = 0.0;
+			z = cos_phi_d_phi;
+			DrawShadowVertex (x, y, z, mat);
+			glEnd();
+		} else if (phi + d_phi + eps >= M_PI) {
 			glBegin (GL_TRIANGLE_FAN);
-				DrawShadowVertex (0., 0., -1., mat);
-                for (theta = twopi; theta - eps > 0; theta -= d_theta) {
-					sin_theta = sin (theta);
-					cos_theta = cos (theta);
-                    x = cos_theta * sin_phi;
-                    y = sin_theta * sin_phi;
-                    z = cos_phi;
-					DrawShadowVertex (x, y, z, mat);
-                }
-                x = sin_phi;
-                y = 0.0;
-                z = cos_phi;
+			DrawShadowVertex (0., 0., -1., mat);
+			for (theta = twopi; theta - eps > 0; theta -= d_theta) {
+				sin_theta = sin (theta);
+				cos_theta = cos (theta);
+				x = cos_theta * sin_phi;
+				y = sin_theta * sin_phi;
+				z = cos_phi;
 				DrawShadowVertex (x, y, z, mat);
-            glEnd();
-        } else {
-            glBegin (GL_TRIANGLE_STRIP);
-				for (theta = 0.0; theta + eps < twopi; theta += d_theta) {
-					sin_theta = sin (theta);
-					cos_theta = cos (theta);
-					x = cos_theta * sin_phi;
-					y = sin_theta * sin_phi;
-					z = cos_phi;
-					DrawShadowVertex (x, y, z, mat);
+			}
+			x = sin_phi;
+			y = 0.0;
+			z = cos_phi;
+			DrawShadowVertex (x, y, z, mat);
+			glEnd();
+		} else {
+			glBegin (GL_TRIANGLE_STRIP);
+			for (theta = 0.0; theta + eps < twopi; theta += d_theta) {
+				sin_theta = sin (theta);
+				cos_theta = cos (theta);
+				x = cos_theta * sin_phi;
+				y = sin_theta * sin_phi;
+				z = cos_phi;
+				DrawShadowVertex (x, y, z, mat);
 
-					x = cos_theta * sin_phi_d_phi;
-					y = sin_theta * sin_phi_d_phi;
-					z = cos_phi_d_phi;
-					DrawShadowVertex (x, y, z, mat);
-                }
-                x = sin_phi;
-                y = 0.0;
-                z = cos_phi;
+				x = cos_theta * sin_phi_d_phi;
+				y = sin_theta * sin_phi_d_phi;
+				z = cos_phi_d_phi;
 				DrawShadowVertex (x, y, z, mat);
-                x = sin_phi_d_phi;
-                y = 0.0;
-                z = cos_phi_d_phi;
-				DrawShadowVertex (x, y, z, mat);
-            glEnd();
-        }
-    }
+			}
+			x = sin_phi;
+			y = 0.0;
+			z = cos_phi;
+			DrawShadowVertex (x, y, z, mat);
+			x = sin_phi_d_phi;
+			y = 0.0;
+			z = cos_phi_d_phi;
+			DrawShadowVertex (x, y, z, mat);
+			glEnd();
+		}
+	}
 }
 
-void CCharShape::TraverseDagForShadow (const TCharNode *node, const TMatrix mat) {
-    TMatrix new_matrix;
-
-    MultiplyMatrices (new_matrix, mat, node->trans);
+void CCharShape::TraverseDagForShadow(const TCharNode *node, const TMatrix<4, 4>& mat) {
+	TMatrix<4, 4> new_matrix = mat * node->trans;
 	if (node->visible && node->render_shadow)
 		DrawShadowSphere (new_matrix);
 
-    TCharNode* child = node->child;
-    while (child != NULL) {
-        TraverseDagForShadow (child, new_matrix);
-        child = child->next;
-    }
+	TCharNode* child = node->child;
+	while (child != NULL) {
+		TraverseDagForShadow (child, new_matrix);
+		child = child->next;
+	}
 }
 
 void CCharShape::DrawShadow () {
-    TMatrix model_matrix;
-
 	if (g_game.light_id == 1 || g_game.light_id == 3) return;
 
-    ScopedRenderMode rm(TUX_SHADOW);
-    glColor4f (shad_col.r, shad_col.g, shad_col.b, shad_col.a);
-    MakeIdentityMatrix (model_matrix);
+	ScopedRenderMode rm(TUX_SHADOW);
+	glColor(shad_col);
 
 	TCharNode *node = GetNode(0);
 	if (node == NULL) {
-		Message ("couldn't find tux's root node", "");
+		Message ("couldn't find tux's root node");
 		return;
-    }
-    TraverseDagForShadow (node, model_matrix);
+	}
+	TraverseDagForShadow(node, TMatrix<4, 4>::getIdentity());
 }
 
 // --------------------------------------------------------------------
@@ -797,7 +782,7 @@ size_t CCharShape::GetNodeName (const string& node_trivialname) const {
 
 void CCharShape::RefreshNode (size_t idx) {
 	if (idx >= numNodes) return;
-    TMatrix TempMatrix;
+	TMatrix<4, 4> TempMatrix;
 	char caxis;
 	ETR_DOUBLE angle;
 
@@ -806,70 +791,58 @@ void CCharShape::RefreshNode (size_t idx) {
 	if (act == NULL) return;
 	if (act->num < 1) return;
 
-	MakeIdentityMatrix (node->trans);
-	MakeIdentityMatrix (node->invtrans);
+	node->trans.SetIdentity();
+	node->invtrans.SetIdentity();
 
 	for (size_t i=0; i<act->num; i++) {
 		int type = act->type[i];
-		const TVector3& vec = act->vec[i];
+		const TVector3d& vec = act->vec[i];
 		ETR_DOUBLE dval = act->dval[i];
 
 		switch (type) {
 			case 0:
-				MakeTranslationMatrix (TempMatrix, vec.x, vec.y, vec.z);
-				MultiplyMatrices (node->trans, node->trans, TempMatrix);
-				MakeTranslationMatrix (TempMatrix, -vec.x, -vec.y, -vec.z);
-				MultiplyMatrices (node->invtrans, TempMatrix, node->invtrans);
+				TempMatrix.SetTranslationMatrix(vec.x, vec.y, vec.z);
+				node->trans = node->trans * TempMatrix;
+				TempMatrix.SetTranslationMatrix(-vec.x, -vec.y, -vec.z);
+				node->invtrans = TempMatrix * node->invtrans;
 				break;
 			case 1:
 				caxis = 'x';
 				angle = dval;
-				MakeRotationMatrix (TempMatrix, angle, caxis);
-				MultiplyMatrices (node->trans, node->trans, TempMatrix);
-				MakeRotationMatrix (TempMatrix, -angle, caxis);
-				MultiplyMatrices (node->invtrans, TempMatrix, node->invtrans);
+				TempMatrix.SetRotationMatrix(angle, caxis);
+				node->trans = node->trans * TempMatrix;
+				TempMatrix.SetRotationMatrix(-angle, caxis);
+				node->invtrans = TempMatrix * node->invtrans;
 				break;
 			case 2:
 				caxis = 'y';
 				angle = dval;
-				MakeRotationMatrix (TempMatrix, angle, caxis);
-				MultiplyMatrices (node->trans, node->trans, TempMatrix);
-				MakeRotationMatrix (TempMatrix, -angle, caxis);
-				MultiplyMatrices (node->invtrans, TempMatrix, node->invtrans);
+				TempMatrix.SetRotationMatrix(angle, caxis);
+				node->trans = node->trans * TempMatrix;
+				TempMatrix.SetRotationMatrix(-angle, caxis);
+				node->invtrans = TempMatrix * node->invtrans;
 				break;
 			case 3:
 				caxis = 'z';
 				angle = dval;
-				MakeRotationMatrix (TempMatrix, angle, caxis);
-				MultiplyMatrices (node->trans, node->trans, TempMatrix);
-				MakeRotationMatrix (TempMatrix, -angle, caxis);
-				MultiplyMatrices (node->invtrans, TempMatrix, node->invtrans);
+				TempMatrix.SetRotationMatrix(angle, caxis);
+				node->trans = node->trans * TempMatrix;
+				TempMatrix.SetRotationMatrix(-angle, caxis);
+				node->invtrans = TempMatrix * node->invtrans;
 				break;
 			case 4:
-				MakeIdentityMatrix (TempMatrix);
-				MultiplyMatrices (node->trans, node->trans, TempMatrix);
-				MakeIdentityMatrix (TempMatrix);
-				MultiplyMatrices (node->invtrans, TempMatrix, node->invtrans);
-
-				MakeScalingMatrix (TempMatrix, vec.x, vec.y, vec.z);
-				MultiplyMatrices (node->trans, node->trans, TempMatrix);
-				MakeScalingMatrix (TempMatrix, 1.0 / vec.x, 1.0 / vec.y, 1.0 / vec.z);
-				MultiplyMatrices (node->invtrans, TempMatrix, node->invtrans);
-
-				MakeIdentityMatrix (TempMatrix);
-				MultiplyMatrices (node->trans, node->trans, TempMatrix);
-				MakeIdentityMatrix (TempMatrix);
-				MultiplyMatrices (node->invtrans, TempMatrix, node->invtrans);
+				TempMatrix.SetScalingMatrix(vec.x, vec.y, vec.z);
+				node->trans = node->trans * TempMatrix;
+				TempMatrix.SetScalingMatrix(1.0 / vec.x, 1.0 / vec.y, 1.0 / vec.z);
+				node->invtrans = TempMatrix * node->invtrans;
 				break;
 			case 5:
-				VisibleNode (node->node_name, dval); break;
-			default: break;
+				VisibleNode (node->node_name, dval);
+				break;
+			default:
+				break;
 		}
 	}
-}
-
-size_t CCharShape::GetNumNodes () const {
-	return numNodes;
 }
 
 const string& CCharShape::GetNodeFullname (size_t idx) const {
@@ -910,13 +883,13 @@ void CCharShape::SaveCharNodes (const string& dir, const string& filename) {
 	CSPList list (MAX_CHAR_NODES + 10);
 
 	list.Add ("# Generated by Tuxracer tools");
-	list.Add ("");
+	list.AddLine ();
 	if (!Materials.empty()) {
 		list.Add ("# Materials:");
 		for (size_t i=0; i<Materials.size(); i++)
-			if(!Materials[i].matline.empty())
+			if (!Materials[i].matline.empty())
 				list.Add (Materials[i].matline);
-		list.Add ("");
+		list.AddLine ();
 	}
 
 	list.Add ("# Nodes:");
@@ -926,21 +899,39 @@ void CCharShape::SaveCharNodes (const string& dir, const string& filename) {
 		if (node->parent_name >= node->node_name) Message ("wrong parent index");
 		string line = "*[node] " + Int_StrN ((int)node->node_name);
 		line += " [par] " + Int_StrN ((int)node->parent_name);
-		bool rotflag = false;
 
 		if (!act->order.empty()) {
-			TVector3 rotation;
+			bool rotflag = false;
+			TVector3d rotation;
 			line += " [order] " + act->order;
 			for (size_t ii=0; ii<act->order.size(); ii++) {
 				int aa = act->order[ii]-48;
 				switch (aa) {
-					case 0: line += " [trans] " + Vector_StrN (act->vec[ii], 2); break;
-					case 4: line += " [scale] " + Vector_StrN (act->vec[ii], 2); break;
-					case 1: rotation.x = act->dval[ii]; rotflag = true; break;
-					case 2: rotation.y = act->dval[ii]; rotflag = true; break;
-					case 3: rotation.z = act->dval[ii]; rotflag = true; break;
-					case 5: line += " [vis] " + Float_StrN (act->dval[ii], 0); break;
-					case 9: rotation.z = act->dval[ii]; rotflag = true; break;
+					case 0:
+						line += " [trans] " + Vector_StrN (act->vec[ii], 2);
+						break;
+					case 4:
+						line += " [scale] " + Vector_StrN (act->vec[ii], 2);
+						break;
+					case 1:
+						rotation.x = act->dval[ii];
+						rotflag = true;
+						break;
+					case 2:
+						rotation.y = act->dval[ii];
+						rotflag = true;
+						break;
+					case 3:
+						rotation.z = act->dval[ii];
+						rotflag = true;
+						break;
+					case 5:
+						line += " [vis] " + Float_StrN (act->dval[ii], 0);
+						break;
+					case 9:
+						rotation.z = act->dval[ii];
+						rotflag = true;
+						break;
 				}
 			}
 			if (rotflag) line += " [rot] " + Vector_StrN (rotation, 2);
@@ -952,7 +943,7 @@ void CCharShape::SaveCharNodes (const string& dir, const string& filename) {
 
 		list.Add (line);
 		if (i<numNodes-3) {
-			if (node->visible && !Nodes[i+1]->visible) list.Add ("");
+			if (node->visible && !Nodes[i+1]->visible) list.AddLine ();
 			const string& joint = Nodes[i+2]->joint;
 			if (joint.empty()) list.Add ("# " + joint);
 		}

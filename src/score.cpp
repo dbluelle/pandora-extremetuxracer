@@ -34,7 +34,8 @@ GNU General Public License for more details.
 
 CScore Score;
 
-int CScore::AddScore (size_t list_idx, const TScore& score) {
+int CScore::AddScore(const TCourse* course, const TScore& score) {
+	size_t list_idx = Course.GetCourseIdx(course);
 	if (list_idx >= Scorelist.size()) return 999;
 	if (score.points < 1) return 999;
 
@@ -117,19 +118,19 @@ bool CScore::SaveHighScore () const {
 bool CScore::LoadHighScore () {
 	CSPList list (520);
 
+	Scorelist.resize(Course.CourseList.size());
+
 	if (!list.Load (param.config_dir, "highscore")) {
 		Message ("could not load highscore list");
 		return false;
 	}
 
-	TScore score;
-
-	Scorelist.resize(Course.CourseList.size());
 	for (size_t i=0; i<list.Count(); i++) {
 		const string& line = list.Line(i);
 		string course = SPStrN (line, "course", "unknown");
-		size_t cidx = Course.GetCourseIdx (course);
+		TCourse* cidx = Course.GetCourse(course);
 
+		TScore score;
 		score.player = SPStrN (line, "plyr", "unknown");
 		score.points = SPIntN (line, "pts", 0);
 		score.herrings = SPIntN (line, "herr", 0);
@@ -140,26 +141,29 @@ bool CScore::LoadHighScore () {
 	return true;
 }
 
-int CScore::CalcRaceResult () {
+int CScore::CalcRaceResult() {
 	g_game.race_result = -1;
-	if (g_game.time <= g_game.time_req.x &&
-		g_game.herring >= g_game.herring_req.i) g_game.race_result = 0;
-	if (g_game.time <= g_game.time_req.y &&
-		g_game.herring >= g_game.herring_req.j) g_game.race_result = 1;
-	if (g_game.time <= g_game.time_req.z &&
-		g_game.herring >= g_game.herring_req.k) g_game.race_result = 2;
+	if (g_game.game_type == CUPRACING) {
+		if (g_game.time <= g_game.race->time.x &&
+		        g_game.herring >= g_game.race->herrings.x) g_game.race_result = 0;
+		if (g_game.time <= g_game.race->time.y &&
+		        g_game.herring >= g_game.race->herrings.y) g_game.race_result = 1;
+		if (g_game.time <= g_game.race->time.z &&
+		        g_game.herring >= g_game.race->herrings.z) g_game.race_result = 2;
+	}
 
-	ETR_DOUBLE herringpt = g_game.herring * 10;
+	int herringpt = g_game.herring * 10;
 	ETR_DOUBLE timept = Course.GetDimensions().y - (g_game.time * 10);
 	g_game.score = (int)(herringpt + timept);
 	if (g_game.score < 0) g_game.score = 0;
 
+	TScore TempScore;
 	TempScore.points = g_game.score;
 	TempScore.herrings = g_game.herring;
 	TempScore.time = g_game.time;
-	TempScore.player = Players.GetName (g_game.player_id);
+	TempScore.player = g_game.player->name;
 
-	return AddScore (g_game.course_id, TempScore);
+	return AddScore (g_game.course, TempScore);
 }
 
 // --------------------------------------------------------------------
@@ -174,11 +178,21 @@ void CScore::Keyb (unsigned int key, bool special, bool release, int x, int y) {
 	KeyGUI(key, 0, release);
 	if (release) return;
 	switch (key) {
-		case SDLK_ESCAPE: State::manager.RequestEnterState (GameTypeSelect); break;
-		case SDLK_q: State::manager.RequestQuit(); break;
-		case SDLK_s: Score.SaveHighScore (); break;
-		case SDLK_l: Score.LoadHighScore (); break;
-		case SDLK_RETURN: State::manager.RequestEnterState (GameTypeSelect); break;
+		case SDLK_ESCAPE:
+			State::manager.RequestEnterState (GameTypeSelect);
+			break;
+		case SDLK_q:
+			State::manager.RequestQuit();
+			break;
+		case SDLK_s:
+			Score.SaveHighScore ();
+			break;
+		case SDLK_l:
+			Score.LoadHighScore ();
+			break;
+		case SDLK_RETURN:
+			State::manager.RequestEnterState (GameTypeSelect);
+			break;
 	}
 }
 
@@ -224,28 +238,25 @@ void CScore::Enter() {
 	course = AddUpDown(area.right + 8, frametop, 0, (int)Course.CourseList.size()-1, 0);
 	int siz = FT.AutoSizeN (5);
 	textbutton = AddTextButton (Trans.Text(64), CENTER, AutoYPosN (80), siz);
-
-	g_game.loopdelay = 1;
 }
 
 const string ordinals[10] =
-	{"1:st", "2:nd", "3:rd", "4:th", "5:th", "6:th", "7:th", "8:th", "9:th", "10:th"};
+{"1:st", "2:nd", "3:rd", "4:th", "5:th", "6:th", "7:th", "8:th", "9:th", "10:th"};
 
-void CScore::Loop (ETR_DOUBLE timestep ) {
+void CScore::Loop (ETR_DOUBLE timestep) {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 
 	Music.Update ();
 	check_gl_error();
-    ClearRenderContext ();
-    ScopedRenderMode rm(GUI);
-    SetupGuiDisplay ();
+	ClearRenderContext ();
+	ScopedRenderMode rm(GUI);
+	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
 		update_ui_snow (timestep);
 		draw_ui_snow();
 	}
-
 
 	Tex.Draw (BOTTOM_LEFT, 0, hh - 256, 1);
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
@@ -279,14 +290,14 @@ void CScore::Loop (ETR_DOUBLE timestep ) {
 				FT.DrawString (area.left + dd1, y, Int_StrN (list->scores[i].points));
 				FT.DrawString (area.left + dd2, y, list->scores[i].player);
 				FT.DrawString (area.left + dd3, y,
-					Int_StrN (list->scores[i].herrings) + "  herrings");
+				               Int_StrN (list->scores[i].herrings) + "  herrings");
 				FT.DrawString (area.left + dd4, y,
-					Float_StrN (list->scores[i].time, 1) + "  sec");
+				               Float_StrN (list->scores[i].time, 1) + "  sec");
 			}
 		}
 	} else Message ("score list out of range");
 
 	DrawGUI();
 
-    Winsys.SwapBuffers();
+	Winsys.SwapBuffers();
 }

@@ -19,28 +19,29 @@ GNU General Public License for more details.
 #define COMMON_H
 
 #include "bh.h"
+#include "matrices.h"
 
 using namespace std;
 
 
-#ifndef MIN
-#	define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
-#ifndef MAX
-#	define MAX(x,y) ((x)>(y)?(x):(y))
-#endif
 #define clamp(minimum, x, maximum) (max(min(x, maximum), minimum))
 
 #ifndef ROUND_TO_NEAREST
 #	define ROUND_TO_NEAREST(x) ((int) ((x)+0.5))
 #endif
 
-#define ANGLES_TO_RADIANS(x) (M_PI / 180.0 * (x) )
-#define RADIANS_TO_ANGLES(x) (180.0 / M_PI * (x) )
+#ifndef M_PI
+#	define M_PI 3.1415926535
+#endif
 
-#define TUX_WIDTH 0.45
-#define MAX_ROLL_ANGLE 30
-#define BRAKING_ROLL_ANGLE 55
+#ifndef EPS
+#	define EPS 1.0e-13
+#endif
+
+#define ANGLES_TO_RADIANS(x) (M_PI / 180.0 * (x))
+#define RADIANS_TO_ANGLES(x) (180.0 / M_PI * (x))
+
+#define MAG_SQD(vec) ((vec).x * (vec).x + (vec).y * (vec).y + (vec).z * (vec).z)
 
 
 // --------------------------------------------------------------------
@@ -80,40 +81,33 @@ void	PrintInt (const int val);
 void	PrintInt (const string& s, const int val);
 void	PrintStr (const char *val);
 void	PrintString (const string& s);
-void	PrintFloat (const float val);
 void	PrintDouble (const double val);
-void	PrintFloat8 (const float val);
-void	PrintFloat (const char *s, const float val);
-void	PrintBool (const bool val);
-void	PrintPointer (void *p);
-void	PrintVector (const TVector3& v);
-void	PrintVector4 (const TVector4& v);
-void    PrintColor (const TColor& c);
-void	PrintVector2 (const TVector2& v);
-void	PrintVector (const char *s, const TVector3& v);
+void	PrintVector (const TVector3d& v);
+void	PrintVector4 (const TVector4d& v);
+void	PrintColor (const TColor& c);
+void	PrintVector2 (const TVector2d& v);
 
-void	PrintMatrix (const TMatrix mat);
+template<int x, int y>
+void	PrintMatrix (const TMatrix<x, y>& mat);
 void	PrintQuaternion (const TQuaternion& q);
-
-void	PrintIndex3 (const TIndex3& idx);
-void	PrintIndex4 (const TIndex4& idx);
 
 // --------------------------------------------------------------------
 //				file utils
 // --------------------------------------------------------------------
 
-bool    FileExists (const char *filename);
+bool	FileExists (const char *filename);
 bool	FileExists (const string& filename);
 bool	FileExists (const string& dir, const string& filename);
-bool    DirExists (const char *dirname);
+bool	DirExists (const char *dirname);
 
 // --------------------------------------------------------------------
 //				message utils
 // --------------------------------------------------------------------
 
-void    Message (const char *msg, const char *desc);
-void    Message (const char *msg);
+void	Message (const char *msg, const char *desc);
+void	Message (const char *msg);
 void	Message (const string& a, const string& b);
+void	Message (const string& a);
 void	SaveMessages ();
 
 // --------------------------------------------------------------------
@@ -121,10 +115,7 @@ void	SaveMessages ();
 // --------------------------------------------------------------------
 
 void GetTimeComponents (ETR_DOUBLE time, int *min, int *sec, int *hundr);
-string GetTimeString1 ();
+string GetTimeString ();
 
-size_t write_word (FILE *fp, uint16_t w);
-size_t write_dword (FILE *fp, uint32_t dw);
-size_t write_long (FILE *fp, int32_t l);
 
 #endif

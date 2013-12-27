@@ -22,23 +22,31 @@ GNU General Public License for more details.
 #include "states.h"
 #include "ogl.h"
 #include "winsys.h"
+#include <ctime>
 
 State::Manager State::manager(Winsys);
 
 State::Manager::~Manager() {
-	if(current)
+	if (current)
 		current->Exit();
 }
 
 void State::Manager::Run(State& entranceState) {
 	current = &entranceState;
 	current->Enter();
+	clock_t ticks = clock();
 	while (!quit) {
 		PollEvent();
-		if(next)
+		if (next)
 			EnterNextState();
 		CallLoopFunction();
-		SDL_Delay(g_game.loopdelay);
+		if (param.framerate != 0) {
+			clock_t nticks = clock();
+			int32_t sleeptime = CLOCKS_PER_SEC/param.framerate - (nticks-ticks);
+			if (sleeptime > 0)
+				SDL_Delay(sleeptime);
+			ticks = nticks;
+		}
 	}
 	current->Exit();
 	previous = current;
@@ -81,7 +89,7 @@ void State::Manager::PollEvent() {
 					break;
 
 				case SDL_MOUSEMOTION: {
-					TVector2 old = cursor_pos;
+					TVector2i old = cursor_pos;
 					cursor_pos.x = event.motion.x;
 					cursor_pos.y = event.motion.y;
 					current->Motion(event.motion.x-old.x, event.motion.y-old.y);
@@ -92,7 +100,7 @@ void State::Manager::PollEvent() {
 					if (Winsys.joystick_isActive()) {
 						unsigned int axis = event.jaxis.axis;
 						if (axis < 2) {
-							float val = (float)event.jaxis.value / 32768;
+							float val = (float)event.jaxis.value / 32768.f;
 							current->Jaxis(axis, val);
 						}
 					}
@@ -105,7 +113,7 @@ void State::Manager::PollEvent() {
 					break;
 
 				case SDL_VIDEORESIZE:
-					if(Winsys.resolution.width != event.resize.w || Winsys.resolution.height != event.resize.h) {
+					if (Winsys.resolution.width != event.resize.w || Winsys.resolution.height != event.resize.h) {
 						Winsys.resolution.width = event.resize.w;
 						Winsys.resolution.height = event.resize.h;
 						Winsys.SetupVideoMode (param.res_type);

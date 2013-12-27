@@ -32,7 +32,7 @@ struct TKeyframe {
 class CKeyframe {
 private:
 	vector<TKeyframe> frames;
-	TVector3 refpos;
+	TVector3d refpos;
 	string loadedfile;
 	TKeyframe clipboard;
 	ETR_DOUBLE keytime;
@@ -49,20 +49,20 @@ public:
 	bool loaded;
 	bool active;
 
-	void Init (const TVector3& ref_position, ETR_DOUBLE height_correction);
-	void Init (const TVector3& ref_position, ETR_DOUBLE height_correction, CCharShape *shape);
-	void InitTest (const TVector3& ref_position, CCharShape *shape);
+	void Init (const TVector3d& ref_position, ETR_DOUBLE height_correction);
+	void Init (const TVector3d& ref_position, ETR_DOUBLE height_correction, CCharShape *shape);
+	void InitTest (const TVector3d& ref_position, CCharShape *shape);
 	void Reset ();
 	void Update (ETR_DOUBLE timestep);
 	void UpdateTest (ETR_DOUBLE timestep, CCharShape *shape);
 	bool Load (const string& dir, const string& filename);
-	void CalcKeyframe (size_t idx, CCharShape *shape, const TVector3& refpos);
+	void CalcKeyframe (size_t idx, CCharShape *shape, const TVector3d& refpos);
 
 	// test and editing
 	TKeyframe *GetFrame (size_t idx);
 	static const string& GetHighlightName (size_t idx);
 	static const string& GetJointName (size_t idx);
-	int GetNumJoints () const;
+	static int GetNumJoints ();
 	void SaveTest (const string& dir, const string& filename);
 	void CopyFrame (size_t prim_idx, size_t sec_idx);
 	void AddFrame ();

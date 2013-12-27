@@ -21,9 +21,9 @@ GNU General Public License for more details.
 
 #include "common.h"
 #include "spx.h"
+#include <sys/stat.h>
 #include <iostream>
 #include <cerrno>
-#include <cstdio>
 #include <ctime>
 
 // --------------------------------------------------------------------
@@ -74,37 +74,12 @@ void PrintString (const string& s) {
 	cout << s << endl;
 }
 
-void PrintFloat (const float val) {
-	cout.precision(4);
-	cout << val << '\n';
-}
-
 void PrintDouble (const double val) {
 	cout.precision(4);
 	cout << val << '\n';
 }
 
-void PrintFloat (const char *s, const float val) {
-	cout.precision(5);
-	cout << s << ' ' << val << '\n';
-}
-
-void PrintFloat8 (const float val) {
-	cout.precision(9);
-	cout << val << '\n';
-}
-
-void PrintBool (const bool val) {
-	if (val == true) cout <<"bool: true\n";
-	else cout << "bool: false\n";
-}
-
-void PrintPointer (void *p) {
-	if (p == NULL) cout << "Pointer: NULL\n";
-	else cout << "Pointer: " << p << '\n';
-}
-
-void PrintVector4 (const TVector4& v) {
+void PrintVector4 (const TVector4d& v) {
 	cout.precision(3);
 	cout << v.x << "  " << v.y << "  " << v.z << "  " << v.w << '\n';
 }
@@ -114,34 +89,22 @@ void PrintColor (const TColor& v) {
 	cout << v.r << "  " << v.g << "  " << v.b << '\n';
 }
 
-void PrintVector2 (const TVector2& v) {
+void PrintVector2 (const TVector2d& v) {
 	cout.precision(3);
 	cout << v.x << "  " << v.y << '\n';
 }
 
-void PrintVector (const TVector3& v) {
+void PrintVector (const TVector3d& v) {
 	cout.precision(5);
 	cout << v.x << "  " << v.y << "  " << v.z << '\n';
 }
 
-void PrintIndex3 (const TIndex3& idx) {
-	cout << idx.i << ' ' << idx.j << ' ' << idx.k << '\n';
-}
-
-void PrintIndex4 (const TIndex4& idx) {
-	cout << idx.i << ' ' << idx.j << ' ' << idx.k << ' ' << idx.l << '\n';
-}
-
-void PrintVector (const char *s, const TVector3& v) {
-	cout << s << ' ';
-	PrintVector(v);
-}
-
-void PrintMatrix (const TMatrix mat) {
+template<int x, int y>
+void PrintMatrix (const TMatrix<x, y>& mat) {
 	cout << '\n';
 	cout.precision(3);
-	for (int i=0; i<4; i++) {
-		for (int j=0; j<4; j++) {
+	for (int i=0; i<x; i++) {
+		for (int j=0; j<y; j++) {
 			if (mat[i][j]>=0) cout << ' ';
 			cout << "  " << mat[i][j];
 		}
@@ -149,6 +112,8 @@ void PrintMatrix (const TMatrix mat) {
 	}
 	cout << '\n';
 }
+template void PrintMatrix<4, 4>(const TMatrix<4, 4>& mat);
+template void PrintMatrix<3, 3>(const TMatrix<3, 3>& mat);
 
 void PrintQuaternion (const TQuaternion& q) {
 	cout.precision(5);
@@ -160,8 +125,6 @@ void PrintQuaternion (const TQuaternion& q) {
 // --------------------------------------------------------------------
 
 static CSPList msg_list (100);
-
-void InitMessages () {}
 
 void SaveMessages () {
 	msg_list.Save (param.config_dir, "messages");
@@ -190,16 +153,21 @@ void Message (const string& a, const string& b) {
 	msg_list.Add (a + b);
 }
 
+void Message (const string& msg) {
+	cout << msg << endl;
+	msg_list.Add (msg);
+}
+
 // --------------------------------------------------------------------
 //				file utils
 // --------------------------------------------------------------------
 
 bool FileExists (const char *filename) {
-    struct stat stat_info;
-    if (stat (filename, &stat_info) != 0) {
+	struct stat stat_info;
+	if (stat (filename, &stat_info) != 0) {
 		if (errno != ENOENT) Message ("couldn't stat ", filename);
 		return false;
-    } else return true;
+	} else return true;
 }
 
 bool FileExists (const string& filename) {
@@ -213,15 +181,15 @@ bool FileExists (const string& dir, const string& filename) {
 #ifndef OS_WIN32_MSC
 bool DirExists (const char *dirname) {
 	DIR *xdir;
-    if ((xdir = opendir (dirname)) == 0)
+	if ((xdir = opendir (dirname)) == 0)
 		return ((errno != ENOENT) && (errno != ENOTDIR));
-    if (closedir (xdir) != 0) Message ("Couldn't close directory", dirname);
-    return true;
+	if (closedir (xdir) != 0) Message ("Couldn't close directory", dirname);
+	return true;
 }
 #else
 bool DirExists (const char *dirname) {
 	DWORD typ = GetFileAttributesA(dirname);
-	if(typ == INVALID_FILE_ATTRIBUTES)
+	if (typ == INVALID_FILE_ATTRIBUTES)
 		return false; // Doesn't exist
 
 	return (typ & FILE_ATTRIBUTE_DIRECTORY) != 0; // Is directory?
@@ -233,12 +201,12 @@ bool DirExists (const char *dirname) {
 // --------------------------------------------------------------------
 
 void GetTimeComponents (ETR_DOUBLE time, int *min, int *sec, int *hundr) {
-    *min = (int) (time / 60);
-    *sec = ((int) time) % 60;
-    *hundr = ((int) (time * 100 + 0.5) ) % 100;
+	*min = (int) (time / 60);
+	*sec = ((int) time) % 60;
+	*hundr = ((int) (time * 100 + 0.5) ) % 100;
 }
 
-string GetTimeString1 () {
+string GetTimeString () {
 	time_t rawtime;
 	struct tm * timeinfo;
 
@@ -251,20 +219,4 @@ string GetTimeString1 () {
 	line += Int_StrN (timeinfo->tm_min);
 	line += Int_StrN (timeinfo->tm_sec);
 	return line;
-}
-
-// --------------------------------------------------------------------
-//				FILE, read and write
-// --------------------------------------------------------------------
-
-size_t write_word (FILE *fp, uint16_t w) {
-	return fwrite(&w, 2, 1, fp);
-}
-
-size_t write_dword(FILE *fp, uint32_t dw) {
-	return fwrite(&dw, 4, 1, fp);
-}
-
-size_t write_long (FILE *fp, int32_t l) {
-	return fwrite(&l, 4, 1, fp);
 }

@@ -41,9 +41,10 @@ static TUpDown* character;
 void QuitRegistration () {
 	Players.ResetControls ();
 	Players.AllocControl (player->GetValue());
-	g_game.player_id = player->GetValue();
+	g_game.player = Players.GetPlayer(player->GetValue());
 
-	g_game.char_id = character->GetValue();
+	g_game.character = &Char.CharList[character->GetValue()];
+	Char.FreeCharacterPreviews(); // From here on, character previews are no longer required
 	State::manager.RequestEnterState (GameTypeSelect);
 }
 
@@ -51,22 +52,25 @@ void CRegist::Keyb (unsigned int key, bool special, bool release, int x, int y) 
 	TWidget* focussed = KeyGUI(key, 0, release);
 	if (release) return;
 	switch (key) {
-		case SDLK_ESCAPE: State::manager.RequestQuit(); break;
+		case SDLK_ESCAPE:
+			State::manager.RequestQuit();
+			break;
 		case SDLK_RETURN:
 			if (focussed == textbuttons[1]) {
-				g_game.player_id = player->GetValue();
+				g_game.player = Players.GetPlayer(player->GetValue());
 				State::manager.RequestEnterState (NewPlayer);
-			} else QuitRegistration ();	break;
+			} else QuitRegistration ();
+			break;
 	}
 }
 
 void CRegist::Mouse (int button, int state, int x, int y) {
 	if (state == 1) {
 		TWidget* focussed = ClickGUI(x, y);
-		if(focussed == textbuttons[0])
+		if (focussed == textbuttons[0])
 			QuitRegistration ();
-		else if(focussed == textbuttons[1]) {
-			g_game.player_id = player->GetValue();
+		else if (focussed == textbuttons[1]) {
+			g_game.player = Players.GetPlayer(player->GetValue());
 			State::manager.RequestEnterState (NewPlayer);
 		}
 	}
@@ -78,21 +82,20 @@ void CRegist::Motion (int x, int y) {
 	if (param.ui_snow) push_ui_snow (cursor_pos);
 }
 
-static int framewidth, frameheight, arrowwidth, sumwidth;
+static int framewidth, frameheight, arrowwidth;
 static TArea area;
-static ETR_DOUBLE scale, texsize;
+static ETR_DOUBLE texsize;
 
-void CRegist::Enter (void) {
+void CRegist::Enter() {
 	Winsys.ShowCursor (!param.ice_cursor);
 	Music.Play (param.menu_music, -1);
 
-	scale = Winsys.scale;
-	framewidth = (int)(scale * 280);
-	frameheight = (int)(scale * 50);
+	framewidth = (int) (Winsys.scale * 280);
+	frameheight = (int) (Winsys.scale * 50);
 	arrowwidth = 50;
-	sumwidth = framewidth * 2 + arrowwidth * 2;
+	int sumwidth = framewidth * 2 + arrowwidth * 2;
 	area = AutoAreaN (30, 80, sumwidth);
-	texsize = 128 * scale;
+	texsize = 128 * Winsys.scale;
 
 	ResetGUI ();
 	player = AddUpDown(area.left + framewidth + 8, area.top, 0, (int)Players.numPlayers() - 1, (int)g_game.start_player);
@@ -101,8 +104,7 @@ void CRegist::Enter (void) {
 	textbuttons[0] = AddTextButton (Trans.Text(60), CENTER, AutoYPosN (62), siz);
 	textbuttons[1] = AddTextButton (Trans.Text(61), CENTER, AutoYPosN (70), siz);
 
-	g_game.loopdelay = 10;
-	if(Char.CharList.empty())
+	if (Char.CharList.empty())
 		Winsys.Terminate(); // Characters are necessary - ETR is unusable otherwise
 }
 
@@ -111,9 +113,9 @@ void CRegist::Loop (ETR_DOUBLE timestep) {
 	int hh = Winsys.resolution.height;
 	Music.Update ();
 	check_gl_error();
-    ClearRenderContext ();
-    ScopedRenderMode rm(GUI);
-    SetupGuiDisplay ();
+	ClearRenderContext ();
+	ScopedRenderMode rm(GUI);
+	SetupGuiDisplay ();
 	TColor col;
 
 	if (param.ui_snow) {
@@ -125,10 +127,8 @@ void CRegist::Loop (ETR_DOUBLE timestep) {
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);
 	Tex.Draw (TOP_RIGHT, ww-256, 0, 1);
-	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), scale);
+	Tex.Draw(T_TITLE_SMALL, CENTER, AutoYPosN(5), Winsys.scale);
 
-//	DrawFrameX (area.left, area.top, area.right-area.left, area.bottom - area.top,
-//			0, colMBackgr, col, 0.2);
 
 	FT.AutoSizeN (3);
 	FT.SetColor (colWhite);
@@ -137,27 +137,29 @@ void CRegist::Loop (ETR_DOUBLE timestep) {
 	FT.DrawString (area.left + framewidth + arrowwidth, top, Trans.Text(59));
 
 	FT.AutoSizeN (4);
-	if (player->focussed()) col = colDYell; else col = colWhite;
+	if (player->focussed()) col = colDYell;
+	else col = colWhite;
 	DrawFrameX (area.left, area.top, framewidth, frameheight, 3, colMBackgr, col, 1.0);
 	FT.SetColor (col);
-	FT.DrawString (area.left + 20, area.top, Players.GetName (player->GetValue()));
+	FT.DrawString(area.left + 20, area.top, Players.GetPlayer(player->GetValue())->name);
 	Players.GetAvatarTexture(player->GetValue())->DrawFrame(
-		area.left + 60, AutoYPosN (40), texsize, texsize, 3, colWhite);
+	    area.left + 60, AutoYPosN (40), texsize, texsize, 3, colWhite);
 
-	if (character->focussed()) col = colDYell; else col = colWhite;
+	if (character->focussed()) col = colDYell;
+	else col = colWhite;
 	DrawFrameX (area.left + framewidth + arrowwidth, area.top,
-		framewidth, frameheight, 3, colMBackgr, col, 1.0);
+	            framewidth, frameheight, 3, colMBackgr, col, 1.0);
 	FT.SetColor (col);
 	FT.DrawString (area.left + framewidth + arrowwidth + 20,
-		area.top, Char.CharList[character->GetValue()].name);
-	if(Char.CharList[character->GetValue()].preview != NULL)
+	               area.top, Char.CharList[character->GetValue()].name);
+	if (Char.CharList[character->GetValue()].preview != NULL)
 		Char.CharList[character->GetValue()].preview->DrawFrame(
-			area.right - texsize - 60 - arrowwidth,
-			AutoYPosN (40), texsize, texsize, 3, colWhite);
+		    area.right - texsize - 60 - arrowwidth,
+		    AutoYPosN (40), texsize, texsize, 3, colWhite);
 
 
 	FT.SetColor (colWhite);
 	DrawGUI();
 
-    Winsys.SwapBuffers();
+	Winsys.SwapBuffers();
 }

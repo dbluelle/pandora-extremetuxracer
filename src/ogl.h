@@ -24,17 +24,18 @@ GNU General Public License for more details.
 #define NEAR_CLIP_DIST 0.1
 
 enum TRenderMode {
-    GUI,
-    GAUGE_BARS,
-    TEXFONT,
-    COURSE,
-    TREES,
-    PARTICLES,
-    TUX,
-    TUX_SHADOW,
-    SKY,
-    FOG_PLANE,
-    TRACK_MARKS,
+	GUI,
+	GAUGE_BARS,
+	TEXFONT,
+	COURSE,
+	TREES,
+	PARTICLES,
+	TUX,
+	TUX_SHADOW,
+	SKY,
+	FOG_PLANE,
+	TRACK_MARKS,
+	RM_UNINITIALIZED = -1
 };
 
 
@@ -44,14 +45,14 @@ enum TRenderMode {
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT_p;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT_p;
 #endif
+
 void check_gl_error();
-void init_glfloat_array( int num, GLfloat arr[], ... );
 void InitOpenglExtensions();
 void PrintGLInfo();
 
 void set_material (const TColor& diffuse_colour,
-		const TColor& specular_colour,
-		ETR_DOUBLE specular_exp);
+                   const TColor& specular_colour,
+                   float specular_exp);
 
 
 void PushRenderMode(TRenderMode mode);
@@ -70,6 +71,17 @@ void ClearRenderContext ();
 void ClearRenderContext (const TColor& col);
 void SetupGuiDisplay ();
 void Reshape (int w, int h);
+
+void glColor(const TColor& col);
+void glColor(const TColor& col, ETR_DOUBLE alpha);
+
+void glTranslate(const TVector3d& vec);
+
+void glNormal3(const TVector3d& vec);
+void glVertex3(const TVector3d& vec);
+void glTexCoord2(const TVector2d& vec);
+
+void glMultMatrix(const TMatrix<4, 4>& mat);
 
 
 #endif

@@ -31,7 +31,7 @@ GNU General Public License for more details.
 
 CHelp Help;
 
-static int xleft1, xleft2, ytop;
+static int ytop;
 
 void CHelp::Keyb(unsigned int key, bool special, bool release, int x, int y) {
 	State::manager.RequestEnterState (GameTypeSelect);
@@ -49,25 +49,24 @@ void CHelp::Enter() {
 	Winsys.ShowCursor (false);
 	Music.Play (param.credits_music, -1);
 
-	xleft1 = 40;
-	xleft2 = (int)(Winsys.resolution.width / 2) + 20;
 	ytop = AutoYPosN (15);
 }
 
-void CHelp::Loop(ETR_DOUBLE timestep ) {
+void CHelp::Loop(ETR_DOUBLE timestep) {
 	Music.Update ();
 	check_gl_error();
-    ClearRenderContext ();
-    ScopedRenderMode rm(GUI);
-    SetupGuiDisplay ();
+	ClearRenderContext ();
+	ScopedRenderMode rm(GUI);
+	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
 		update_ui_snow (timestep);
 		draw_ui_snow();
-    }
+	}
 
 	FT.AutoSizeN (4);
-	FT.SetColor (colWhite);
+	FT.SetColor(colWhite);
+	const int xleft1 = 40;
 	FT.DrawString (xleft1, AutoYPosN (5), Trans.Text (57));
 
 	FT.AutoSizeN (3);
@@ -87,7 +86,7 @@ void CHelp::Loop(ETR_DOUBLE timestep ) {
 	FT.DrawString (xleft1, ytop + offs * 12, Trans.Text(56));
 
 	FT.DrawString (CENTER, AutoYPosN (90), Trans.Text(65));
-    Winsys.SwapBuffers();
+	Winsys.SwapBuffers();
 }
 
 void CHelp::Exit() {

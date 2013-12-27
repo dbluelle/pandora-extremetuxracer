@@ -19,51 +19,33 @@ GNU General Public License for more details.
 #define BH_H
 
 // --------------------------------------------------------------------
-//		compiler flags
+//			global and or system-dependant includes
 // --------------------------------------------------------------------
 
 #ifndef HAVE_CONFIG_H
 // These are detected by configure
-#define HAVE_SDL
-#define HAVE_SDL_MIXER
-#define HAVE_SDL_IMAGE
-#define STDC_HEADERS
 #define HAVE_GETCWD
 #define HAVE_STRDUP
 #define HAVE_SYS_TIME_H
 #endif
 
 
-#define HAVE_SDL_JOYSTICK
 #define TIME_WITH_SYS_TIME
 #define HAVE_GETTIMEOFDAY
 #define HAVE_GL_GLEXT_H
 #define HAVE_GL_GLX_H
-#define USE_STENCIL_BUFFER
-
-// --------------------------------------------------------------------
-//			includes
-// --------------------------------------------------------------------
 
 #ifndef PANDORA
 #include <cstdint>
 #endif
-#include <climits>
 #include <cstddef>
 #include <string>
-#include <sys/stat.h>
-
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
 
 #ifdef PANDORA
 #include "eglport.h"
 #endif
 #ifdef USE_GLES1
 #define ETR_DOUBLE float
-#include <GLES/gl.h>
-#include <GL/glu.h>
 #define GL_INT     GL_SHORT
 #define GL_UNSIGNED_INT GL_UNSIGNED_SHORT
 #define GL_QUADS GL_TRIANGLE_FAN
@@ -75,6 +57,16 @@ GNU General Public License for more details.
 #define glClearDepth glClearDepthf
 #define glMultMatrixd glMultMatrixf
 #define glFogi glFogf
+#define glColor4d glColor4f
+#define glTranslated glTranslatef
+#define glNormal3d glNormal3f
+#define glVertex3d glVertex3f
+#define glTexCoord2d glTexCoord2f
+#define glRecti glRectf
+#define glVertex2i glVertex2f
+#define glNormal3i glNormal3f
+#include <GLES/gl.h>
+#include <GL/glu.h>
 void glPopAttrib();
 void glPushAttrib(int t);
 void glBegin(GLenum mode);
@@ -96,61 +88,56 @@ void glesCleanUp();
 #include <GL/glu.h>
 #endif
 
-#include "SDL/SDL.h"
-#include "SDL/SDL_joystick.h"
-#include "SDL/SDL_image.h"
-#include "SDL/SDL_mixer.h"
-
 #ifndef HAVE_CONFIG_H
-#ifdef _WIN32 // Windows platform
-#ifdef _MSC_VER // MSVC compiler
-#define OS_WIN32_MSC
-#else // Assume MinGW compiler
-#define OS_WIN32_MINGW
-#endif
-#else // Assume Unix platform (Linux, Mac OS X, BSD, ...)
-#ifdef __APPLE__
-#define OS_MAC
-#elif defined(__linux__)
-#define OS_LINUX
-#endif
-#endif
+#	ifdef _WIN32 // Windows platform
+#		ifdef _MSC_VER // MSVC compiler
+#			define OS_WIN32_MSC
+#		else // Assume MinGW compiler
+#			define OS_WIN32_MINGW
+#		endif
+#	else // Assume Unix platform (Linux, Mac OS X, BSD, ...)
+#		ifdef __APPLE__
+#			define OS_MAC
+#		elif defined(__linux__)
+#			define OS_LINUX
+#		endif
+#	endif
 #endif // CONFIG_H
 
 #if defined OS_WIN32_MSC // Windows platform
-	#include <windows.h>
-	#include "glext.h"
-	#pragma warning (disable:4244)
-	#pragma warning (disable:4305)
-	#define SEP "\\"
-	#undef DrawText
+#	include <windows.h>
+#	include "glext.h"
+#	pragma warning (disable:4244)
+#	pragma warning (disable:4305)
+#	define SEP "\\"
+#	undef DrawText
+#	undef GetObject
 #elif defined OS_WON32_MINGW
-	#include <dirent.h>
-	#include <GL/glext.h>
-	#define SEP "/"
+#	include <dirent.h>
+#	include <GL/glext.h>
+#	define SEP "/"
 #else // Assume Unix platform (Linux, Mac OS X, BSD, ...)
-	#include <unistd.h>
-	#include <sys/types.h>
-	#include <pwd.h>
-	#include <dirent.h>
-	#include <sys/time.h>
-	#include <GL/glx.h>
-	#define SEP "/"
+#	include <unistd.h>
+#	include <sys/types.h>
+#	include <pwd.h>
+#	include <dirent.h>
+#	include <sys/time.h>
+#	include <GL/glx.h>
+#	define SEP "/"
 #endif
 
 // --------------------------------------------------------------------
 //			defines
 // --------------------------------------------------------------------
 
+#define USE_STENCIL_BUFFER
+
 #include "version.h"
-#define PROG_NAME "ETR"
-#define PACKAGE "etr"
 #define WINDOW_TITLE "Extreme Tux Racer " ETR_VERSION_STRING
 
 using namespace std;
 
 #include "etr_types.h"
-#include "mathlib.h"
 #include "common.h"
 #include "game_config.h"
 

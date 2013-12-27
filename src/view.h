@@ -19,6 +19,7 @@ GNU General Public License for more details.
 #define VIEW_H
 
 #include "bh.h"
+#include "mathlib.h"
 
 void set_view_mode (CControl *ctrl, TViewMode mode);
 void update_view (CControl *ctrl, ETR_DOUBLE dt);
@@ -30,13 +31,13 @@ void SetCameraDistance (ETR_DOUBLE val);
 // ------------- viewfrustum ------------------------------------------
 
 enum clip_result_t {
-    NoClip,
-    SomeClip,
-    NotVisible
+	NoClip,
+	SomeClip,
+	NotVisible
 };
 
 void SetupViewFrustum (const CControl *ctrl);
-clip_result_t clip_aabb_to_view_frustum (const TVector3& min, const TVector3& max);
+clip_result_t clip_aabb_to_view_frustum (const TVector3d& min, const TVector3d& max);
 
 const TPlane& get_far_clip_plane();
 const TPlane& get_left_clip_plane();

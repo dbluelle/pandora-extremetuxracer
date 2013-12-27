@@ -41,8 +41,12 @@ CSplashScreen SplashScreen;
 void CSplashScreen::Keyb(unsigned int key, bool special, bool release, int x, int y) {
 	if (release) return;
 	switch (key) {
-		case SDLK_ESCAPE: State::manager.RequestQuit(); break;
-		case SDLK_RETURN: State::manager.RequestEnterState (Regist); break;
+		case SDLK_ESCAPE:
+			State::manager.RequestQuit();
+			break;
+		case SDLK_RETURN:
+			State::manager.RequestEnterState (Regist);
+			break;
 	}
 }
 
@@ -51,28 +55,26 @@ void CSplashScreen::Enter() {
 	Winsys.ShowCursor (!param.ice_cursor);
 	init_ui_snow ();
 	Music.Play (param.menu_music, -1);
-	g_game.loopdelay = 10;
 }
 
 void CSplashScreen::Loop(ETR_DOUBLE timestep) {
 	Music.Update ();
 	check_gl_error();
-    ClearRenderContext ();
+	ClearRenderContext ();
 	ScopedRenderMode rm(GUI);
-    SetupGuiDisplay ();
+	SetupGuiDisplay ();
 	Trans.LoadLanguages ();
 	Trans.LoadTranslations (param.language); // Before first texts are being displayed
 
-//	FT.SetFont ("normal");
+
 	Tex.Draw (TEXLOGO, CENTER, 60, Winsys.scale);
 	FT.SetColor (colDYell);
 	FT.AutoSizeN (6);
-	int top = AutoYPosN (60);
-	int dist = FT.AutoDistanceN (3);
+	int top = AutoYPosN (60);	int dist = FT.AutoDistanceN (3);
 	FT.DrawString (CENTER, top, Trans.Text(67));
 	FT.DrawString (CENTER, top+dist, Trans.Text(68));
 
-    Winsys.SwapBuffers();
+	Winsys.SwapBuffers();
 	Course.MakeStandardPolyhedrons ();
 	Sound.LoadSoundList ();
 	Credits.LoadCreditList ();

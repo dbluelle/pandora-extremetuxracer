@@ -29,6 +29,7 @@ GNU General Public License for more details.
 #include "tool_char.h"
 #include "env.h"
 #include "winsys.h"
+#include <GL/glu.h>
 
 CGluCamera GluCamera;
 
@@ -125,51 +126,42 @@ static string char_dir;
 static string char_file;
 static string frame_file;
 
-static float tdef_amb[]  = {0.45, 0.53, 0.75, 1.0};
-static float tdef_diff[] = {1.0, 0.9, 1.0, 1.0};
-static float tdef_spec[] = {0.6, 0.6, 0.6, 1.0};
-static float tdef_pos[]  = {1, 2, 2, 0.0};
-static TLight toollight;
+static const TLight toollight = {
+	true,
+	{0.45, 0.53, 0.75, 1.0},
+	{1.0, 0.9, 1.0, 1.0},
+	{0.6, 0.6, 0.6, 1.0},
+	{1, 2, 2, 0.0}
+};
 static int tool_mode = 0;
 
-void DrawQuad (float x, float y, float w, float h,
-		float scrheight, const TColor& col, int frame) {
+void DrawQuad (float x, float y, float w, float h, float scrheight, const TColor& col, int frame) {
 	glDisable (GL_TEXTURE_2D);
-    glColor4f (col.r, col.g, col.b, col.a);
-	glBegin (GL_QUADS);
-		glVertex2f (x-frame,   scrheight-y-h-frame);
-		glVertex2f (x+w+frame, scrheight-y-h-frame);
-		glVertex2f (x+w+frame, scrheight-y+frame);
-		glVertex2f (x-frame,   scrheight-y+frame);
-	glEnd();
+	glColor(col);
+	const GLfloat vtx[] = {
+		x - frame, scrheight - y - h - frame,
+		x + w + frame, scrheight - y - h - frame,
+		x + w + frame, scrheight - y + frame,
+		x - frame, scrheight - y + frame
+	};
+	glEnableClientState(GL_VERTEX_ARRAY);
+
+	glVertexPointer(2, GL_FLOAT, 0, vtx);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
 	glEnable (GL_TEXTURE_2D);
 }
 
 void DrawChanged () {
 	DrawQuad (Winsys.resolution.width - 120, 10, 100, 22, Winsys.resolution.height, colRed, 0);
-	FT.SetFont ("normal");
-	FT.SetSize (18);
-	FT.SetColor (colBlack);
+	FT.SetProps("normal", 18, colBlack);
 	FT.DrawString (Winsys.resolution.width - 110, 8, "changed");
 }
 
-void InitToolLight () {
-	toollight.is_on = true;
-	for (int i=0; i<4; i++) {
-		toollight.ambient[i]  = tdef_amb[i];
-		toollight.diffuse[i]  = tdef_diff[i];
-		toollight.specular[i] = tdef_spec[i];
-		toollight.position[i] = tdef_pos[i];
-	}
-}
-
 void SetToolLight () {
-	glLightfv (GL_LIGHT0, GL_POSITION, toollight.position);
-	glLightfv (GL_LIGHT0, GL_AMBIENT, toollight.ambient);
-	glLightfv (GL_LIGHT0, GL_DIFFUSE, toollight.diffuse);
-	glLightfv (GL_LIGHT0, GL_SPECULAR, toollight.specular);
-	glEnable  (GL_LIGHT0);
-	glEnable  (GL_LIGHTING);
+	toollight.Enable(GL_LIGHT0);
+	glEnable(GL_LIGHTING);
 }
 
 void QuitTool () {
@@ -179,11 +171,15 @@ void QuitTool () {
 
 void SetToolMode (int newmode) {
 	if (newmode == tool_mode) return;
-	if (newmode > 2) tool_mode = 0; else tool_mode = newmode;
+	if (newmode > 2) tool_mode = 0;
+	else tool_mode = newmode;
 	switch (tool_mode) {
-		case 0: break;
-		case 1: break;
-		case 2: break;
+		case 0:
+			break;
+		case 1:
+			break;
+		case 2:
+			break;
 	}
 }
 
@@ -219,11 +215,13 @@ void SaveToolFrame () {
 	framechanged = false;
 }
 
-void CTools::Enter() {
-	char_dir = param.char_dir + SEP + g_game.dir_arg;
+void CTools::SetParameter(const string& dir, const string& file) {
+	char_dir = param.char_dir + SEP + dir;
 	char_file = "shape.lst";
-	frame_file = g_game.file_arg;
+	frame_file = file;
+}
 
+void CTools::Enter() {
 	if (TestChar.Load (char_dir, char_file, true) == false) {
 		Message ("could not load 'shape.lst'");
 		Winsys.Terminate();
@@ -235,42 +233,64 @@ void CTools::Enter() {
 	charchanged = false;
 	framechanged = false;
 
-	InitToolLight ();
 	InitCharTools ();
 	InitFrameTools ();
 
 	Winsys.KeyRepeat (true);
-	g_game.loopdelay = 1;
 }
 
 void CTools::Keyb(unsigned int key, bool special, bool release, int x, int y) {
-		switch (tool_mode) {
-			case 0: CharKeys (key, special, release, x, y); break;
-			case 1: SingleFrameKeys (key, special, release, x, y); break;
-			case 2: SequenceKeys (key, special, release, x, y); break;
-		}
+	switch (tool_mode) {
+		case 0:
+			CharKeys (key, special, release, x, y);
+			break;
+		case 1:
+			SingleFrameKeys (key, special, release, x, y);
+			break;
+		case 2:
+			SequenceKeys (key, special, release, x, y);
+			break;
+	}
 }
 
 void CTools::Mouse(int button, int state, int x, int y) {
 	switch (tool_mode) {
-		case 0: CharMouse (button, state, x, y); break;
-		case 1: SingleFrameMouse (button, state, x, y); break;
-		case 2: SequenceMouse (button, state, x, y); break;
+		case 0:
+			CharMouse (button, state, x, y);
+			break;
+		case 1:
+			SingleFrameMouse (button, state, x, y);
+			break;
+		case 2:
+			SequenceMouse (button, state, x, y);
+			break;
 	}
 }
 
 void CTools::Motion(int x, int y) {
 	switch (tool_mode) {
-		case 0: CharMotion (x, y); break;
-		case 1: SingleFrameMotion (x, y); break;
-		case 2: SequenceMotion (x, y); break;
+		case 0:
+			CharMotion (x, y);
+			break;
+		case 1:
+			SingleFrameMotion (x, y);
+			break;
+		case 2:
+			SequenceMotion (x, y);
+			break;
 	}
 }
 
 void CTools::Loop(ETR_DOUBLE timestep) {
 	switch (tool_mode) {
-		case 0: RenderChar (timestep); break;
-		case 1: RenderSingleFrame (timestep); break;
-		case 2: RenderSequence (timestep); break;
+		case 0:
+			RenderChar (timestep);
+			break;
+		case 1:
+			RenderSingleFrame (timestep);
+			break;
+		case 2:
+			RenderSequence (timestep);
+			break;
 	}
 }

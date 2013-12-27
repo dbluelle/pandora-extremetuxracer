@@ -28,7 +28,9 @@ GNU General Public License for more details.
 #include "game_over.h"
 #include "winsys.h"
 #include "physics.h"
+#include <cstdlib>
 #include <list>
+#include <algorithm>
 
 // ====================================================================
 //					gui particles 2D
@@ -42,90 +44,92 @@ GNU General Public License for more details.
 #define PUSH_DECAY_TIME_CONSTANT 0.2
 #define PUSH_DIST_DECAY 100
 #define PUSH_FACTOR 0.5
-#define MAX_PUSH_FORCE 5
+#define MAX_PUSH_FORCE 5.0f
 #define AIR_DRAG 0.4
+#define TUX_WIDTH 0.45
 
 #define PARTICLE_MIN_SIZE 1
 #define PARTICLE_SIZE_RANGE 10
 
 struct TGuiParticle {
-    TVector2 pt;
-    ETR_DOUBLE size;
-    TVector2 vel;
-    TVector2 tex_min;
-    TVector2 tex_max;
+	TVector2d pt;
+	float size;
+	TVector2d vel;
+	const GLfloat* tex;
 
 	TGuiParticle(ETR_DOUBLE x, ETR_DOUBLE y);
 	void Draw(ETR_DOUBLE xres, ETR_DOUBLE yres) const;
-	void Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const TVector2& push_vector);
+	void Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const TVector2d& push_vector);
 };
 
 static list<TGuiParticle> particles_2d;
-static GLfloat part_col[4] = {1, 1, 1, 0.5 };
-static TVector2 push_position(0, 0);
-static TVector2 last_push_position;
+static TVector2d push_position(0, 0);
+static TVector2d last_push_position;
 static ETR_DOUBLE last_update_time = -1;
 static bool push_position_initialized = false;
 
-static ETR_DOUBLE frand () {return (ETR_DOUBLE)rand() / RAND_MAX; }
-
 TGuiParticle::TGuiParticle(ETR_DOUBLE x, ETR_DOUBLE y) {
-    pt.x = x;
-    pt.y = y;
-    ETR_DOUBLE p_dist = frand();
+	pt.x = x;
+	pt.y = y;
+	ETR_DOUBLE p_dist = FRandom();
 
 	size = PARTICLE_MIN_SIZE + (1.0 - p_dist) * PARTICLE_SIZE_RANGE;
-    vel.x = 0;
-    vel.y = -BASE_VELOCITY - p_dist * VELOCITY_RANGE;
+	vel.x = 0;
+	vel.y = -BASE_VELOCITY - p_dist * VELOCITY_RANGE;
 
-	int type = (int) (frand() * (4.0 - EPS));
-	if (type == 0) {
-		tex_min = TVector2(0.0, 0.0);
-		tex_max = TVector2(0.5, 0.5);
-    } else if (type == 1) {
-		tex_min = TVector2(0.5, 0.0);
-		tex_max = TVector2(1.0, 0.5);
-    } else if (type == 2) {
-		tex_min = TVector2(0.5, 0.5);
-		tex_max = TVector2(1.0, 1.0);
-    } else {
-		tex_min = TVector2(0.0, 0.5);
-		tex_max = TVector2(0.5, 1.0);
-    }
+	static const GLfloat tex_coords[4][8] = {
+		{
+			0.0, 0.0,
+			0.5, 0.0,
+			0.5, 0.5,
+			0.0, 0.5
+		}, {
+			0.5, 0.0,
+			1.0, 0.0,
+			1.0, 0.5,
+			0.5, 0.5
+		}, {
+			0.0, 0.5,
+			0.5, 0.5,
+			0.5, 1.0,
+			0.0, 1.0
+		}, {
+			0.5, 0.5,
+			1.0, 0.5,
+			1.0, 1.0,
+			0.5, 1.0
+		}
+	};
+	int type = rand() % 4;
+	tex = tex_coords[type];
 }
 
 void TGuiParticle::Draw(ETR_DOUBLE xres, ETR_DOUBLE yres) const {
-	glPushMatrix();
-	glTranslatef (pt.x * xres, pt.y * yres, 0);
-	glBegin (GL_QUADS);
-		glTexCoord2f (tex_min.x, tex_min.y);
-		glVertex2f (0, 0);
-		glTexCoord2f (tex_max.x, tex_min.y);
-		glVertex2f (size, 0);
-		glTexCoord2f (tex_max.x, tex_max.y);
-		glVertex2f (size, size);
-		glTexCoord2f (tex_min.x, tex_max.y);
-		glVertex2f (0, size);
-	glEnd();
-	glPopMatrix();
+	const GLfloat vtx[] = {
+		pt.x * xres,        pt.y * yres,
+		pt.x * xres + size, pt.y * yres,
+		pt.x * xres + size, pt.y * yres + size,
+		pt.x * xres,        pt.y * yres + size
+	};
+	glVertexPointer(2, GL_FLOAT, 0, vtx);
+	glTexCoordPointer(2, GL_FLOAT, 0, tex);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-void TGuiParticle::Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const TVector2& push_vector) {
-	TVector2 f;
+void TGuiParticle::Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const TVector2d& push_vector) {
+	TVector2d f;
 
 	ETR_DOUBLE dist_from_push = (pow((pt.x - push_position.x), 2) +
-			pow((pt.y - push_position.y), 2));
+	                         pow((pt.y - push_position.y), 2));
 	if (push_timestep > 0) {
-	    f.x = PUSH_FACTOR * push_vector.x / push_timestep;
+		f.x = PUSH_FACTOR * push_vector.x / push_timestep;
 		f.y = PUSH_FACTOR * push_vector.y / push_timestep;
-		f.x = MIN (MAX_PUSH_FORCE, f.x);
-		f.x = MAX (-MAX_PUSH_FORCE, f.x);
-	    f.y = MIN (MAX_PUSH_FORCE, f.y);
-		f.y = MAX (-MAX_PUSH_FORCE, f.y);
+		f.x = clamp (-MAX_PUSH_FORCE, f.x, MAX_PUSH_FORCE);
+		f.y = clamp (-MAX_PUSH_FORCE, f.y, MAX_PUSH_FORCE);
 		f.x *= 1.0/(PUSH_DIST_DECAY*dist_from_push + 1) *
-			size/PARTICLE_SIZE_RANGE;
+		       size/PARTICLE_SIZE_RANGE;
 		f.y *= 1.0/(PUSH_DIST_DECAY*dist_from_push + 1) *
-			size/PARTICLE_SIZE_RANGE;
+		       size/PARTICLE_SIZE_RANGE;
 	}
 
 	vel.x +=  (f.x - vel.x * AIR_DRAG) *  time_step;
@@ -143,40 +147,40 @@ void TGuiParticle::Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const 
 
 void init_ui_snow () {
 	for (int i=0; i<BASE_num_snowparticles; i++)
-		particles_2d.push_back(TGuiParticle( frand(), frand()));
-    push_position = TVector2(0.0, 0.0);
+		particles_2d.push_back(TGuiParticle(FRandom(), FRandom()));
+	push_position = TVector2d(0.0, 0.0);
 }
 
-void update_ui_snow (ETR_DOUBLE time_step) {
-    ETR_DOUBLE time = Winsys.ClockTime ();
+void update_ui_snow(ETR_DOUBLE time_step) {
+	ETR_DOUBLE time = Winsys.ClockTime ();
 
-    TVector2 push_vector;
-    ETR_DOUBLE push_timestep = 0;
+	TVector2d push_vector;
+	ETR_DOUBLE push_timestep = 0;
 
-    if (push_position_initialized) {
+	if (push_position_initialized) {
 		push_vector.x = push_position.x - last_push_position.x;
 		push_vector.y = push_position.y - last_push_position.y;
 		push_timestep = time - last_update_time;
-    }
-    last_push_position = push_position;
-    last_update_time = time;
+	}
+	last_push_position = push_position;
+	last_update_time = time;
 
-    for (list<TGuiParticle>::iterator p = particles_2d.begin(); p != particles_2d.end(); ++p) {
+	for (list<TGuiParticle>::iterator p = particles_2d.begin(); p != particles_2d.end(); ++p) {
 		p->Update(time_step, push_timestep, push_vector);
-    }
-
-	if(frand() < time_step*20.0*(MAX_num_snowparticles - particles_2d.size())/1000.0) {
-		particles_2d.push_back(TGuiParticle(frand(), 1));
 	}
 
-    for (list<TGuiParticle>::iterator p = particles_2d.begin(); p != particles_2d.end();) {
+	if (FRandom() < time_step*20.0*(MAX_num_snowparticles - particles_2d.size()) / 1000.0) {
+		particles_2d.push_back(TGuiParticle(FRandom(), 1));
+	}
+
+	for (list<TGuiParticle>::iterator p = particles_2d.begin(); p != particles_2d.end();) {
 		if (p->pt.y < -0.05) {
-			if (particles_2d.size() > BASE_num_snowparticles && frand() > 0.2) {
+			if (particles_2d.size() > BASE_num_snowparticles && FRandom() > 0.2) {
 				p = particles_2d.erase(p);
 			} else {
-				p->pt.x = frand();
-				p->pt.y = 1+frand()*BASE_VELOCITY;
-				ETR_DOUBLE p_dist = frand();
+				p->pt.x = FRandom();
+				p->pt.y = 1 + FRandom()*BASE_VELOCITY;
+				ETR_DOUBLE p_dist = FRandom();
 				p->size = PARTICLE_MIN_SIZE + (1.0 - p_dist) * PARTICLE_SIZE_RANGE;
 				p->vel.x = 0;
 				p->vel.y = -BASE_VELOCITY-p_dist*VELOCITY_RANGE;
@@ -184,33 +188,37 @@ void update_ui_snow (ETR_DOUBLE time_step) {
 			}
 		} else
 			++p;
-    }
+	}
 
-    if (time_step < PUSH_DECAY_TIME_CONSTANT) {
+	if (time_step < PUSH_DECAY_TIME_CONSTANT) {
 		push_vector.x *= 1.0 - time_step/PUSH_DECAY_TIME_CONSTANT;
 		push_vector.y *= 1.0 - time_step/PUSH_DECAY_TIME_CONSTANT;
-    } else {
+	} else {
 		push_vector.x = 0.0;
 		push_vector.y = 0.0;
-    }
+	}
 }
 void draw_ui_snow () {
-    ETR_DOUBLE xres = Winsys.resolution.width;
-    ETR_DOUBLE yres = Winsys.resolution.height;
+	ETR_DOUBLE xres = Winsys.resolution.width;
+	ETR_DOUBLE yres = Winsys.resolution.height;
 
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	Tex.BindTex (SNOW_PART);
-    glColor4f(part_col[0], part_col[1], part_col[2], part_col[3]);
-	part_col[3] = 0.3;
+	glColor4f(1.f, 1.f, 1.f, 0.3f);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	for (list<TGuiParticle>::const_iterator i = particles_2d.begin(); i != particles_2d.end(); ++i) {
 		i->Draw(xres, yres);
-    }
+	}
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void push_ui_snow (const TVector2& pos) {
-    push_position = TVector2(pos.x/(ETR_DOUBLE)Winsys.resolution.width, 1.0 - pos.y/(ETR_DOUBLE)Winsys.resolution.height);
-    if (!push_position_initialized) last_push_position = push_position;
-    push_position_initialized = true;
+void push_ui_snow (const TVector2i& pos) {
+	push_position = TVector2d(pos.x/(ETR_DOUBLE)Winsys.resolution.width, 1.0 - pos.y/(ETR_DOUBLE)Winsys.resolution.height);
+	if (!push_position_initialized) last_push_position = push_position;
+	push_position_initialized = true;
 }
 
 // ====================================================================
@@ -231,239 +239,230 @@ void push_ui_snow (const TVector2& pos) {
 #define BRAKE_PARTICLES 2000
 #define MAX_ROLL_PARTICLES 3000
 #define PARTICLE_SPEED_FACTOR 40
-#define MAX_PARTICLE_ANGLE 80
+#define MAX_PARTICLE_ANGLE 80.0f
 #define MAX_PARTICLE_ANGLE_SPEED 50
 #define PARTICLE_SPEED_MULTIPLIER 0.3
-#define MAX_PARTICLE_SPEED 2
+#define MAX_PARTICLE_SPEED 2.0
 
 
 struct Particle {
-    TVector3 pt;
-    short type;
-    ETR_DOUBLE base_size;
-    ETR_DOUBLE cur_size;
-    ETR_DOUBLE terrain_height;
-    ETR_DOUBLE age;
-    ETR_DOUBLE death;
-    ETR_DOUBLE alpha;
-    TVector3 vel;
+	TVector3d pt;
+	short type;
+	ETR_DOUBLE base_size;
+	ETR_DOUBLE cur_size;
+	ETR_DOUBLE terrain_height;
+	ETR_DOUBLE age;
+	ETR_DOUBLE death;
+	ETR_DOUBLE alpha;
+	TVector3d vel;
 
 	void Draw(const CControl* ctrl) const;
-	void draw_billboard (const CControl *ctrl, ETR_DOUBLE width, ETR_DOUBLE height, bool use_world_y_axis,
-		const TVector2& min_tex_coord, const TVector2& max_tex_coord) const;
+private:
+	void draw_billboard(const CControl *ctrl, ETR_DOUBLE width, ETR_DOUBLE height, bool use_world_y_axis, const GLfloat* tex) const;
 };
 
 static list<Particle> particles;
 
 void Particle::Draw(const CControl* ctrl) const {
-	TVector2 min_tex_coord, max_tex_coord;
-	if (type == 0 || type == 1) {
-		min_tex_coord.y = 0;
-		max_tex_coord.y = 0.5;
-	} else {
-		min_tex_coord.y = 0.5;
-		max_tex_coord.y = 1.0;
-	}
-
-	if (type == 0 || type == 3) {
-		min_tex_coord.x = 0;
-		max_tex_coord.x = 0.5;
-	} else {
-		min_tex_coord.x = 0.5;
-		max_tex_coord.x = 1.0;
-	}
+	static const GLfloat tex_coords[4][8] = {
+		{
+			0.0, 0.0,
+			0.5, 0.0,
+			0.5, 0.5,
+			0.0, 0.5
+		}, {
+			0.5, 0.0,
+			1.0, 0.0,
+			1.0, 0.5,
+			0.5, 0.5
+		}, {
+			0.0, 0.5,
+			0.5, 0.5,
+			0.5, 1.0,
+			0.0, 1.0
+		}, {
+			0.5, 0.5,
+			1.0, 0.5,
+			1.0, 1.0,
+			0.5, 1.0
+		}
+	};
 
 	const TColor& particle_colour = Env.ParticleColor ();
-	glColor4f (particle_colour.r,
-			particle_colour.g,
-			particle_colour.b,
-			particle_colour.a * alpha);
+	glColor(particle_colour, particle_colour.a * alpha);
 
-	draw_billboard (ctrl, cur_size, cur_size, false, min_tex_coord, max_tex_coord);
+	draw_billboard(ctrl, cur_size, cur_size, false, tex_coords[type]);
 }
 
-void Particle::draw_billboard (const CControl *ctrl, ETR_DOUBLE width, ETR_DOUBLE height, bool use_world_y_axis, const TVector2& min_tex_coord, const TVector2& max_tex_coord) const
-{
-    TVector3 x_vec;
-    TVector3 y_vec;
-    TVector3 z_vec;
+void Particle::draw_billboard (const CControl *ctrl, ETR_DOUBLE width, ETR_DOUBLE height, bool use_world_y_axis, const GLfloat* tex) const {
+	TVector3d x_vec;
+	TVector3d y_vec;
+	TVector3d z_vec;
 
-    x_vec.x = ctrl->view_mat[0][0];
-    x_vec.y = ctrl->view_mat[0][1];
-    x_vec.z = ctrl->view_mat[0][2];
+	x_vec.x = ctrl->view_mat[0][0];
+	x_vec.y = ctrl->view_mat[0][1];
+	x_vec.z = ctrl->view_mat[0][2];
 
-    if (use_world_y_axis) {
-		y_vec = TVector3(0, 1, 0);
+	if (use_world_y_axis) {
+		y_vec = TVector3d(0, 1, 0);
 		x_vec = ProjectToPlane (y_vec, x_vec);
-		NormVector (x_vec);
+		x_vec.Norm();
 		z_vec = CrossProduct (x_vec, y_vec);
-    } else {
+	} else {
 		y_vec.x = ctrl->view_mat[1][0];
 		y_vec.y = ctrl->view_mat[1][1];
 		y_vec.z = ctrl->view_mat[1][2];
 		z_vec.x = ctrl->view_mat[2][0];
 		z_vec.y = ctrl->view_mat[2][1];
 		z_vec.z = ctrl->view_mat[2][2];
-    }
+	}
 
-    glBegin (GL_QUADS);
-		TVector3 newpt = AddVectors (pt, ScaleVector (-width/2.0, x_vec));
-		newpt = AddVectors (newpt, ScaleVector (-height/2.0, y_vec));
-		glNormal3f (z_vec.x, z_vec.y, z_vec.z);
-		glTexCoord2f (min_tex_coord.x, min_tex_coord.y);
-		glVertex3f (newpt.x, newpt.y, newpt.z);
+	TVector3d pt1 = pt + -width/2.0 * x_vec;
+	pt1 += -height / 2.0 * y_vec;
+	TVector3d pt2 = pt1 + width * x_vec;
+	TVector3d pt3 = pt2 + height * y_vec;
+	TVector3d pt4 = pt3 + -width * x_vec;
+	const GLfloat vtx[] = {
+		pt1.x, pt1.y, pt1.z,
+		pt2.x, pt2.y, pt2.z,
+		pt3.x, pt3.y, pt3.z,
+		pt4.x, pt4.y, pt4.z,
+	};
 
-		newpt = AddVectors (newpt, ScaleVector (width, x_vec));
-		glTexCoord2f (max_tex_coord.x, min_tex_coord.y);
-		glVertex3f (newpt.x, newpt.y, newpt.z);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-		newpt = AddVectors (newpt, ScaleVector (height, y_vec));
-		glTexCoord2f (max_tex_coord.x, max_tex_coord.y);
-		glVertex3f (newpt.x, newpt.y, newpt.z);
+	glVertexPointer(3, GL_FLOAT, 0, vtx);
+	glTexCoordPointer(2, GL_FLOAT, 0, tex);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-		newpt = AddVectors (newpt, ScaleVector (-width, x_vec));
-		glTexCoord2f (min_tex_coord.x, max_tex_coord.y);
-		glVertex3f (newpt.x, newpt.y, newpt.z);
-    glEnd ();
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void create_new_particles (const TVector3& loc, TVector3 vel, int num) {
-    ETR_DOUBLE speed = NormVector (vel);
+void create_new_particles (const TVector3d& loc, const TVector3d& vel, int num) {
+	ETR_DOUBLE speed = vel.Length();
 
-    if (particles.size() + num > MAX_PARTICLES) {
-		Message ("maximum number of particles exceeded", "");
-    }
-    for (int i=0; i<num; i++) {
+	if (particles.size() + num > MAX_PARTICLES) {
+		Message ("maximum number of particles exceeded");
+	}
+	for (int i=0; i<num; i++) {
 		particles.push_back(Particle());
-        Particle* newp = &particles.back();
-        newp->pt.x = loc.x + 2.*(frand() - 0.5) * START_RADIUS;
-        newp->pt.y = loc.y;
-        newp->pt.z = loc.z + 2.*(frand() - 0.5) * START_RADIUS;
-		newp->type = (int) (frand() * (4.0 - EPS));
-		newp->base_size =  (frand() + 0.5) * OLD_PART_SIZE;
+		Particle* newp = &particles.back();
+		newp->pt.x = loc.x + 2.*(FRandom() - 0.5) * START_RADIUS;
+		newp->pt.y = loc.y;
+		newp->pt.z = loc.z + 2.*(FRandom() - 0.5) * START_RADIUS;
+		newp->type = rand() % 4;
+		newp->base_size = (FRandom() + 0.5) * OLD_PART_SIZE;
 		newp->cur_size = NEW_PART_SIZE;
-        newp->age = frand() * MIN_AGE;
-        newp->death = frand() * MAX_AGE;
-        newp->vel = AddVectors (
-			ScaleVector (speed, vel),
-			TVector3(VARIANCE_FACTOR * (frand() - 0.5) * speed,
-				 VARIANCE_FACTOR * (frand() - 0.5) * speed,
-				 VARIANCE_FACTOR * (frand() - 0.5) * speed ));
-    }
+		newp->age = FRandom() * MIN_AGE;
+		newp->death = FRandom() * MAX_AGE;
+		newp->vel = vel +
+		            TVector3d(VARIANCE_FACTOR * (FRandom() - 0.5) * speed,
+		                      VARIANCE_FACTOR * (FRandom() - 0.5) * speed,
+		                      VARIANCE_FACTOR * (FRandom() - 0.5) * speed);
+	}
 }
 void update_particles (ETR_DOUBLE time_step) {
-	for(list<Particle>::iterator p = particles.begin(); p != particles.end();) {
+	for (list<Particle>::iterator p = particles.begin(); p != particles.end();) {
 		p->age += time_step;
-        if (p->age < 0) {
+		if (p->age < 0) {
 			++p;
 			continue;
 		}
 
-		p->pt = AddVectors (p->pt, ScaleVector (time_step, p->vel));
+		p->pt += time_step * p->vel;
 		ETR_DOUBLE ycoord = Course.FindYCoord (p->pt.x, p->pt.z);
 		if (p->pt.y < ycoord - 3) {p->age = p->death + 1;}
-        if (p->age >= p->death) {
+		if (p->age >= p->death) {
 			p = particles.erase(p);
-            continue;
-        }
-        p->alpha = (p->death - p->age) / p->death;
+			continue;
+		}
+		p->alpha = (p->death - p->age) / p->death;
 		p->cur_size = NEW_PART_SIZE +
-			    (OLD_PART_SIZE - NEW_PART_SIZE) * (p->age / p->death);
-        p->vel.y += -EARTH_GRAV * time_step;
-        ++p;
+		              (OLD_PART_SIZE - NEW_PART_SIZE) * (p->age / p->death);
+		p->vel.y += -EARTH_GRAV * time_step;
+		++p;
 	}
 }
 void draw_particles (const CControl *ctrl) {
-    ScopedRenderMode rm(PARTICLES);
+	ScopedRenderMode rm(PARTICLES);
 	Tex.BindTex (SNOW_PART);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glColor4f(part_col[0], part_col[1], part_col[2], part_col[3]);
-	part_col[3] = 0.8;    // !!!!!!!!!
+	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glColor4f(1.f, 1.f, 1.f, 0.8f);
 
-	for(list<Particle>::const_iterator p = particles.begin(); p != particles.end(); ++p) {
-        if (p->age >= 0)
+	for (list<Particle>::const_iterator p = particles.begin(); p != particles.end(); ++p) {
+		if (p->age >= 0)
 			p->Draw(ctrl);
-    }
+	}
 }
 void clear_particles() {
 	particles.clear();
 }
 
 ETR_DOUBLE adjust_particle_count (ETR_DOUBLE particles) {
-    if (particles < 1) {
+	if (particles < 1) {
 		if (((ETR_DOUBLE) rand()) / RAND_MAX < particles) return 1.0;
 		else return 0.0;
-    } else return particles;
+	} else return particles;
 }
 
-void generate_particles (const CControl *ctrl, ETR_DOUBLE dtime, const TVector3& pos, ETR_DOUBLE speed) {
-    ETR_DOUBLE brake_particles;
-    ETR_DOUBLE turn_particles;
-    ETR_DOUBLE roll_particles;
-    ETR_DOUBLE surf_y;
-    ETR_DOUBLE left_particles, right_particles;
-    TMatrix rot_mat;
+void generate_particles (const CControl *ctrl, ETR_DOUBLE dtime, const TVector3d& pos, ETR_DOUBLE speed) {
 	TTerrType *TerrList = &Course.TerrList[0];
 
-    surf_y = Course.FindYCoord (pos.x, pos.z);
+	ETR_DOUBLE surf_y = Course.FindYCoord (pos.x, pos.z);
 
 	int id = Course.GetTerrainIdx (pos.x, pos.z, 0.5);
 	if (id >= 0 && TerrList[id].particles && pos.y < surf_y) {
-		TVector3 xvec = CrossProduct (ctrl->cdirection, ctrl->plane_nml);
+		TVector3d xvec = CrossProduct (ctrl->cdirection, ctrl->plane_nml);
 
-		TVector3 right_part_pt = AddVectors (
-		    pos,
-		    ScaleVector (TUX_WIDTH/2.0, xvec));
+		TVector3d right_part_pt = pos + TUX_WIDTH/2.0 * xvec;
 
-		TVector3 left_part_pt = AddVectors (
-		    pos,
-		    ScaleVector (-TUX_WIDTH/2.0, xvec));
+		TVector3d left_part_pt = pos + -TUX_WIDTH/2.0 * xvec;
 
-        right_part_pt.y = left_part_pt.y  = surf_y;
+		right_part_pt.y = left_part_pt.y  = surf_y;
 
-		brake_particles = dtime *
-		    BRAKE_PARTICLES *  (ctrl->is_braking ? 1.0 : 0.0)
-		    * min (speed / PARTICLE_SPEED_FACTOR, 1.0);
-		turn_particles = dtime * MAX_TURN_PARTICLES
-		    * min (speed / PARTICLE_SPEED_FACTOR, 1.0);
-		roll_particles = dtime * MAX_ROLL_PARTICLES
-		    * min (speed / PARTICLE_SPEED_FACTOR, 1.0);
+		ETR_DOUBLE brake_particles = dtime *
+		                         BRAKE_PARTICLES *  (ctrl->is_braking ? 1.0 : 0.0)
+		                         * min (speed / PARTICLE_SPEED_FACTOR, 1.0);
+		ETR_DOUBLE turn_particles = dtime * MAX_TURN_PARTICLES
+		                        * min (speed / PARTICLE_SPEED_FACTOR, 1.0);
+		ETR_DOUBLE roll_particles = dtime * MAX_ROLL_PARTICLES
+		                        * min (speed / PARTICLE_SPEED_FACTOR, 1.0);
 
-		left_particles = turn_particles *
-		    fabs (min(ctrl->turn_fact, 0.)) +
-		    brake_particles +
-		    roll_particles * fabs (min(ctrl->turn_animation, 0.));
+		ETR_DOUBLE left_particles = turn_particles *
+		                        fabs (min(ctrl->turn_fact, 0.)) +
+		                        brake_particles +
+		                        roll_particles * fabs (min(ctrl->turn_animation, 0.));
 
-		right_particles = turn_particles *
-		    fabs (max(ctrl->turn_fact, 0.)) +
-		    brake_particles +
-		    roll_particles * fabs (max(ctrl->turn_animation, 0.));
+		ETR_DOUBLE right_particles = turn_particles *
+		                         fabs (max(ctrl->turn_fact, 0.)) +
+		                         brake_particles +
+		                         roll_particles * fabs (max(ctrl->turn_animation, 0.));
 
 		left_particles = adjust_particle_count (left_particles);
 		right_particles = adjust_particle_count (right_particles);
 
-		RotateAboutVectorMatrix(
-		    rot_mat, ctrl->cdirection,
-		    MAX (-MAX_PARTICLE_ANGLE,
-			 -MAX_PARTICLE_ANGLE * speed / MAX_PARTICLE_ANGLE_SPEED));
-		TVector3 left_part_vel = TransformVector (rot_mat, ctrl->plane_nml);
-		left_part_vel = ScaleVector (MIN (MAX_PARTICLE_SPEED,
-			speed * PARTICLE_SPEED_MULTIPLIER),left_part_vel);
+		TMatrix<4, 4> rot_mat = RotateAboutVectorMatrix(
+		                            ctrl->cdirection,
+		                            max (-MAX_PARTICLE_ANGLE,
+		                                 -MAX_PARTICLE_ANGLE * speed / MAX_PARTICLE_ANGLE_SPEED));
+		TVector3d left_part_vel = TransformVector (rot_mat, ctrl->plane_nml);
+		left_part_vel = min(MAX_PARTICLE_SPEED, speed * PARTICLE_SPEED_MULTIPLIER);
 
-		RotateAboutVectorMatrix(
-		    rot_mat, ctrl->cdirection,
-		    MIN (MAX_PARTICLE_ANGLE,
-			 MAX_PARTICLE_ANGLE * speed / MAX_PARTICLE_ANGLE_SPEED));
-		TVector3 right_part_vel = TransformVector (rot_mat, ctrl->plane_nml);
-		right_part_vel = ScaleVector (MIN (MAX_PARTICLE_SPEED,
-			speed * PARTICLE_SPEED_MULTIPLIER),right_part_vel);
+		rot_mat = RotateAboutVectorMatrix(
+		              ctrl->cdirection,
+		              min (MAX_PARTICLE_ANGLE,
+		                   MAX_PARTICLE_ANGLE * speed / MAX_PARTICLE_ANGLE_SPEED));
+		TVector3d right_part_vel = TransformVector (rot_mat, ctrl->plane_nml);
+		right_part_vel *= min(MAX_PARTICLE_SPEED, speed * PARTICLE_SPEED_MULTIPLIER);
 
 
-        create_new_particles (left_part_pt, left_part_vel,
-			      (int)left_particles);
-        create_new_particles (right_part_pt, right_part_vel,
-			      (int)right_particles);
-    }
+		create_new_particles (left_part_pt, left_part_vel,
+		                      (int)left_particles);
+		create_new_particles (right_part_pt, right_part_vel,
+		                      (int)right_particles);
+	}
 }
 
 // --------------------------------------------------------------------
@@ -478,34 +477,35 @@ static CFlakes Flakes;
 void TFlake::Draw(const TPlane& lp, const TPlane& rp, bool rotate_flake, float dir_angle) const {
 	if ((DistanceToPlane (lp, pt) < 0) && (DistanceToPlane (rp, pt) < 0)) {
 		glPushMatrix();
-		glTranslatef (pt.x, pt.y, pt.z);
+		glTranslate(pt);
 		if (rotate_flake) glRotatef (dir_angle, 0, 1, 0);
-		glBegin (GL_QUADS);
-			glTexCoord2f (tex_min.x, tex_min.y);
-			glVertex3f (0, 0, 0);
-			glTexCoord2f (tex_max.x, tex_min.y);
-			glVertex3f (size, 0, 0);
-			glTexCoord2f (tex_max.x, tex_max.y);
-			glVertex3f (size, size, 0);
-			glTexCoord2f (tex_min.x, tex_max.y);
-			glVertex3f (0, size, 0);
-		glEnd();
+
+		const GLfloat vtx[] = {
+			0,    0,    0,
+			size, 0,    0,
+			size, size, 0,
+			0,    size, 0
+		};
+		glVertexPointer(3, GL_FLOAT, 0, vtx);
+		glTexCoordPointer(2, GL_FLOAT, 0, tex);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
 		glPopMatrix();
 	}
 }
 
 
 TFlakeArea::TFlakeArea (
-		int   num_flakes,
-		float _xrange,
-		float _ytop,
-		float _yrange,
-		float _zback,
-		float _zrange,
-		float _minSize,
-		float _maxSize,
-		float _speed,
-		bool  rotate) {
+    int   num_flakes,
+    float _xrange,
+    float _ytop,
+    float _yrange,
+    float _zback,
+    float _zrange,
+    float _minSize,
+    float _maxSize,
+    float _speed,
+    bool  rotate) {
 	xrange = _xrange;
 	ytop = _ytop;
 	yrange = _yrange;
@@ -528,12 +528,17 @@ void TFlakeArea::Draw (const CControl *ctrl) const {
 
 	ScopedRenderMode rm(PARTICLES);
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	Tex.BindTex (T_WIDGETS);
+	Tex.BindTex(SNOW_PART);
 	const TColor& particle_colour = Env.ParticleColor ();
-    glColor4f (particle_colour.r, particle_colour.g, particle_colour.b, particle_colour.a);
+	glColor(particle_colour);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	for (size_t i=0; i < flakes.size(); i++) {
 		flakes[i].Draw(lp, rp, rotate_flake, dir_angle);
 	}
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 void TFlakeArea::Update(float timestep, float xcoeff, float ycoeff, float zcoeff) {
@@ -567,27 +572,38 @@ void CFlakes::MakeSnowFlake (size_t ar, size_t i) {
 	areas[ar].flakes[i].pt.y = -XRandom (areas[ar].top, areas[ar].bottom);
 	areas[ar].flakes[i].pt.z = areas[ar].back - FRandom () * (areas[ar].back - areas[ar].front);
 
-	float p_dist = FRandom ();
-    areas[ar].flakes[i].size = XRandom (areas[ar].minSize, areas[ar].maxSize);
+	areas[ar].flakes[i].size = XRandom (areas[ar].minSize, areas[ar].maxSize);
 	areas[ar].flakes[i].vel.x = 0;
 	areas[ar].flakes[i].vel.z = 0;
 	areas[ar].flakes[i].vel.y = -areas[ar].flakes[i].size * areas[ar].speed;
 
-	int type = (int) (FRandom () * 3.9999);
+	int type = rand() % 4;
 
-	if (type == 0) {
-		areas[ar].flakes[i].tex_min = TVector2(0.0, 0.875);
-		areas[ar].flakes[i].tex_max = TVector2(0.125, 1.0);
-    } else if (type == 1) {
-		areas[ar].flakes[i].tex_min = TVector2(0.125, 0.875);
-		areas[ar].flakes[i].tex_max = TVector2(0.25, 1.0);
-	} else if (type == 2) {
-		areas[ar].flakes[i].tex_min = TVector2(0.0, 0.75);
-		areas[ar].flakes[i].tex_max = TVector2(0.125, 0.875);
-    } else {
-		areas[ar].flakes[i].tex_min = TVector2(0.125, 0.75);
-		areas[ar].flakes[i].tex_max = TVector2(0.25, 0.875);
-    }
+	static const GLfloat tex_coords[4][8] = {
+		{
+			0.0, 0.5,
+			0.5, 0.5,
+			0.5, 0.0,
+			0.0, 0.0
+		}, {
+			0.5, 0.5,
+			1.0, 0.5,
+			1.0, 0.0,
+			0.5, 0.0
+		}, {
+			0.0, 1.0,
+			0.5, 1.0,
+			0.5, 0.5,
+			0.0, 0.5
+		}, {
+			0.5, 1.0,
+			1.0, 1.0,
+			1.0, 0.5,
+			0.5, 0.5
+		}
+	};
+
+	areas[ar].flakes[i].tex = tex_coords[type];
 }
 
 void CFlakes::GenerateSnowFlakes (const CControl *ctrl) {
@@ -654,7 +670,8 @@ void CFlakes::Init (int grade, const CControl *ctrl) {
 //			areas.push_back(TFlakeArea(800, 12, 5, 9,      2, 8, 0.12, 0.20,    5, false));
 //			areas.push_back(TFlakeArea(800, 30, 6, 15,      10, 15, 0.25, 0.5,    5, false));
 			break;
-		default: break;
+		default: 
+			break;
 	}
 
 	UpdateAreas (ctrl);
@@ -673,7 +690,7 @@ void CFlakes::Update (ETR_DOUBLE timestep, const CControl *ctrl) {
 		ydiff = ctrl->cpos.y - snow_lastpos.y;
 	}
 
-	TVector3 winddrift = ScaleVector (SNOW_WIND_DRIFT, Wind.WindDrift ());
+	TVector3d winddrift = SNOW_WIND_DRIFT * Wind.WindDrift ();
 	float xcoeff = winddrift.x * timestep;
 	float ycoeff = (ydiff * YDRIFT) + (winddrift.z * timestep);
 	float zcoeff = (zdiff * ZDRIFT) + (winddrift.z * timestep);
@@ -740,9 +757,15 @@ TCurtain::TCurtain (int num_rows, float z_dist, float tex_size,
 	startangle = start_angle;
 	minheight = min_height;
 	switch (dense) {
-		case 1: texture = T_SNOW1; break;
-		case 2: texture = T_SNOW2; break;
-		case 3: texture = T_SNOW3; break;
+		case 1:
+			texture = T_SNOW1;
+			break;
+		case 2:
+			texture = T_SNOW2;
+			break;
+		case 3:
+			texture = T_SNOW3;
+			break;
 	}
 
 	angledist = atan (size / 2 / zdist) * 360 / 3.14159;
@@ -771,30 +794,39 @@ void TCurtain::SetStartParams(const CControl* ctrl) {
 
 void TCurtain::Draw() const {
 	Tex.BindTex (texture);
-	float halfsize = size / 2;
+	float halfsize = size / 2.f;
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	for (unsigned int co=0; co<numCols; co++) {
 		for (unsigned int row=0; row<numRows; row++) {
-			const TVector3* pt = &curtains[co][row].pt;
+			const TVector3d& pt = curtains[co][row].pt;
 			glPushMatrix();
-			glTranslatef (pt->x, pt->y, pt->z);
+			glTranslate(pt);
 			glRotatef (-curtains[co][row].angle, 0, 1, 0);
-			// glNormal3f (0, 0, 1);
-			glBegin (GL_QUADS);
-				glTexCoord2f (0, 0);
-				glVertex3f (-halfsize, -halfsize, 0);
-				glTexCoord2f (1, 0);
-				glVertex3f (halfsize, -halfsize, 0);
-				glTexCoord2f (1, 1);
-				glVertex3f (halfsize, halfsize, 0);
-				glTexCoord2f (0, 1);
-				glVertex3f (-halfsize, halfsize, 0);
-			glEnd();
+
+			static const GLshort tex[] = {
+				0, 0,
+				1, 0,
+				1, 1,
+				0, 1
+			};
+			const GLfloat vtx[] = {
+				-halfsize, -halfsize, 0,
+				halfsize, -halfsize, 0,
+				halfsize, halfsize, 0,
+				-halfsize, halfsize, 0
+			};
+			glVertexPointer(3, GL_FLOAT, 0, vtx);
+			glTexCoordPointer(2, GL_SHORT, 0, tex);
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 			glPopMatrix();
 		}
 	}
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void TCurtain::Update(float timestep, const TVector3& drift, const CControl* ctrl) {
+void TCurtain::Update(float timestep, const TVector3d& drift, const CControl* ctrl) {
 	for (unsigned int co=0; co<numCols; co++) {
 		for (unsigned int row=0; row<numRows; row++) {
 			TCurtainElement* curt = &curtains[co][row];
@@ -829,7 +861,7 @@ void CCurtain::Draw () {
 	ScopedRenderMode rm(PARTICLES);
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	const TColor& particle_colour = Env.ParticleColor ();
-	glColor4f (particle_colour.r, particle_colour.g, particle_colour.b, 1.0);
+	glColor(particle_colour, 1.0);
 
 	// glEnable (GL_NORMALIZE);
 	for (size_t i=0; i<curtains.size(); i++) {
@@ -839,7 +871,7 @@ void CCurtain::Draw () {
 
 void CCurtain::Update (float timestep, const CControl *ctrl) {
 	if (g_game.snow_id < 1) return;
-	const TVector3 drift = Wind.WindDrift ();
+	const TVector3d& drift = Wind.WindDrift ();
 
 	UpdateChanges (timestep);
 	for (size_t i=0; i<curtains.size(); i++) {
@@ -862,47 +894,47 @@ void CCurtain::Init (const CControl *ctrl) {
 	Reset ();
 	InitChanges ();
 	switch (g_game.snow_id) {
-	case 1:
+		case 1:
 //		curtains.push_back(TCurtain(3, 60, 10,       3, -100, -10, 1));
 //		curtains.push_back(TCurtain(3, 50, 13,       3, -100, -10, 1));
 //		curtains.push_back(TCurtain(3, 40, 16,       3, -100, -10, 1));
-		curtains.push_back(TCurtain(3, 60, 15,       3, -100, -10, 1));
+			curtains.push_back(TCurtain(3, 60, 15,       3, -100, -10, 1));
 #ifndef PANDORA
-		curtains.push_back(TCurtain(3, 50, 19,       3, -100, -10, 1));
-		curtains.push_back(TCurtain(3, 40, 23,       3, -100, -10, 1));
+			curtains.push_back(TCurtain(3, 50, 19,       3, -100, -10, 1));
+			curtains.push_back(TCurtain(3, 40, 23,       3, -100, -10, 1));
 #endif
 //		curtains.push_back(TCurtain(3, 60, 20,       3, -100, -10, 1));
 //		curtains.push_back(TCurtain(3, 50, 25,       3, -100, -10, 1));
 //		curtains.push_back(TCurtain(3, 40, 30,       3, -100, -10, 1));
-		break;
-	case 2:
+			break;
+		case 2:
 //		curtains.push_back(TCurtain(3, 60, 15,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 50, 17,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 40, 20,       3, -100, -10, 2));
-		curtains.push_back(TCurtain(3, 60, 22,       3, -100, -10, 2));
+			curtains.push_back(TCurtain(3, 60, 22,       3, -100, -10, 2));
 #ifndef PANDORA
-		curtains.push_back(TCurtain(3, 50, 25,       3, -100, -10, 2));
-		curtains.push_back(TCurtain(3, 40, 30,       3, -100, -10, 2));
+			curtains.push_back(TCurtain(3, 50, 25,       3, -100, -10, 2));
+			curtains.push_back(TCurtain(3, 40, 30,       3, -100, -10, 2));
 #endif
 //		curtains.push_back(TCurtain(3, 60, 30,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 50, 35,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 40, 40,       3, -100, -10, 2));
-		break;
-	case 3:
+			break;
+		case 3:
 //		curtains.push_back(TCurtain(3, 60, 20,       3, -100, -10, 3));
 //		curtains.push_back(TCurtain(3, 50, 25,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 40, 30,       3, -100, -10, 2));
-		curtains.push_back(TCurtain(3, 60, 22,       3, -100, -10, 3));
+			curtains.push_back(TCurtain(3, 60, 22,       3, -100, -10, 3));
 #ifndef PANDORA
-		curtains.push_back(TCurtain(3, 50, 27,       3, -100, -10, 2));
-		curtains.push_back(TCurtain(3, 40, 32,       3, -100, -10, 2));
+			curtains.push_back(TCurtain(3, 50, 27,       3, -100, -10, 2));
+			curtains.push_back(TCurtain(3, 40, 32,       3, -100, -10, 2));
 #endif
 //		curtains.push_back(TCurtain(3, 60, 25,       3, -100, -10, 3));
 //		curtains.push_back(TCurtain(3, 50, 30,       3, -100, -10, 2));
 //		curtains.push_back(TCurtain(3, 40, 35,       3, -100, -10, 2));
-		break;
-	default:
-		break;
+			break;
+		default:
+			break;
 	}
 	SetStartParams (ctrl);
 }
@@ -916,8 +948,7 @@ void CCurtain::Init (const CControl *ctrl) {
 CWind Wind;
 
 CWind::CWind ()
-	: WVector(0, 0, 0)
-{
+	: WVector(0, 0, 0) {
 	windy = false;
 	CurrTime = 0.0;
 
@@ -1030,20 +1061,21 @@ void CWind::CalcDestSpeed () {
 		WindChange = XRandom (params.minChange, params.maxChange);
 	}
 
-	if (DestSpeed > WSpeed) SpeedMode = 1; else SpeedMode = 0;
+	if (DestSpeed > WSpeed) SpeedMode = 1;
+	else SpeedMode = 0;
 }
 
 void CWind::CalcDestAngle () {
 	DestAngle = XRandom (params.minAngle, params.maxAngle);
 	AngleChange = XRandom (params.minAngleChange, params.maxAngleChange);
 
-	if (DestAngle > WAngle) AngleMode = 1; else AngleMode = 0;
+	if (DestAngle > WAngle) AngleMode = 1;
+	else AngleMode = 0;
 }
 
 void CWind::Update (float timestep) {
-	float xx, zz;
-
 	if (!windy) return;
+
 	// the wind needn't be updated in each frame
 	CurrTime = CurrTime + timestep;
 	if (CurrTime > UPDATE_TIME) {
@@ -1074,8 +1106,8 @@ void CWind::Update (float timestep) {
 		if (WAngle > params.maxAngle) WAngle = params.maxAngle;
 		if (WAngle < params.minAngle) WAngle = params.minAngle;
 
-		xx = sin (WAngle * 3.14159 / 180);
-		zz = sqrt (1 - xx * xx);
+		float xx = sin (WAngle * 3.14159 / 180);
+		float zz = sqrt (1 - xx * xx);
 		if ((WAngle > 90 && WAngle < 270) || (WAngle > 450 && WAngle < 630)) {
 			zz = -zz;
 		}
@@ -1088,7 +1120,7 @@ void CWind::Update (float timestep) {
 void CWind::Init (int wind_id) {
 	if (wind_id < 1 || wind_id > 3) {
 		windy = false;
-		WVector = TVector3 (0, 0, 0);
+		WVector = TVector3d (0, 0, 0);
 		WAngle = 0;
 		WSpeed = 0;
 		return;
@@ -1127,6 +1159,6 @@ void InitWind () {
 	Wind.Init (g_game.wind_id);
 }
 
-void UpdateWind (ETR_DOUBLE timestep, const CControl *ctrl) {
+void UpdateWind (ETR_DOUBLE timestep) {
 	Wind.Update (timestep);
 }

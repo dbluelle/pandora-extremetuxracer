@@ -24,10 +24,6 @@ GNU General Public License for more details.
 
 CTranslation Trans;
 
-CTranslation::CTranslation () {
-	languages_ok = false;
-}
-
 // if anything is wrong with an translation, the program will fall back
 // to these defaults (only the wrong items)
 void CTranslation::SetDefaultTranslations () {
@@ -56,7 +52,7 @@ void CTranslation::SetDefaultTranslations () {
 	texts[22] = "Success, +/- 0 Tuxlive";
 	texts[23] = "Success, +1 Tuxlive";
 	texts[24] = "Success, +2 Tuxlive";
-	texts[25] = "Race aborted [trans]";
+	texts[25] = "Race aborted";
 	texts[26] = "Score:";
 	texts[27] = "points";
 
@@ -128,6 +124,9 @@ void CTranslation::SetDefaultTranslations () {
 	texts[82] = "Wind: Blustery";
 
 	texts[83] = "Randomize settings";
+
+	texts[84] = "Fullscreen setting has changed,";
+	texts[85] = "You need to restart the game";
 }
 
 const string& CTranslation::Text (size_t idx) const {
@@ -138,22 +137,22 @@ const string& CTranslation::Text (size_t idx) const {
 void CTranslation::LoadLanguages () {
 	CSPList list (MAX_LANGUAGES);
 
-	languages_ok = false;
 	if (!list.Load (param.trans_dir, "languages.lst")) {
 		Message ("could not load language list");
 		return;
 	}
 
-	languages.resize(list.Count());
-	for (size_t i=0; i<list.Count(); i++) {
-		const string& line = list.Line(i);
+	languages.resize(list.Count()+1);
+	languages[0].lang = "en_GB";
+	languages[0].language = "English";
+	for (size_t i=1; i<list.Count()+1; i++) {
+		const string& line = list.Line(i-1);
 		languages[i].lang = SPStrN (line, "lang", "en_GB");
 		languages[i].language = SPStrN (line, "language", "English");
 		LangIndex[languages[i].lang] = i;
 	}
-	if (!languages.empty()) languages_ok = true;
 
-	if(param.language == string::npos)
+	if (param.language == string::npos)
 		param.language = GetSystemDefaultLangIdx();
 }
 
@@ -172,8 +171,7 @@ const string& CTranslation::GetLanguage (const string& lang) const {
 
 void CTranslation::LoadTranslations (size_t langidx) {
 	SetDefaultTranslations ();
-	if (!languages_ok) return;
-	if (langidx >= languages.size()) return;
+	if (langidx == 0 || langidx >= languages.size()) return;
 
 	CSPList list(MAX_COMMON_TEXT_LINES);
 	string filename = languages[langidx].lang + ".lst";
@@ -198,7 +196,7 @@ string CTranslation::GetSystemDefaultLang() {
 	char buf2[10] = {0};
 	WideCharToMultiByte(CP_ACP, 0, buf, -1, buf2, 10, NULL, NULL);
 	string ret = buf2;
-	while(ret.find('-') != string::npos)
+	while (ret.find('-') != string::npos)
 		ret[ret.find('-')] = '_';
 	return ret;
 #else
@@ -209,7 +207,7 @@ string CTranslation::GetSystemDefaultLang() {
 size_t CTranslation::GetSystemDefaultLangIdx() const {
 	try {
 		return GetLangIdx(GetSystemDefaultLang());
-	} catch(...) {
+	} catch (...) {
 		return 0;
 	}
 }

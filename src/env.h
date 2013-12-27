@@ -25,38 +25,37 @@ GNU General Public License for more details.
 class TTexture;
 
 
-struct TLocInfo {
-	string name;
-};
-
-struct TLightCond {
-	string name;
-};
-
 struct TFog {
-    bool is_on;
+	bool is_on;
 	GLint mode;
-    float start;
-    float end;
+	float start;
+	float end;
 	float height;
-    float color[4];
+	float color[4];
 	TColor part_color;
 };
 
-struct TLight{
+struct TLight {
 	bool is_on;
 	float ambient[4];
 	float diffuse[4];
 	float specular[4];
 	float position[4];
+
+	void Enable(GLenum num) const;
+};
+
+struct TEnvironment {
+	string name;
+	bool high_res;
 };
 
 class CEnvironment {
 private:
 	size_t EnvID;
 	TTexture* Skybox;
-	vector<TLocInfo> locs;
-	TLightCond lightcond[4];
+	vector<TEnvironment> locs;
+	string lightcond[4];
 	TLight default_light;
 	TLight lights[4];
 	TFog fog;
@@ -66,18 +65,18 @@ private:
 	map<string, size_t> LightIndex;
 
 	void ResetSkybox ();
-	void LoadSkybox ();
+	void LoadSkybox(const string& EnvDir, bool high_res);
+	void LoadSkyboxSide(size_t index, const string& EnvDir, const string& name, bool high_res);
 	void ResetLight ();
-	void LoadLight ();
+	void LoadLight (const string& EnvDir);
 	void ResetFog ();
-	string EnvDir;
 	void Reset ();
 	string GetDir (size_t location, size_t light) const;
 public:
 	CEnvironment ();
 	bool LoadEnvironmentList ();
-	bool LoadEnvironment (size_t loc, size_t light);
-	void DrawSkybox (const TVector3& pos);
+	void LoadEnvironment (size_t loc, size_t light);
+	void DrawSkybox (const TVector3d& pos);
 	void SetupLight ();
 	void SetupFog ();
 	void DrawFog ();

@@ -20,68 +20,62 @@ GNU General Public License for more details.
 #define MATHLIB_H
 
 #include "bh.h"
+#include "matrices.h"
+#include <vector>
 
-static const TVector3 NullVec(0.0, 0.0, 0.0);
-static const TVector3 GravVec(0.0, -1.0, 0.0);
+static const TVector3d GravVec(0.0, -1.0, 0.0);
 
 // --------------------------------------------------------------------
-//			vector and matrix
+//			Advanced geometry
 // --------------------------------------------------------------------
 
-ETR_DOUBLE		VectorLength (const TVector3 &v);
+struct TPlane {
+	TVector3d nml;
+	ETR_DOUBLE d;
+	TPlane(ETR_DOUBLE nx = 0.0, ETR_DOUBLE ny = 0.0, ETR_DOUBLE nz = 0.0, ETR_DOUBLE d_ = 0.0)
+		: nml(nx, ny, nz), d(d_)
+	{}
+};
 
-TVector3	ScaleVector (ETR_DOUBLE s, const TVector3& v);
-TVector3	AddVectors (const TVector3& v1, const TVector3& v2);
-TVector3	SubtractVectors (const TVector3& v1, const TVector3& v2);
-ETR_DOUBLE		NormVector (TVector3 &v);
+struct TPolygon		{ vector<int> vertices; };
+struct TSphere		{ ETR_DOUBLE radius; int divisions; };
+struct TRay			{ TVector3d pt; TVector3d vec; };
 
-ETR_DOUBLE		DotProduct (const TVector3& v1, const TVector3& v2);
-TVector3	CrossProduct (const TVector3& u, const TVector3& v);
+struct TPolyhedron {
+	vector<TVector3d> vertices;
+	vector<TPolygon> polygons;
+};
 
-TVector3	ProjectToPlane (const TVector3& nml, const TVector3& v);
-TVector3	TransformVector (const TMatrix mat, const TVector3& v);
-TVector3	TransformNormal (const TVector3& n, const TMatrix mat);	// not used ?
-TVector3	TransformPoint (const TMatrix mat, const TVector3& p);
-TPlane		MakePlane (ETR_DOUBLE nx, ETR_DOUBLE ny, ETR_DOUBLE nz, ETR_DOUBLE d);
-bool		IntersectPlanes (const TPlane& s1, const TPlane& s2, const TPlane& s3, TVector3 *p);
-ETR_DOUBLE		DistanceToPlane (const TPlane& plane, const TVector3& pt);
+TVector3d	ProjectToPlane(const TVector3d& nml, const TVector3d& v);
+TVector3d	TransformVector(const TMatrix<4, 4>& mat, const TVector3d& v);
+TVector3d	TransformNormal(const TVector3d& n, const TMatrix<4, 4>& mat);	// not used ?
+TVector3d	TransformPoint(const TMatrix<4, 4>& mat, const TVector3d& p);
+bool		IntersectPlanes (const TPlane& s1, const TPlane& s2, const TPlane& s3, TVector3d *p);
+ETR_DOUBLE		DistanceToPlane (const TPlane& plane, const TVector3d& pt);
 
-void MakeIdentityMatrix (TMatrix h);
-void MakeRotationMatrix (TMatrix mat, ETR_DOUBLE angle, char axis);
-void MakeTranslationMatrix (TMatrix mat, ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z);
-void MakeScalingMatrix (TMatrix mat, ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z);
+TMatrix<4, 4> RotateAboutVectorMatrix(const TVector3d& u, ETR_DOUBLE angle);
 
-void MultiplyMatrices (TMatrix ret, const TMatrix mat1, const TMatrix mat2);
-void TransposeMatrix (const TMatrix mat, TMatrix trans);
-void MakeBasisMat (TMatrix mat,	const TVector3& w1, const TVector3& w2, const TVector3& w3);
-void MakeBasismatrix_Inv (TMatrix mat, TMatrix invMat, const TVector3& w1, const TVector3& w2, const TVector3& w3);
-void RotateAboutVectorMatrix (TMatrix mat, const TVector3& u, ETR_DOUBLE angle);
-
-TQuaternion AddQuaternions (const TQuaternion& q, const TQuaternion& r);		// not used?
 TQuaternion MultiplyQuaternions (const TQuaternion& q, const TQuaternion& r);
-TQuaternion ScaleQuaternion (ETR_DOUBLE s, const TQuaternion& q);
 TQuaternion ConjugateQuaternion (const TQuaternion& q);
-void		MakeMatrixFromQuaternion (TMatrix mat, const TQuaternion& q);
-TQuaternion MakeQuaternionFromMatrix (const TMatrix mat);
-TQuaternion MakeRotationQuaternion (const TVector3& s, const TVector3& t);
+TMatrix<4, 4> MakeMatrixFromQuaternion(const TQuaternion& q);
+TQuaternion MakeQuaternionFromMatrix(const TMatrix<4, 4>& mat);
+TQuaternion MakeRotationQuaternion (const TVector3d& s, const TVector3d& t);
 TQuaternion InterpolateQuaternions (const TQuaternion& q, TQuaternion r, ETR_DOUBLE t);
-TVector3	RotateVector (const TQuaternion& q, const TVector3& v);
+TVector3d	RotateVector (const TQuaternion& q, const TVector3d& v);
 
-bool		IntersectPolygon (const TPolygon& p, TVector3 *v);
-bool		IntersectPolyhedron (const TPolyhedron& p);
-TVector3	MakeNormal (const TPolygon& p, TVector3 *v);
-TPolyhedron	CopyPolyhedron (const TPolyhedron& ph);
-void		FreePolyhedron (const TPolyhedron& ph);
-void		TransPolyhedron (const TMatrix mat, const TPolyhedron& ph);
+bool		IntersectPolygon (const TPolygon& p, vector<TVector3d>& v);
+bool		IntersectPolyhedron (TPolyhedron& p);
+TVector3d	MakeNormal (const TPolygon& p, const TVector3d *v);
+void		TransPolyhedron(const TMatrix<4, 4>& mat, TPolyhedron& ph);
 
 // --------------------------------------------------------------------
 //				ode solver
 // --------------------------------------------------------------------
 
 struct TOdeData {
-    ETR_DOUBLE k[4];
-    ETR_DOUBLE init_val;
-    ETR_DOUBLE h;
+	ETR_DOUBLE k[4];
+	ETR_DOUBLE init_val;
+	ETR_DOUBLE h;
 };
 
 typedef int			(*PNumEstimates) ();
@@ -94,17 +88,16 @@ typedef ETR_DOUBLE		(*PEstimateError) (TOdeData *);
 typedef ETR_DOUBLE		(*PTimestepExponent) ();
 
 struct TOdeSolver {
-    PNumEstimates		NumEstimates;
-    PInitOdeData		InitOdeData;
-    PNextTime			NextTime;
-    PNextValue			NextValue;
-    PUpdateEstimate		UpdateEstimate;
-    PFinalEstimate		FinalEstimate;
-    PEstimateError		EstimateError;
-    PTimestepExponent	TimestepExponent;
+	PNumEstimates		NumEstimates;
+	PInitOdeData		InitOdeData;
+	PNextTime			NextTime;
+	PNextValue			NextValue;
+	PUpdateEstimate		UpdateEstimate;
+	PFinalEstimate		FinalEstimate;
+	PEstimateError		EstimateError;
+	PTimestepExponent	TimestepExponent;
+	TOdeSolver();
 };
-
-TOdeSolver NewOdeSolver23 ();
 
 // --------------------------------------------------------------------
 //			special

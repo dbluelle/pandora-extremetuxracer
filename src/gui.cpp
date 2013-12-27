@@ -22,6 +22,7 @@ GNU General Public License for more details.
 #include "gui.h"
 #include "textures.h"
 #include "font.h"
+#include "ogl.h"
 #include "winsys.h"
 #include <list>
 #include <vector>
@@ -33,16 +34,15 @@ static vector<TWidget*> Widgets;
 
 static bool Inside (int x, int y, const TRect& Rect) {
 	return (x >= Rect.left
-		&& x <= Rect.left + Rect.width
-		&& y >= Rect.top
-		&& y <= Rect.top + Rect.height);
+	        && x <= Rect.left + Rect.width
+	        && y >= Rect.top
+	        && y <= Rect.top + Rect.height);
 }
 
 TWidget::TWidget(int x, int y, int width, int height)
 	: active(true)
 	, visible(true)
-	, focus(false)
-{
+	, focus(false) {
 	mouseRect.top = y;
 	mouseRect.left = x;
 	mouseRect.height = height;
@@ -62,8 +62,7 @@ void TWidget::MouseMove(int x, int y) {
 TTextButton::TTextButton(int x, int y, const string& text_, ETR_DOUBLE ftsize_)
 	: TWidget(x, y, 0, 0)
 	, text(text_)
-	, ftsize(ftsize_)
-{
+	, ftsize(ftsize_) {
 	if (ftsize < 0) ftsize = FT.AutoSizeN (4);
 
 	ETR_DOUBLE len = FT.GetTextWidth (text);
@@ -101,8 +100,7 @@ TTextField::TTextField(int x, int y, int width, int height, const string& text_)
 	, cursorPos(0)
 	, maxLng(32)
 	, time(0.0)
-	, cursor(false)
-{
+	, cursor(false) {
 }
 
 void TTextField::Draw() const {
@@ -113,23 +111,27 @@ void TTextField::Draw() const {
 	FT.DrawString (mouseRect.left+20, mouseRect.top, text);
 
 	if (cursor && focus) {
-		ETR_DOUBLE x = mouseRect.left+20+1;
+		int x = mouseRect.left + 20 + 1;
 		if (cursorPos != 0) {
 			string temp = text.substr (0, cursorPos);
 			x += FT.GetTextWidth (temp);
 		}
-		ETR_DOUBLE w = 3;
-		ETR_DOUBLE h = 26*Winsys.scale;
-		ETR_DOUBLE scrheight = Winsys.resolution.height;
+		int w = 3;
+		int h = 26 * Winsys.scale;
+		int scrheight = Winsys.resolution.height;
 
 		glDisable (GL_TEXTURE_2D);
-		glColor4f (colYellow.r, colYellow.g, colYellow.b, colYellow.a);
-		glBegin (GL_QUADS);
-			glVertex2f (x,   scrheight-mouseRect.top-h-9);
-			glVertex2f (x+w, scrheight-mouseRect.top-h-9);
-			glVertex2f (x+w, scrheight-mouseRect.top-9);
-			glVertex2f (x,   scrheight-mouseRect.top-9);
-		glEnd();
+		glColor(colYellow);
+		const GLshort vtx[] = {
+			x,     scrheight - mouseRect.top - h - 9,
+			x + w, scrheight - mouseRect.top - h - 9,
+			x + w, scrheight - mouseRect.top - 9,
+			x,     scrheight - mouseRect.top - 9
+		};
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_SHORT, 0, vtx);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		glDisableClientState(GL_VERTEX_ARRAY);
 		glEnable (GL_TEXTURE_2D);
 	}
 }
@@ -148,13 +150,28 @@ void TTextField::Key(unsigned int key, unsigned int mod, bool released) {
 		}
 	} else {
 		switch (key) {
-			case SDLK_DELETE: if (cursorPos < text.size()) text.erase (cursorPos, 1); break;
-			case SDLK_BACKSPACE: if (cursorPos > 0) { text.erase (cursorPos-1, 1); cursorPos--; } break;
-			case SDLK_RIGHT: if (cursorPos < text.size()) cursorPos++; break;
-			case SDLK_LEFT: if (cursorPos > 0) cursorPos--; break;
-			case SDLK_HOME: cursorPos = 0; break;
-			case SDLK_END: cursorPos = text.size(); break;
-			case SDLK_SPACE: text.insert(cursorPos, 1, 21); cursorPos++; break;
+			case SDLK_DELETE:
+				if (cursorPos < text.size()) text.erase (cursorPos, 1);
+				break;
+			case SDLK_BACKSPACE:
+				if (cursorPos > 0) { text.erase (cursorPos-1, 1); cursorPos--; }
+				break;
+			case SDLK_RIGHT:
+				if (cursorPos < text.size()) cursorPos++;
+				break;
+			case SDLK_LEFT:
+				if (cursorPos > 0) cursorPos--;
+				break;
+			case SDLK_HOME:
+				cursorPos = 0;
+				break;
+			case SDLK_END:
+				cursorPos = text.size();
+				break;
+			case SDLK_SPACE:
+				text.insert(cursorPos, 1, 21);
+				cursorPos++;
+				break;
 		}
 	}
 }
@@ -176,7 +193,7 @@ void TCheckbox::Draw () const {
 	Tex.Draw (CHECKBOX, position.x + width - 32, position.y, 1.0);
 	if (checked)
 		Tex.Draw (CHECKMARK_SMALL, position.x + width - 32, position.y, 1.0);
-	if (focus == focus)
+	if (focus)
 		FT.SetColor (colDYell);
 	else
 		FT.SetColor (colWhite);
@@ -184,7 +201,7 @@ void TCheckbox::Draw () const {
 }
 
 bool TCheckbox::Click(int x, int y) {
-	if(active && visible && Inside(x, y, mouseRect)) {
+	if (active && visible && Inside(x, y, mouseRect)) {
 		checked = !checked;
 		return true;
 	}
@@ -192,9 +209,9 @@ bool TCheckbox::Click(int x, int y) {
 }
 
 void TCheckbox::Key(unsigned int key, unsigned int mod, bool released) {
-	if(released) return;
+	if (released) return;
 
-	if(key == SDLK_SPACE || key == SDLK_RIGHT || key == SDLK_LEFT) {
+	if (key == SDLK_SPACE || key == SDLK_RIGHT || key == SDLK_LEFT) {
 		checked = !checked;
 	}
 }
@@ -206,7 +223,7 @@ TCheckbox* AddCheckbox (int x, int y, int width, const string& tag) {
 
 void TIconButton::SetValue (int _value) {
 	value = _value;
-	if(value > maximum)
+	if (value > maximum)
 		value = maximum;
 }
 
@@ -222,47 +239,57 @@ void TIconButton::Draw () const {
 	int r = x + size;
 
 	DrawFrameX (position.x-line, position.y-line,
-				framesize, framesize, line, colBlack, framecol, 1.0);
+	            framesize, framesize, line, colBlack, framecol, 1.0);
 
 	glEnable (GL_TEXTURE_2D);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	texture->Bind();
-    glColor4f (1.0, 1.0, 1.0, 1.0);
+	glColor4f (1.0, 1.0, 1.0, 1.0);
 
-	glBegin (GL_QUADS);
-	switch (value) {
-		case 0:
-			glTexCoord2f (0, 0.5); glVertex2f (x,y);
-			glTexCoord2f (0.5, 0.5); glVertex2f (r,y);
-			glTexCoord2f (0.5, 1.0); glVertex2f (r,t);
-			glTexCoord2f (0, 1.0); glVertex2f (x,t);
-		break;
-		case 1:
-			glTexCoord2f (0.5, 0.5); glVertex2f (x,y);
-			glTexCoord2f (1.0, 0.5); glVertex2f (r,y);
-			glTexCoord2f (1.0, 1.0); glVertex2f (r,t);
-			glTexCoord2f (0.5, 1.0); glVertex2f (x,t);
-		break;
-		case 2:
-			glTexCoord2f (0, 0); glVertex2f (x,y);
-			glTexCoord2f (0.5, 0); glVertex2f (r,y);
-			glTexCoord2f (0.5, 0.5); glVertex2f (r,t);
-			glTexCoord2f (0, 0.5); glVertex2f (x,t);
-		break;
-		case 3:
-			glTexCoord2f (0.5, 0); glVertex2f (x,y);
-			glTexCoord2f (1.0, 0); glVertex2f (r,y);
-			glTexCoord2f (1.0, 0.5); glVertex2f (r,t);
-			glTexCoord2f (0.5, 0.5); glVertex2f (x,t);
-		break;
-	}
-	glEnd ();
+	const GLshort vtx[] = {
+		x, y,
+		r, y,
+		r, t,
+		x, t
+	};
+	static const GLfloat tex[4][8] = {
+		{
+			0, 0.5,
+			0.5, 0.5,
+			0.5, 1,
+			0, 1
+		}, {
+			0.5, 0.5,
+			1, 0.5,
+			1, 1,
+			0.5, 1
+		}, {
+			0, 0,
+			0.5, 0,
+			0.5, 0.5,
+			0, 0.5
+		}, {
+			0.5, 0,
+			1, 0,
+			1, 0.5,
+			0.5, 0.5
+		}
+	};
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glVertexPointer(2, GL_SHORT, 0, vtx);
+	glTexCoordPointer(2, GL_FLOAT, 0, tex[value]);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 bool TIconButton::Click(int x, int y) {
-	if(Inside(x, y, mouseRect)) {
+	if (Inside(x, y, mouseRect)) {
 		value++;
-		if(value > maximum)
+		if (value > maximum)
 			value = 0;
 		return true;
 	}
@@ -270,15 +297,15 @@ bool TIconButton::Click(int x, int y) {
 }
 
 void TIconButton::Key(unsigned int key, unsigned int mod, bool released) {
-	if(released) return;
+	if (released) return;
 
-	if(key == SDLK_DOWN || key == SDLK_LEFT) { // Arrow down/left
+	if (key == SDLK_DOWN || key == SDLK_LEFT) { // Arrow down/left
 		value--;
-		if(value < 0)
+		if (value < 0)
 			value = maximum;
-	} else if(key == SDLK_UP || key == SDLK_RIGHT) { // Arrow up/right
+	} else if (key == SDLK_UP || key == SDLK_RIGHT) { // Arrow up/right
 		value++;
-		if(value > maximum)
+		if (value > maximum)
 			value = 0;
 	}
 }
@@ -289,45 +316,45 @@ TIconButton* AddIconButton(int x, int y, TTexture* texture, ETR_DOUBLE size, int
 }
 
 void TArrow::Draw() const {
-	static const ETR_DOUBLE textl[6] = {0.5, 0.0, 0.5, 0.5, 0.0, 0.5};
-	static const ETR_DOUBLE textr[6] = {1.0, 0.5, 1.0, 1.0, 0.5, 1.0};
-	static const ETR_DOUBLE texbl[6] = {0.25, 0.25, 0.75, 0.00, 0.00, 0.50};
-	static const ETR_DOUBLE texbr[6] = {0.50, 0.50, 1.00, 0.25, 0.25, 0.75};
-    TVector2 bl, tr;
+	static const float textl[6] = { 0.5, 0.0, 0.5, 0.5, 0.0, 0.5 };
+	static const float textr[6] = { 1.0, 0.5, 1.0, 1.0, 0.5, 1.0 };
+	static const float texbl[6] = { 0.25, 0.25, 0.75, 0.00, 0.00, 0.50 };
+	static const float texbr[6] = {0.50, 0.50, 1.00, 0.25, 0.25, 0.75};
 
 	int type = 0;
 	if (active)
 		type = 1;
-	if(focus)
+	if (focus)
 		type++;
-	if(down)
+	if (down)
 		type += 3;
 
-	bl.x = position.x;
-	bl.y = Winsys.resolution.height - position.y - 16;
-	tr.x = position.x + 32;
-	tr.y = Winsys.resolution.height - position.y;
-
-	ETR_DOUBLE texleft = textl[type];
-	ETR_DOUBLE texright = textr[type];
-	ETR_DOUBLE texbottom = texbl[type];
-	ETR_DOUBLE textop = texbr[type];
-
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable (GL_TEXTURE_2D);
+	glEnable (GL_TEXTURE_2D);
 	Tex.BindTex (LB_ARROWS);
 	glColor4f (1.0, 1.0, 1.0, 1.0);
 
-	glBegin( GL_QUADS );
-		glTexCoord2f (texleft, texbottom);
-		glVertex2f (bl.x, bl.y);
-		glTexCoord2f (texright, texbottom);
-		glVertex2f (tr.x, bl.y);
-		glTexCoord2f (texright, textop);
-		glVertex2f (tr.x, tr.y);
-		glTexCoord2f (texleft, textop);
-		glVertex2f (bl.x, tr.y);
-	glEnd();
+	const GLfloat tex[] = {
+		textl[type], texbl[type],
+		textr[type], texbl[type],
+		textr[type], texbr[type],
+		textl[type], texbr[type]
+	};
+	const GLshort vtx[] = {
+		position.x,      Winsys.resolution.height - position.y - 16,
+		position.x + 32, Winsys.resolution.height - position.y - 16,
+		position.x + 32, Winsys.resolution.height - position.y,
+		position.x,      Winsys.resolution.height - position.y
+	};
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glVertexPointer(2, GL_SHORT, 0, vtx);
+	glTexCoordPointer(2, GL_FLOAT, 0, tex);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 TArrow* AddArrow(int x, int y, bool down) {
@@ -342,8 +369,7 @@ TUpDown::TUpDown(int x, int y, int min_, int max_, int value_, int distance)
 	, down(x, y, false)
 	, value(value_)
 	, minimum(min_)
-	, maximum(max_)
-{
+	, maximum(max_) {
 	up.SetActive(value < maximum);
 	down.SetActive(value > minimum);
 }
@@ -354,17 +380,17 @@ void TUpDown::Draw() const {
 }
 
 bool TUpDown::Click(int x, int y) {
-	if(active && visible && up.Click(x, y)) {
+	if (active && visible && up.Click(x, y)) {
 		value++;
 		down.SetActive(true);
-		if(value == maximum)
+		if (value == maximum)
 			up.SetActive(false);
 		return true;
 	}
-	if(active && visible && down.Click(x, y)) {
+	if (active && visible && down.Click(x, y)) {
 		up.SetActive(true);
 		value--;
-		if(value == minimum)
+		if (value == minimum)
 			down.SetActive(false);
 		return true;
 	}
@@ -372,20 +398,20 @@ bool TUpDown::Click(int x, int y) {
 }
 
 void TUpDown::Key(unsigned int key, unsigned int mod, bool released) {
-	if(released) return;
+	if (released) return;
 
-	if(key == SDLK_UP || key == SDLK_RIGHT) { // Arrow down/left
-		if(value > minimum) {
+	if (key == SDLK_UP || key == SDLK_RIGHT) { // Arrow down/left
+		if (value > minimum) {
 			value--;
 			up.SetActive(true);
-			if(value == minimum)
+			if (value == minimum)
 				down.SetActive(false);
 		}
-	} else if(key == SDLK_DOWN || key == SDLK_LEFT) { // Arrow up/right
-		if(value < maximum) {
+	} else if (key == SDLK_DOWN || key == SDLK_LEFT) { // Arrow up/right
+		if (value < maximum) {
 			value++;
 			down.SetActive(true);
-			if(value == maximum)
+			if (value == maximum)
 				up.SetActive(false);
 		}
 	}
@@ -403,12 +429,14 @@ void TUpDown::SetValue(int value_) {
 	down.SetActive(value > minimum);
 }
 void TUpDown::SetMinimum(int min_) {
-	minimum = min_; value = clamp(minimum, value, maximum);
+	minimum = min_;
+	value = clamp(minimum, value, maximum);
 	up.SetActive(value < maximum);
 	down.SetActive(value > minimum);
 }
 void TUpDown::SetMaximum(int max_) {
-	maximum = max_; value = clamp(minimum, value, maximum);
+	maximum = max_;
+	value = clamp(minimum, value, maximum);
 	up.SetActive(value < maximum);
 	down.SetActive(value > minimum);
 }
@@ -420,101 +448,45 @@ TUpDown* AddUpDown(int x, int y, int minimum, int maximum, int value, int distan
 
 // ------------------ Elementary drawing ---------------------------------------------
 
-void DrawFrameX (int x, int y, int w, int h, int line,
-		const TColor& backcol, const TColor& framecol, ETR_DOUBLE transp) {
-	ETR_DOUBLE yy = Winsys.resolution.height - y - h;
-
+void DrawFrameX (int x, int y, int w, int h, int line, const TColor& backcol, const TColor& framecol, ETR_DOUBLE transp) {
+	float yy = Winsys.resolution.height - y - h;
 	if (x < 0) x = (Winsys.resolution.width -w) / 2;
+
 	glPushMatrix();
-	glDisable (GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D);
+	glEnableClientState(GL_VERTEX_ARRAY);
 
-	glColor4f (framecol.r, framecol.g, framecol.b, transp);
-	glTranslatef (x, yy, 0);
-	glBegin (GL_QUADS );
-	    glVertex2f (0, 0);
-	    glVertex2f (w, 0);
-	    glVertex2f (w, h);
-	    glVertex2f (0, h);
-	glEnd();
+	glColor(framecol, transp);
+	glTranslatef(x, yy, 0);
+	const GLshort frame [] = {
+		0, 0,
+		w, 0,
+		w, h,
+		0, h
+	};
+	glVertexPointer(2, GL_SHORT, 0, frame);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-	glColor4f (backcol.r, backcol.g, backcol.b, transp);
-	glBegin (GL_QUADS );
-	    glVertex2f (0 + line, 0 + line);
-	    glVertex2f (w - line, 0 + line);
-	    glVertex2f (w - line, h - line);
-	    glVertex2f (0 + line, h - line);
-	glEnd();
+	glColor(backcol, transp);
+	const GLshort back [] = {
+		0 + line, 0 + line,
+		w - line, 0 + line,
+		w - line, h - line,
+		0 + line, h - line
+	};
+	glVertexPointer(2, GL_SHORT, 0, back);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
+	glDisableClientState(GL_VERTEX_ARRAY);
 	glEnable (GL_TEXTURE_2D);
-    glPopMatrix();
-}
-
-void DrawLevel (int x, int y, int level, ETR_DOUBLE fact) {
-    TVector2 bl, tr;
-	static const ETR_DOUBLE lev[4] = {0.0, 0.75, 0.5, 0.25};
-
-	bl.x = x;
-	bl.y = Winsys.resolution.height - y - 32;
-	tr.x = x + 95;
-	tr.y = Winsys.resolution.height - y;
-
-	ETR_DOUBLE bott = lev[level];
-	ETR_DOUBLE top = bott + 0.25;
-
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable (GL_TEXTURE_2D);
-	Tex.BindTex (STARS);
-	glColor4f (1.0, 1.0, 1.0, 1.0);
-
-	glBegin( GL_QUADS );
-	    glTexCoord2f (0, bott);
-		glVertex2f (bl.x, bl.y);
-	    glTexCoord2f (0.75, bott);
-		glVertex2f (tr.x, bl.y);
-	    glTexCoord2f (0.75, top);
-		glVertex2f (tr.x, tr.y);
-	    glTexCoord2f (0, top);
-		glVertex2f (bl.x, tr.y);
-	glEnd();
-}
-
-void DrawBonus (int x, int y, size_t max, size_t num) {
-    TVector2 bl, tr;
-
-	bl.y = Winsys.resolution.height - y - 32;
-	tr.y = Winsys.resolution.height - y;
-
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable (GL_TEXTURE_2D);
-	Tex.BindTex (TUXBONUS);
-	glColor4f (1.0, 1.0, 1.0, 1.0);
-
-	for (size_t i=0; i<max; i++) {
-		bl.x = x + i * 40;
-		tr.x = bl.x + 32;
-
-		ETR_DOUBLE bott = 0.0;
-		if (i<num) bott = 0.5;
-		ETR_DOUBLE top = bott + 0.5;
-
-		glBegin( GL_QUADS );
-		    glTexCoord2f (0, bott);
-			glVertex2f (bl.x, bl.y);
-		    glTexCoord2f (1, bott);
-			glVertex2f (tr.x, bl.y);
-	    	glTexCoord2f (1, top);
-			glVertex2f (tr.x, tr.y);
-		    glTexCoord2f (0, top);
-			glVertex2f (bl.x, tr.y);
-		glEnd();
-	}
+	glPopMatrix();
 }
 
 void DrawBonusExt (int y, size_t numraces, size_t num) {
 	size_t maxtux = numraces * 3;
 	if (num > maxtux) return;
 
-    TVector2 bl, tr;
+	TVector2i bl, tr;
 
 	//TColor col1 = {0.3, 0.5, 0.7, 1};
 	TColor col2(0.45, 0.65, 0.85, 1);
@@ -533,15 +505,18 @@ void DrawBonusExt (int y, size_t numraces, size_t num) {
 	DrawFrameX (lleft[0], y, framewidth, 40, 1, col2, colBlack, 1);
 	DrawFrameX (lleft[1], y, framewidth, 40, 1, col2, colBlack, 1);
 	DrawFrameX (lleft[2], y, framewidth, 40, 1, col2, colBlack, 1);
-	if (param.use_papercut_font > 0) FT.SetSize (20); else FT.SetSize (15);
+	if (param.use_papercut_font > 0) FT.SetSize (20);
+	else FT.SetSize (15);
 	bl.y = Winsys.resolution.height - y - 32 -4;
 	tr.y = Winsys.resolution.height - y - 0 -4;
 
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable (GL_TEXTURE_2D);
+	glEnable (GL_TEXTURE_2D);
 	Tex.BindTex (TUXBONUS);
 	glColor4f (1.0, 1.0, 1.0, 1.0);
 
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	for (size_t i=0; i<maxtux; i++) {
 		size_t majr = (i/numraces);
 		size_t minr = i - majr * numraces;
@@ -553,60 +528,72 @@ void DrawBonusExt (int y, size_t numraces, size_t num) {
 		// if (i<num) bott = 0.5; else bott = 0.0;
 		// top = bott + 0.5;
 		if (i<num) {
-			ETR_DOUBLE bott = 0.5;
-			ETR_DOUBLE top = 1.0;
-			glBegin (GL_QUADS);
-				glTexCoord2f (0, bott); glVertex2f (bl.x, bl.y);
-				glTexCoord2f (1, bott); glVertex2f (tr.x, bl.y);
-				glTexCoord2f (1, top);  glVertex2f (tr.x, tr.y);
-				glTexCoord2f (0, top);  glVertex2f (bl.x, tr.y);
-			glEnd();
+			float bott = 0.5;
+			float top = 1.0;
+
+			const GLfloat tex[] = {
+				0, bott,
+				1, bott,
+				1, top,
+				0, top
+			};
+			const GLshort vtx[] = {
+				bl.x, bl.y,
+				tr.x, bl.y,
+				tr.x, tr.y,
+				bl.x, tr.y
+			};
+			glVertexPointer(2, GL_SHORT, 0, vtx);
+			glTexCoordPointer(2, GL_FLOAT, 0, tex);
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		}
 	}
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void DrawCursor () {
 	Tex.Draw (MOUSECURSOR, cursor_pos.x, cursor_pos.y,
-		CURSOR_SIZE  * (ETR_DOUBLE)Winsys.resolution.width / 14000);
+	          CURSOR_SIZE  * (ETR_DOUBLE)Winsys.resolution.width / 14000);
 }
 
 
 // ------------------ Main GUI functions ---------------------------------------------
 
 void DrawGUI() {
-	for(size_t i = 0; i < Widgets.size(); i++)
-		if(Widgets[i]->GetVisible())
+	for (size_t i = 0; i < Widgets.size(); i++)
+		if (Widgets[i]->GetVisible())
 			Widgets[i]->Draw();
-	if(param.ice_cursor)
+	if (param.ice_cursor)
 		DrawCursor ();
 }
 
 TWidget* ClickGUI(int x, int y) {
 	TWidget* clicked = NULL;
-	for(size_t i = 0; i < Widgets.size(); i++)
-		if(Widgets[i]->Click(x, y))
+	for (size_t i = 0; i < Widgets.size(); i++)
+		if (Widgets[i]->Click(x, y))
 			clicked = Widgets[i];
 	return clicked;
 }
 
 static int focussed = -1;
 TWidget* MouseMoveGUI(int x, int y) {
-	if(x != 0 || y != 0) {
+	if (x != 0 || y != 0) {
 		focussed = -1;
-		for(size_t i = 0; i < Widgets.size(); i++) {
+		for (size_t i = 0; i < Widgets.size(); i++) {
 			Widgets[i]->MouseMove(cursor_pos.x, cursor_pos.y);
-			if(Widgets[i]->focussed())
+			if (Widgets[i]->focussed())
 				focussed = (int)i;
 		}
 	}
-	if(focussed == -1)
+	if (focussed == -1)
 		return 0;
 
 	return Widgets[focussed];
 }
 
 TWidget* KeyGUI(unsigned int key, unsigned int mod, bool released) {
-	if(!released) {
+	if (!released) {
 		switch (key) {
 			case SDLK_TAB:
 				IncreaseFocus();
@@ -615,70 +602,70 @@ TWidget* KeyGUI(unsigned int key, unsigned int mod, bool released) {
 				break;
 		}
 	}
-	if(focussed == -1)
+	if (focussed == -1)
 		return 0;
 	Widgets[focussed]->Key(key, mod, released);
 	return Widgets[focussed];
 }
 
 void SetFocus(TWidget* widget) {
-	if(!widget)
+	if (!widget)
 		focussed = -1;
 	else
-		for(int i = 0; i < (int)Widgets.size(); i++)
-			if(Widgets[i] == widget) {
+		for (int i = 0; i < (int)Widgets.size(); i++)
+			if (Widgets[i] == widget) {
 				focussed = i;
 				break;
 			}
 }
 
 void IncreaseFocus() {
-	if(focussed >= 0)
+	if (focussed >= 0)
 		Widgets[focussed]->focus = false;
 
 	focussed++;
-	if(focussed >= (int)Widgets.size())
+	if (focussed >= (int)Widgets.size())
 		focussed = 0;
 	int end = focussed;
 	// Select only active widgets
 	do {
-		if(Widgets[focussed]->GetActive())
+		if (Widgets[focussed]->GetActive())
 			break;
 
 		focussed++;
-		if(focussed >= (int)Widgets.size())
+		if (focussed >= (int)Widgets.size())
 			focussed = 0;
-	} while(end != focussed);
+	} while (end != focussed);
 
-	if(focussed >= 0)
+	if (focussed >= 0)
 		Widgets[focussed]->focus = true;
 }
 void DecreaseFocus() {
-	if(focussed >= 0)
+	if (focussed >= 0)
 		Widgets[focussed]->focus = false;
 
-	if(focussed > 0)
+	if (focussed > 0)
 		focussed--;
 	else
 		focussed = (int)Widgets.size()-1;
 	int end = focussed;
 	// Select only active widgets
 	do {
-		if(Widgets[focussed]->GetActive())
+		if (Widgets[focussed]->GetActive())
 			break;
 
-		if(focussed > 0)
+		if (focussed > 0)
 			focussed--;
 		else
 			focussed = (int)Widgets.size()-1;
-	} while(end != focussed);
+	} while (end != focussed);
 
-	if(focussed >= 0)
+	if (focussed >= 0)
 		Widgets[focussed]->focus = true;
 }
 
 void ResetGUI () {
-	for(size_t i = 0; i < Widgets.size(); i++)
+	for (size_t i = 0; i < Widgets.size(); i++)
 		delete Widgets[i];
 	Widgets.clear();
 	focussed = 0;
@@ -697,8 +684,7 @@ TArea AutoAreaN (ETR_DOUBLE top_perc, ETR_DOUBLE bott_perc, int w) {
 	res.top = AutoYPosN (top_perc);
 	res.bottom = AutoYPosN (bott_perc);
 	if (w > Winsys.resolution.width) w = Winsys.resolution.width;
-	ETR_DOUBLE left = (Winsys.resolution.width - w) / 2;
-	res.left = (int) left;
+	res.left = (Winsys.resolution.width - w) / 2;
 	res.right = Winsys.resolution.width - res.left;
 	return res;
 }

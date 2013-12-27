@@ -41,7 +41,7 @@ CEvent Event;
 // ready: 0 - racing  1 - ready with success  2 - ready with failure
 static int ready = 0; 						// indicates if last race is done
 static TWidget* curr_focus = 0;
-static TCup2 *ecup = 0;
+static TCup *ecup = 0;
 static size_t curr_race = 0;
 static size_t curr_bonus = 0;
 static TWidget* textbuttons[3];
@@ -51,38 +51,44 @@ void StartRace () {
 		State::manager.RequestEnterState (EventSelect);
 		return;
 	}
-	g_game.mirror_id = false;
-	g_game.course_id = ecup->races[curr_race]->course;
+	g_game.mirrorred = false;
+	g_game.course = ecup->races[curr_race]->course;
 	g_game.theme_id = ecup->races[curr_race]->music_theme;
 	g_game.light_id = ecup->races[curr_race]->light;
 	g_game.snow_id = ecup->races[curr_race]->snow;
 	g_game.wind_id = ecup->races[curr_race]->wind;
-	g_game.herring_req = ecup->races[curr_race]->herrings;
-	g_game.time_req = ecup->races[curr_race]->time;
+	g_game.race = ecup->races[curr_race];
 	g_game.game_type = CUPRACING;
 	State::manager.RequestEnterState (Loading);
 }
 
 void CEvent::Keyb (unsigned int key, bool special, bool release, int x, int y) {
-    if (release) return;
+	if (release) return;
 	switch (key) {
-	case SDLK_RETURN:
-		if (curr_focus == textbuttons[0] && ready < 1) StartRace ();
-		else State::manager.RequestEnterState (EventSelect);
-		break;
-	case SDLK_ESCAPE:
-		State::manager.RequestEnterState (EventSelect);
-		break;
-	case SDLK_TAB:
-		if (ready > 0) {
-			curr_focus = textbuttons[2];
-		} else {
-			if (curr_focus == textbuttons[0]) curr_focus = textbuttons[1]; else curr_focus = textbuttons[0];
-		}
-		break;
-	case SDLK_LEFT: if (curr_focus == textbuttons[0]) curr_focus = textbuttons[1]; break;
-	case SDLK_RIGHT: if (curr_focus == textbuttons[1]) curr_focus = textbuttons[0]; break;
-	case SDLK_u: param.ui_snow = !param.ui_snow; break;
+		case SDLK_RETURN:
+			if (curr_focus == textbuttons[0] && ready < 1) StartRace ();
+			else State::manager.RequestEnterState (EventSelect);
+			break;
+		case SDLK_ESCAPE:
+			State::manager.RequestEnterState (EventSelect);
+			break;
+		case SDLK_TAB:
+			if (ready > 0) {
+				curr_focus = textbuttons[2];
+			} else {
+				if (curr_focus == textbuttons[0]) curr_focus = textbuttons[1];
+				else curr_focus = textbuttons[0];
+			}
+			break;
+		case SDLK_LEFT:
+			if (curr_focus == textbuttons[0]) curr_focus = textbuttons[1];
+			break;
+		case SDLK_RIGHT:
+			if (curr_focus == textbuttons[1]) curr_focus = textbuttons[0];
+			break;
+		case SDLK_u:
+			param.ui_snow = !param.ui_snow;
+			break;
 	}
 }
 
@@ -90,10 +96,10 @@ void CEvent::Mouse (int button, int state, int x, int y) {
 	if (state != 1) return;
 
 	TWidget* clicked = ClickGUI(x, y);
-	if(clicked == textbuttons[0]) {
+	if (clicked == textbuttons[0]) {
 		if (ready < 1)
 			StartRace ();
-	} else if(clicked == textbuttons[1])
+	} else if (clicked == textbuttons[1] || clicked == textbuttons[2])
 		State::manager.RequestEnterState (EventSelect);
 }
 
@@ -116,7 +122,8 @@ void UpdateCupRacing () {
 	size_t lastrace = ecup->races.size() - 1;
 	curr_bonus += g_game.race_result;
 	if (g_game.race_result >= 0) {
-		if (curr_race < lastrace) curr_race++; else ready = 1;
+		if (curr_race < lastrace) curr_race++;
+		else ready = 1;
 	} else {
 		if (curr_bonus == 0) ready = 2;
 	}
@@ -137,7 +144,7 @@ void CEvent::Enter () {
 	Winsys.ShowCursor (!param.ice_cursor);
 
 	if (State::manager.PreviousState() == &GameOver) UpdateCupRacing ();
-		else InitCupRacing ();
+	else InitCupRacing ();
 
 	framewidth = 500;
 	frametop = AutoYPosN (45);
@@ -158,8 +165,8 @@ void CEvent::Enter () {
 	textbuttons[2] = AddTextButton (Trans.Text(15), CENTER, AutoYPosN (80), siz);
 
 	Music.Play (param.menu_music, -1);
-	if (ready < 1) curr_focus = textbuttons[0]; else curr_focus = textbuttons[2];
-	g_game.loopdelay = 20;
+	if (ready < 1) curr_focus = textbuttons[0];
+	else curr_focus = textbuttons[2];
 }
 
 int resultlevel (size_t num, size_t numraces) {
@@ -171,11 +178,11 @@ int resultlevel (size_t num, size_t numraces) {
 void CEvent::Loop (ETR_DOUBLE timestep) {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
- 
+
 	check_gl_error();
 	ScopedRenderMode rm(GUI);
 	Music.Update ();
-    ClearRenderContext ();
+	ClearRenderContext ();
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
@@ -199,7 +206,7 @@ void CEvent::Loop (ETR_DOUBLE timestep) {
 		DrawBonusExt (bonustop, (int)ecup->races.size(), curr_bonus);
 
 		DrawFrameX (area.left, frametop, framewidth,
-			(int)ecup->races.size() * dist + 20, 3, colBackgr, colWhite, 1);
+		            (int)ecup->races.size() * dist + 20, 3, colBackgr, colWhite, 1);
 
 		for (size_t i=0; i<ecup->races.size(); i++) {
 			FT.AutoSizeN (3);
@@ -209,18 +216,18 @@ void CEvent::Loop (ETR_DOUBLE timestep) {
 				FT.SetColor (colDYell);
 			else
 				FT.SetColor (colWhite);
-			FT.DrawString (area.left + 29, y, Course.CourseList[ecup->races[i]->course].name);
+			FT.DrawString (area.left + 29, y, ecup->races[i]->course->name);
 			Tex.Draw (CHECKBOX, area.right -54, y, texsize, texsize);
-			if (curr_race > i) Tex.Draw (CHECKMARK, area.right-50, y + 4, 0.8);
+			if (curr_race > i) Tex.Draw (CHECKMARK_SMALL, area.right-50, y + 4, 0.8);
 		}
 
 		FT.AutoSizeN (3);
 		int ddd = FT.AutoDistanceN (1);
 		FT.SetColor (colDBlue);
 		string info = Trans.Text(11);
-		info += "   " + Int_StrN (ecup->races[curr_race]->herrings.i);
-		info += "   " + Int_StrN (ecup->races[curr_race]->herrings.j);
-		info += "   " + Int_StrN (ecup->races[curr_race]->herrings.k);
+		info += "   " + Int_StrN (ecup->races[curr_race]->herrings.x);
+		info += "   " + Int_StrN (ecup->races[curr_race]->herrings.y);
+		info += "   " + Int_StrN (ecup->races[curr_race]->herrings.z);
 		FT.DrawString (CENTER, framebottom+15, info);
 
 		info = Trans.Text(12);
@@ -236,7 +243,7 @@ void CEvent::Loop (ETR_DOUBLE timestep) {
 		FT.DrawString (CENTER, messtop, Trans.Text(16));
 		DrawBonusExt (bonustop, (int)ecup->races.size(), curr_bonus);
 		int res = resultlevel(curr_bonus, ecup->races.size());
-		FT.DrawString (CENTER, messtop2, Trans.Text(17) + "  "+Int_StrN (res));
+		FT.DrawString (CENTER, messtop2, Trans.Text(17) + "  " + Int_StrN (res));
 	} else if (ready == 2) {		// cup finished but failed
 		FT.AutoSizeN (5);
 		FT.SetColor (colLRed);
@@ -250,5 +257,5 @@ void CEvent::Loop (ETR_DOUBLE timestep) {
 	textbuttons[2]->SetVisible(!(ready < 1));
 
 	DrawGUI ();
-    Winsys.SwapBuffers();
+	Winsys.SwapBuffers();
 }

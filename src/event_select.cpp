@@ -34,27 +34,33 @@ GNU General Public License for more details.
 
 CEventSelect EventSelect;
 
-static TEvent2 *EventList;
+static TEvent *EventList;
 static TUpDown* event;
 static TUpDown* cup;
 static TWidget* textbuttons[2];
-static TCup2 *CupList;
 
 void EnterEvent () {
 	g_game.game_type = CUPRACING;
 	g_game.cup = EventList[event->GetValue()].cups[cup->GetValue()];
-	g_game.race_id = 0;
 	State::manager.RequestEnterState(Event);
 }
 
 void CEventSelect::Keyb (unsigned int key, bool special, bool release, int x, int y) {
-    if (release) return;
+	if (release) return;
 	switch (key) {
-		case SDLK_ESCAPE: State::manager.RequestEnterState (GameTypeSelect); break;
-		case SDLK_q: State::manager.RequestQuit(); break;
-		case SDLK_RETURN: if (textbuttons[1]->focussed()) State::manager.RequestEnterState (GameTypeSelect);
-			else if (Events.IsUnlocked (event->GetValue(), cup->GetValue())) EnterEvent(); break;
-		case SDLK_u: param.ui_snow = !param.ui_snow; break;
+		case SDLK_ESCAPE:
+			State::manager.RequestEnterState (GameTypeSelect);
+			break;
+		case SDLK_q:
+			State::manager.RequestQuit();
+			break;
+		case SDLK_RETURN:
+			if (textbuttons[1]->focussed()) State::manager.RequestEnterState (GameTypeSelect);
+			else if (Events.IsUnlocked (event->GetValue(), cup->GetValue())) EnterEvent();
+			break;
+		case SDLK_u:
+			param.ui_snow = !param.ui_snow;
+			break;
 		default:
 			KeyGUI(key, 0, release);
 	}
@@ -66,8 +72,7 @@ void CEventSelect::Mouse (int button, int state, int x, int y) {
 		if (textbuttons[0] == clicked) {
 			if (Events.IsUnlocked (event->GetValue(), cup->GetValue()))
 				EnterEvent();
-		}
-		else if (textbuttons[1] == clicked)
+		} else if (textbuttons[1] == clicked)
 			State::manager.RequestEnterState (GameTypeSelect);
 	}
 }
@@ -85,7 +90,6 @@ static int framewidth, frameheight, frametop1, frametop2;
 void CEventSelect::Enter () {
 	Winsys.ShowCursor (!param.ice_cursor);
 	EventList = &Events.EventList[0];
-	CupList = &Events.CupList[0];
 
 	framewidth = 500 * Winsys.scale;
 	frameheight = 50 * Winsys.scale;
@@ -95,7 +99,7 @@ void CEventSelect::Enter () {
 
 	ResetGUI();
 	event = AddUpDown(area.right+8, frametop1, 0, (int)Events.EventList.size() - 1, 0);
-	cup = AddUpDown(area.right+8, frametop2, 0, (int)EventList[0].cups.size() - 1, 0);
+	cup = AddUpDown(area.right + 8, frametop2, 0, (int)Events.EventList[0].cups.size() - 1, 0);
 
 	int siz = FT.AutoSizeN (5);
 
@@ -104,9 +108,8 @@ void CEventSelect::Enter () {
 	textbuttons[1] = AddTextButton (Trans.Text(8), area.left+50, AutoYPosN (70), siz);
 	SetFocus(textbuttons[1]);
 
-	Events.MakeUnlockList (Players.GetCurrUnlocked());
+	Events.MakeUnlockList (g_game.player->funlocked);
 	Music.Play (param.menu_music, -1);
-	g_game.loopdelay = 20;
 }
 
 void CEventSelect::Loop (ETR_DOUBLE timestep) {
@@ -117,7 +120,7 @@ void CEventSelect::Loop (ETR_DOUBLE timestep) {
 	check_gl_error();
 	ScopedRenderMode rm(GUI);
 	Music.Update ();
-    ClearRenderContext ();
+	ClearRenderContext ();
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
@@ -145,12 +148,14 @@ void CEventSelect::Loop (ETR_DOUBLE timestep) {
 
 	FT.AutoSizeN (4);
 
-	if (event->focussed()) col = colDYell; else col = colWhite;
+	if (event->focussed()) col = colDYell;
+	else col = colWhite;
 	DrawFrameX (area.left, frametop1, framewidth, frameheight, 3, colMBackgr, col, 1.0);
 	FT.SetColor (colDYell);
 	FT.DrawString (area.left + 20, frametop1, EventList[event->GetValue()].name);
 
-	if (cup->focussed()) col = colDYell; else col = colWhite;
+	if (cup->focussed()) col = colDYell;
+	else col = colWhite;
 	DrawFrameX (area.left, frametop2, framewidth, frameheight, 3, colMBackgr, col, 1.0);
 	if (Events.IsUnlocked (event->GetValue(), cup->GetValue()))
 		FT.SetColor (colDYell);

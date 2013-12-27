@@ -56,7 +56,6 @@ Then edit the below functions:
 CGameConfig GameConfig;
 static string res_names[NUM_RESOLUTIONS];
 
-static TLang *LangList;
 static TCheckbox* fullscreen;
 static TUpDown* language;
 static TUpDown* resolution;
@@ -66,65 +65,33 @@ static TUpDown* detail_level;
 static TWidget* textbuttons[2];
 
 
-void RestartSDL () {
-	// first close the resources that must be restored when
-	// starting a new VideoMode. That are all resourcse controlled
-	// by SDL or OpenGL
-	Winsys.CloseJoystick ();		// controlled by SDL
-	Tex.FreeTextureList ();			// textures are controlled by OpenGL
-	Course.FreeCourseList ();		// contains the preview textures
-	Char.FreeCharacterPreviews ();	// they are not reloaded !!!
-	Audio.Close ();					// frees music and sound as well (SDL_mixer)
-	SDL_Quit ();					// SDL main
-
-	// second restore the freed resources
-	Winsys.Init ();					// includes SetVideoMode
-	Audio.Open ();					// clear, it has been closed before
-	Sound.LoadSoundList ();			// all sounds must loaded again
-	Music.LoadMusicList (); 		// same with music pieces
-	Tex.LoadTextureList ();			// common textures
-	Course.LoadCourseList ();		// only for the previews
-	Course.ResetCourse ();			// the current course must be freed and reset
-
-	// and some start settings which refer to the restored resources,
-	// probably it's not necessary.
-	Music.SetVolume (param.music_volume);
-	g_game.course_id = 0;
-	g_game.cup = 0;
-	g_game.race_id = 0;
-}
-
 void SetConfig () {
 	if (mus_vol->GetValue() != param.music_volume ||
-		sound_vol->GetValue() != param.sound_volume ||
-		language->GetValue() != param.language ||
-		detail_level->GetValue() != param.perf_level 
+			sound_vol->GetValue() != param.sound_volume ||
+			language->GetValue() != param.language ||
+			resolution->GetValue() != param.res_type
 #ifndef PANDORA
-		|| resolution->GetValue() != param.res_type 
-		|| fullscreen->checked != param.fullscreen
+			|| detail_level->GetValue() != param.perf_level
+			|| fullscreen->checked != param.fullscreen
 #endif
-		) 
-		{
-
+			)
+			{
+		
 #ifndef PANDORA
 		if (resolution->GetValue() != param.res_type || fullscreen->checked != param.fullscreen) {
 			// these changes require a new VideoMode
 			param.res_type = resolution->GetValue();
+#ifdef _WIN32
+			if (fullscreen->checked == param.fullscreen)
+				Winsys.SetupVideoMode(param.res_type);
 			param.fullscreen = fullscreen->checked;
-
-			#if defined (OS_WIN32_MINGW)
-				// on windows we need to free and restore a lot of resources
-				if (!param.restart_on_res_change) RestartSDL ();
-			#else
-				// on linux the resources seem to be kept at new VideoMode
-				if (param.res_type > 0) {
-					Winsys.SetupVideoMode(param.res_type);
-				} else {
-					RestartSDL();
-				}
-			#endif
+#else
+			param.fullscreen = fullscreen->checked;
+			Winsys.SetupVideoMode(param.res_type);
+#endif
 		}
 #endif
+
 		// the followind config params don't require a new VideoMode
 		// they only must stored in the param structure (and saved)
 		param.music_volume = mus_vol->GetValue();
@@ -142,21 +109,29 @@ void SetConfig () {
 }
 
 void CGameConfig::Keyb (unsigned int key, bool special, bool release, int x, int y) {
-    if (release) return;
+	if (release) return;
 
-	if(key != SDLK_UP && key != SDLK_DOWN)
+	if (key != SDLK_UP && key != SDLK_DOWN)
 		KeyGUI(key, 0, release);
 	switch (key) {
-		case SDLK_q: State::manager.RequestQuit(); break;
-		case SDLK_ESCAPE: State::manager.RequestEnterState (*State::manager.PreviousState()); break;
+		case SDLK_q:
+			State::manager.RequestQuit();
+			break;
+		case SDLK_ESCAPE:
+			State::manager.RequestEnterState (*State::manager.PreviousState());
+			break;
 		case SDLK_RETURN:
-			if(textbuttons[0]->focussed())
+			if (textbuttons[0]->focussed())
 				State::manager.RequestEnterState (*State::manager.PreviousState());
-			else if(textbuttons[1]->focussed())
+			else if (textbuttons[1]->focussed())
 				SetConfig ();
 			break;
-		case SDLK_UP: DecreaseFocus(); break;
-		case SDLK_DOWN: IncreaseFocus(); break;
+		case SDLK_UP:
+			DecreaseFocus();
+			break;
+		case SDLK_DOWN:
+			IncreaseFocus();
+			break;
 	}
 }
 
@@ -164,9 +139,9 @@ void CGameConfig::Mouse (int button, int state, int x, int y) {
 	if (state == 1) {
 		TWidget* focussed = ClickGUI(x, y);
 
-		if(focussed == textbuttons[0])
+		if (focussed == textbuttons[0])
 			State::manager.RequestEnterState (*State::manager.PreviousState());
-		else if(focussed == textbuttons[1])
+		else if (focussed == textbuttons[1])
 			SetConfig ();
 	}
 }
@@ -180,24 +155,20 @@ void CGameConfig::Motion (int x, int y) {
 // ------------------ Init --------------------------------------------
 
 static TArea area;
-static int framewidth, frameheight;
-static int dd, rightpos;
+static int dd;
 
 void CGameConfig::Enter() {
 	Winsys.ShowCursor (!param.ice_cursor);
 	Winsys.KeyRepeat (true);
 
-	LangList = &Trans.languages[0];
-
 	for (int i=0; i<NUM_RESOLUTIONS; i++) res_names[i] = Winsys.GetResName (i);
 
-	framewidth = 550 * Winsys.scale;
-	frameheight = 50 * Winsys.scale;
+	int framewidth = 550 * Winsys.scale;
 	area = AutoAreaN (30, 80, framewidth);
 	FT.AutoSizeN (4);
 	dd = FT.AutoDistanceN (3);
 	if (dd < 36) dd = 36;
-	rightpos = area.right -48;
+	int rightpos = area.right -48;
 
 	ResetGUI ();
 #ifndef PANDORA
@@ -208,7 +179,7 @@ void CGameConfig::Enter() {
 #endif
 	mus_vol = AddUpDown(rightpos, area.top+dd*2, 0, 120, param.music_volume);
 	sound_vol = AddUpDown(rightpos, area.top+dd*3, 0, 120, param.sound_volume);
-	detail_level = AddUpDown(rightpos, area.top+dd*4, 1, 3, param.perf_level);
+	detail_level = AddUpDown(rightpos, area.top+dd*4, 1, 4, param.perf_level);
 	language = AddUpDown(rightpos, area.top+dd*5, 0, (int)Trans.languages.size() - 1, (int)param.language);
 
 	int siz = FT.AutoSizeN (5);
@@ -228,13 +199,13 @@ void CGameConfig::Loop (ETR_DOUBLE time_step) {
 	check_gl_error();
 	Music.Update ();
 	ScopedRenderMode rm(GUI);
-    ClearRenderContext ();
-    SetupGuiDisplay ();
+	ClearRenderContext ();
+	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
 		update_ui_snow (time_step);
 		draw_ui_snow();
-    }
+	}
 
 	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), 1.0);
 	Tex.Draw (BOTTOM_LEFT, 0, hh-256, 1);
@@ -248,16 +219,21 @@ void CGameConfig::Loop (ETR_DOUBLE time_step) {
 	FT.AutoSizeN (4);
 
 #ifndef PANDORA
-	if (resolution->focussed()) FT.SetColor (colDYell); else FT.SetColor (colWhite);
+	if (resolution->focussed()) FT.SetColor (colDYell);
+	else FT.SetColor (colWhite);
 	FT.DrawString (area.left, area.top + dd, Trans.Text(32));
 #endif
-	if (mus_vol->focussed()) FT.SetColor (colDYell); else FT.SetColor (colWhite);
+	if (mus_vol->focussed()) FT.SetColor (colDYell);
+	else FT.SetColor (colWhite);
 	FT.DrawString (area.left, area.top + dd*2, Trans.Text(33));
-	if (sound_vol->focussed()) FT.SetColor (colDYell); else FT.SetColor (colWhite);
+	if (sound_vol->focussed()) FT.SetColor (colDYell);
+	else FT.SetColor (colWhite);
 	FT.DrawString (area.left, area.top + dd*3, Trans.Text(34));
-	if (detail_level->focussed()) FT.SetColor (colDYell); else FT.SetColor (colWhite);
+	if (detail_level->focussed()) FT.SetColor (colDYell);
+	else FT.SetColor (colWhite);
 	FT.DrawString (area.left, area.top + dd*4, Trans.Text(36));
-	if (language->focussed()) FT.SetColor (colDYell); else FT.SetColor (colWhite);
+	if (language->focussed()) FT.SetColor (colDYell);
+	else FT.SetColor (colWhite);
 	FT.DrawString (area.left, area.top + dd*5, Trans.Text(35));
 
 	FT.SetColor (colWhite);
@@ -267,29 +243,28 @@ void CGameConfig::Loop (ETR_DOUBLE time_step) {
 	FT.DrawString (area.left+240, area.top + dd*2, Int_StrN (mus_vol->GetValue()));
 	FT.DrawString (area.left+240, area.top + dd*3, Int_StrN (sound_vol->GetValue()));
 	FT.DrawString (area.left+240, area.top + dd*4, Int_StrN (detail_level->GetValue()));
-	FT.DrawString (area.left+240, area.top + dd*5, LangList[language->GetValue()].language);
+	FT.DrawString (area.left+240, area.top + dd*5, Trans.languages[language->GetValue()].language);
 
-	#if defined (OS_WIN32_MINGW)
-		if ((curr_res != prev_res || curr_fullscreen != prev_fullscreen) &&
-		param.restart_on_res_change) {
-			FT.SetColor (colDYell);
-			FT.AutoSizeN (4);
-			FT.DrawString (CENTER, AutoYPosN (68), "The video adjustments have changed,");
-			FT.DrawString (CENTER, AutoYPosN (72), "You need to restart the game");
-		} else {
-			FT.SetColor (colLGrey);
-			FT.AutoSizeN (3);
-			FT.DrawString (CENTER, AutoYPosN (68), Trans.Text(41));
-			FT.DrawString (CENTER, AutoYPosN (72), Trans.Text(42));
-		}
-	#else
-#ifndef PANDORA
-		FT.SetColor (colWhite);
+#if defined (_WIN32)
+	if (fullscreen->checked != param.fullscreen) {
+		FT.SetColor (colDYell);
+		FT.AutoSizeN (4);
+		FT.DrawString (CENTER, AutoYPosN (68), Trans.Text(84));
+		FT.DrawString (CENTER, AutoYPosN (72), Trans.Text(85));
+	} else {
+		FT.SetColor (colLGrey);
 		FT.AutoSizeN (3);
 		FT.DrawString (CENTER, AutoYPosN (68), Trans.Text(41));
 		FT.DrawString (CENTER, AutoYPosN (72), Trans.Text(42));
+	}
+#else
+#ifndef PANDORA
+	FT.SetColor (colWhite);
+	FT.AutoSizeN (3);
+	FT.DrawString (CENTER, AutoYPosN (68), Trans.Text(41));
+	FT.DrawString (CENTER, AutoYPosN (72), Trans.Text(42));
 #endif
-	#endif
+#endif
 
 	DrawGUI();
 

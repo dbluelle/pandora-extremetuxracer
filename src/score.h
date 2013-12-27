@@ -39,7 +39,6 @@ struct TScoreList {
 class CScore : public State {
 private:
 	vector<TScoreList> Scorelist;
-	TScore TempScore;
 
 	void Enter();
 	void Loop(ETR_DOUBLE time_step);
@@ -47,7 +46,7 @@ private:
 	void Mouse(int button, int state, int x, int y);
 	void Motion(int x, int y);
 public:
-	int AddScore (size_t list_idx, const TScore& score);
+	int AddScore(const TCourse* course, const TScore& score);
 	const TScoreList *GetScorelist (size_t list_idx) const;
 	void PrintScorelist (size_t list_idx) const;
 	bool SaveHighScore () const;

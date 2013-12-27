@@ -18,58 +18,11 @@ GNU General Public License for more details.
 #ifndef ETR_TYPES_H
 #define ETR_TYPES_H
 
-#ifndef M_PI
-#	define M_PI 3.1415926535
-#endif
-
-#ifndef EPS
-#	define EPS 1.0e-13
-#endif
-
-#define MAG_SQD(vec) ((vec).x * (vec).x + (vec).y * (vec).y + (vec).z * (vec).z)
-
+#include "vectors.h"
 
 enum Orientation {
 	OR_TOP = 0,			// top-orientated menu widgets
 	OR_BOTTOM = 1		// bottom-orientated
-};
-
-struct TVector2	{
-	ETR_DOUBLE x, y;
-	TVector2(ETR_DOUBLE _x = 0.0, ETR_DOUBLE _y = 0.0)
-		: x(_x), y(_y)
-	{}
-};
-struct TVector3 : public TVector2 {
-	ETR_DOUBLE z;
-	TVector3(ETR_DOUBLE _x = 0.0, ETR_DOUBLE _y = 0.0, ETR_DOUBLE _z = 0.0)
-		: TVector2(_x, _y), z(_z)
-	{}
-};
-struct TVector4 : public TVector3 {
-	ETR_DOUBLE w;
-	TVector4(ETR_DOUBLE _x = 0.0, ETR_DOUBLE _y = 0.0, ETR_DOUBLE _z = 0.0, ETR_DOUBLE _w = 0.0)
-		: TVector3(_x, _y, _z), w(_w)
-	{}
-};
-
-struct TIndex2 {
-	int i, j;
-	TIndex2(int i_ = 0, int j_ = 0)
-		: i(i_), j(j_)
-	{}
-};
-struct TIndex3 : public TIndex2 {
-	int k;
-	TIndex3(int i_ = 0, int j_ = 0, int k_ = 0)
-		: TIndex2(i_, j_), k(k_)
-	{}
-};
-struct TIndex4 : public TIndex3 {
-	int l;
-	TIndex4(int i_ = 0, int j_ = 0, int k_ = 0, int l_ = 0)
-		: TIndex3(i_, j_, k_), l(l_)
-	{}
 };
 
 struct TColor3 {
@@ -83,35 +36,6 @@ struct TColor : public TColor3 {
 	TColor(ETR_DOUBLE r_ = 0, ETR_DOUBLE g_ = 0, ETR_DOUBLE b_ = 0, ETR_DOUBLE a_ = 0)
 		: TColor3(r_, g_, b_), a(a_)
 	{}
-};
-
-typedef ETR_DOUBLE TMatrix[4][4];
-typedef TVector4 TQuaternion;
-
-struct TPlane		{ TVector3 nml; ETR_DOUBLE d; };
-struct TPolygon		{ int num_vertices; int *vertices; };
-struct TSphere		{ ETR_DOUBLE radius; int divisions; };
-struct TRay			{ TVector3 pt; TVector3 vec; };
-
-struct TPolyhedron {
-    size_t num_vertices;
-    size_t num_polygons;
-    TVector3 *vertices;
-    TPolygon *polygons;
-};
-
-struct TRect {
-	int left;
-	int top;
-	int width;
-	int height;
-};
-
-struct TArea {
-	int left;
-	int right;
-	int top;
-	int bottom;
 };
 
 enum TToolMode {
@@ -128,13 +52,17 @@ enum TGameType {
 };
 
 enum TViewMode {
-    BEHIND,
-    FOLLOW,
-    ABOVE,
-    NUM_VIEW_MODES
+	BEHIND,
+	FOLLOW,
+	ABOVE,
+	NUM_VIEW_MODES
 };
 
-struct TCup2;
+struct TCup;
+struct TPlayer;
+struct TCourse;
+struct TRace;
+struct TCharacter;
 
 struct TGameData {
 	TToolMode toolmode;
@@ -144,38 +72,30 @@ struct TGameData {
 	int treesize;
 	int treevar;
 	int argument;
-	string group_arg;
-	string dir_arg;
-	string file_arg;
-	int loopdelay;
 	bool finish;
 	bool use_keyframe;
 	ETR_DOUBLE finish_brake;
 
 	// course and race params
-	size_t player_id;
+	TPlayer* player;
 	size_t start_player;
-	TCup2* cup;
-	size_t race_id;
-	bool mirror_id;
-	size_t char_id;
-	size_t course_id;
+	TCup* cup;
+	bool mirrorred;
+	TCharacter* character;
+	TCourse* course;
 	size_t location_id;
 	size_t light_id;
 	int snow_id;
 	int wind_id;
 	size_t theme_id;
-
-	// requirements
-	TIndex3 herring_req;	// 3 levels of needed herrings
-	TVector3 time_req;		// 3 levels of allowed time
+	TRace* race; // Only valid if not in practice mode
 
 	// race results (better in player.ctrl ?)
 	ETR_DOUBLE time;			// reached time
 	int score;				// reached score
 	int herring;			// catched herrings during the race
 	int race_result;		// tuxlifes, only for a single race, see game_ctrl
-    bool raceaborted;
+	bool raceaborted;
 };
 
 class CControl;

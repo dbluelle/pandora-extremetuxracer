@@ -21,82 +21,36 @@ GNU General Public License for more details.
 #endif
 
 #include "mathlib.h"
+#include <cstdlib>
 #include <algorithm>
 
-ETR_DOUBLE VectorLength (const TVector3 &v) {
-	return sqrt (MAG_SQD(v));
-}
 
-ETR_DOUBLE DotProduct (const TVector3& v1, const TVector3& v2) {
-	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-}
-
-TVector3 ScaleVector (ETR_DOUBLE s, const TVector3& v) {
-	TVector3 rval(
-		s * v.x,
-		s * v.y,
-		s * v.z);
-	return rval;
-}
-
-TVector3 AddVectors (const TVector3& v1, const TVector3& v2) {
-	TVector3 result(
-		v1.x + v2.x,
-		v1.y + v2.y,
-		v1.z + v2.z);
-	return result;
-}
-
-TVector3 SubtractVectors (const TVector3& v1, const TVector3& v2) {
-	TVector3 result(
-		v1.x - v2.x,
-		v1.y - v2.y,
-		v1.z - v2.z);
-	return result;
-}
-
-TVector3 ProjectToPlane (const TVector3& nml, const TVector3& v) {
+TVector3d ProjectToPlane (const TVector3d& nml, const TVector3d& v) {
 	ETR_DOUBLE dotProd = DotProduct (nml, v);
-	TVector3 nmlComp = ScaleVector (dotProd, nml);
+	TVector3d nmlComp = dotProd * nml;
 
-	return SubtractVectors (v, nmlComp);
-}
-
-ETR_DOUBLE NormVector (TVector3 &v) {
-	ETR_DOUBLE square = v.x * v.x + v.y * v.y + v.z * v.z;
-	if (square == 0.0) return 0.0;
-	ETR_DOUBLE denom = sqrt (square);
-	v = ScaleVector (1.0 / denom, v);
-	return denom;
+	return v - nmlComp;
 }
 
 
-TVector3 CrossProduct(const TVector3& u, const TVector3& v) {
-	TVector3 ret(
-		u.y * v.z - u.z * v.y,
-		u.z * v.x - u.x * v.z,
-		u.x * v.y - u.y * v.x);
-	return ret;
-}
-
-TVector3 TransformVector(const TMatrix mat, const TVector3& v) {
-	TVector3 r;
+TVector3d TransformVector(const TMatrix<4, 4>& mat, const TVector3d& v) {
+	TVector3d r;
 	r.x = v.x * mat[0][0] + v.y * mat[1][0] + v.z * mat[2][0];
 	r.y = v.x * mat[0][1] + v.y * mat[1][1] + v.z * mat[2][1];
 	r.z = v.x * mat[0][2] + v.y * mat[1][2] + v.z * mat[2][2];
 	return r;
 }
 
-TVector3 TransformNormal(const TVector3& n, const TMatrix mat) {
-	TVector3 r;
+TVector3d TransformNormal(const TVector3d& n, const TMatrix<4, 4>& mat) {
+	TVector3d r;
 	r.x = n.x * mat[0][0] + n.y * mat[0][1] + n.z * mat[0][2];
 	r.y = n.x * mat[1][0] + n.y * mat[1][1] + n.z * mat[1][2];
 	r.z = n.x * mat[2][0] + n.y * mat[2][1] + n.z * mat[2][2];
 	return r;
 }
 
-TVector3 TransformPoint(const TMatrix mat, const TVector3& p) {
-	TVector3 r;
+TVector3d TransformPoint(const TMatrix<4, 4>& mat, const TVector3d& p) {
+	TVector3d r;
 	r.x = p.x * mat[0][0] + p.y * mat[1][0] + p.z * mat[2][0];
 	r.y = p.x * mat[0][1] + p.y * mat[1][1] + p.z * mat[2][1];
 	r.z = p.x * mat[0][2] + p.y * mat[1][2] + p.z * mat[2][2];
@@ -106,17 +60,7 @@ TVector3 TransformPoint(const TMatrix mat, const TVector3& p) {
 	return r;
 }
 
-TPlane MakePlane (ETR_DOUBLE nx, ETR_DOUBLE ny, ETR_DOUBLE nz, ETR_DOUBLE d) {
-	TPlane tmp;
-	tmp.nml.x = nx;
-	tmp.nml.y = ny;
-	tmp.nml.z = nz;
-	tmp.d = d;
-
-	return tmp;
-}
-
-bool IntersectPlanes (const TPlane& s1, const TPlane& s2, const TPlane& s3, TVector3 *p) {
+bool IntersectPlanes (const TPlane& s1, const TPlane& s2, const TPlane& s3, TVector3d *p) {
 	ETR_DOUBLE A[3][4];
 	ETR_DOUBLE x[3];
 	ETR_DOUBLE retval;
@@ -148,134 +92,16 @@ bool IntersectPlanes (const TPlane& s1, const TPlane& s2, const TPlane& s3, TVec
 	}
 }
 
-ETR_DOUBLE DistanceToPlane (const TPlane& plane, const TVector3& pt) {
+ETR_DOUBLE DistanceToPlane (const TPlane& plane, const TVector3d& pt) {
 	return
-		plane.nml.x * pt.x +
-		plane.nml.y * pt.y +
-		plane.nml.z * pt.z +
-		plane.d;
-}
-
-void MakeIdentityMatrix(TMatrix h) {
-	for (int i= 0; i< 4; i++)
-		for (int j= 0; j< 4; j++)
-			h[i][j]= (i==j);
+	    DotProduct(plane.nml, pt) +
+	    plane.d;
 }
 
 
-void MultiplyMatrices (TMatrix ret, const TMatrix mat1, const TMatrix mat2) {
-	TMatrix r;
-
-	for (int i = 0; i < 4; i++)
-		for (int j = 0; j < 4; j++)
-			r[j][i] = mat1[0][i] * mat2[j][0] +
-				mat1[1][i] * mat2[j][1] +
-				mat1[2][i] * mat2[j][2] +
-				mat1[3][i] * mat2[j][3];
-
-	for (int i = 0; i < 4; i++)
-		for (int j = 0; j < 4; j++)
-			ret[i][j] = r[i][j];
-}
-
-
-void TransposeMatrix (const TMatrix mat, TMatrix trans) {
-	TMatrix r;
-
-	for (int i = 0; i < 4; i++)
-		for (int j = 0; j< 4; j++)
-			r[j][i] = mat[i][j];
-
-	for (int i = 0; i< 4; i++)
-		for (int j = 0; j< 4; j++)
-			trans[i][j] = r[i][j];
-}
-
-void MakeRotationMatrix (TMatrix mat, ETR_DOUBLE angle, char axis) {
-	ETR_DOUBLE sinv, cosv;
-	sinv = sin (ANGLES_TO_RADIANS (angle));
-	cosv = cos (ANGLES_TO_RADIANS (angle));
-
-	MakeIdentityMatrix (mat);
-
-	switch (axis) {
-	case 'x':
-		mat[1][1] = cosv;
-		mat[2][1] = -sinv;
-		mat[1][2] = sinv;
-		mat[2][2] = cosv;
-		break;
-
-	case 'y':
-		mat[0][0] = cosv;
-		mat[2][0] = sinv;
-		mat[0][2] = -sinv;
-		mat[2][2] = cosv;
-		break;
-
-	case 'z':
-		mat[0][0] = cosv;
-		mat[1][0] = -sinv;
-		mat[0][1] = sinv;
-		mat[1][1] = cosv;
-		break;
-	}
-}
-
-void MakeTranslationMatrix (TMatrix mat, ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z) {
-	MakeIdentityMatrix (mat);
-	mat[3][0] = x;
-	mat[3][1] = y;
-	mat[3][2] = z;
-}
-
-void MakeScalingMatrix (TMatrix mat, ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z) {
-	MakeIdentityMatrix (mat);
-	mat[0][0] = x;
-	mat[1][1] = y;
-	mat[2][2] = z;
-}
-
-void MakeBasisMat (TMatrix mat, const TVector3& w1, const TVector3& w2, const TVector3& w3) {
-	MakeIdentityMatrix (mat);
-	mat[0][0] = w1.x;
-	mat[0][1] = w1.y;
-	mat[0][2] = w1.z;
-	mat[1][0] = w2.x;
-	mat[1][1] = w2.y;
-	mat[1][2] = w2.z;
-	mat[2][0] = w3.x;
-	mat[2][1] = w3.y;
-	mat[2][2] = w3.z;
-}
-
-void MakeBasismatrix_Inv (TMatrix mat, TMatrix invMat,
-		const TVector3& w1, const TVector3& w2, const TVector3& w3) {
-	MakeIdentityMatrix (mat);
-	mat[0][0] = w1.x;
-	mat[0][1] = w1.y;
-	mat[0][2] = w1.z;
-	mat[1][0] = w2.x;
-	mat[1][1] = w2.y;
-	mat[1][2] = w2.z;
-	mat[2][0] = w3.x;
-	mat[2][1] = w3.y;
-	mat[2][2] = w3.z;
-
-	MakeIdentityMatrix (invMat);
-	invMat[0][0] = w1.x;
-	invMat[1][0] = w1.y;
-	invMat[2][0] = w1.z;
-	invMat[0][1] = w2.x;
-	invMat[1][1] = w2.y;
-	invMat[2][1] = w2.z;
-	invMat[0][2] = w3.x;
-	invMat[1][2] = w3.y;
-	invMat[2][2] = w3.z;
-}
-
-void RotateAboutVectorMatrix (TMatrix mat, const TVector3& u, ETR_DOUBLE angle) {
-	TMatrix rx, irx, ry, iry;
+TMatrix<4, 4> RotateAboutVectorMatrix(const TVector3d& u, ETR_DOUBLE angle) {
+	TMatrix<4, 4> rx, irx, ry, iry;
+	TMatrix<4, 4> mat;
 
 	ETR_DOUBLE a = u.x;
 	ETR_DOUBLE b = u.y;
@@ -285,16 +111,16 @@ void RotateAboutVectorMatrix (TMatrix mat, const TVector3& u, ETR_DOUBLE angle) 
 
 	if (d < EPS) {
 		if (a < 0)
-			MakeRotationMatrix (mat, -angle, 'x');
+			mat.SetRotationMatrix(-angle, 'x');
 		else
-			MakeRotationMatrix (mat, angle, 'x');
-		return;
+			mat.SetRotationMatrix(angle, 'x');
+		return mat;
 	}
 
-	MakeIdentityMatrix (rx);
-	MakeIdentityMatrix (irx);
-	MakeIdentityMatrix (ry);
-	MakeIdentityMatrix (iry);
+	rx.SetIdentity();
+	irx.SetIdentity();
+	ry.SetIdentity();
+	iry.SetIdentity();
 
 	rx[1][1] = c/d;
 	rx[2][1] = -b/d;
@@ -316,12 +142,13 @@ void RotateAboutVectorMatrix (TMatrix mat, const TVector3& u, ETR_DOUBLE angle) 
 	iry[0][2] = -a;
 	iry[2][2] = d;
 
-	MakeRotationMatrix (mat, angle, 'z');
+	mat.SetRotationMatrix(angle, 'z');
 
-	MultiplyMatrices (mat, mat, ry);
-	MultiplyMatrices (mat, mat, rx);
-	MultiplyMatrices (mat, iry, mat);
-	MultiplyMatrices (mat, irx, mat);
+	mat = mat * ry;
+	mat = mat * rx;
+	mat = iry * mat;
+	mat = irx * mat;
+	return mat;
 }
 
 TQuaternion MultiplyQuaternions (const TQuaternion& q, const TQuaternion& r) {
@@ -333,36 +160,18 @@ TQuaternion MultiplyQuaternions (const TQuaternion& q, const TQuaternion& r) {
 	return res;
 }
 
-TQuaternion AddQuaternions (const TQuaternion& q, const TQuaternion& r) {
-	TQuaternion res(
-		q.x + r.x,
-		q.y + r.y,
-		q.z + r.z,
-		q.w + r.w);
-	return res;
-}
-
 TQuaternion ConjugateQuaternion (const TQuaternion& q) {
 	TQuaternion res(
-		-1 * q.x,
-		-1 * q.y,
-		-1 * q.z,
-		q.w);
+	    -1 * q.x,
+	    -1 * q.y,
+	    -1 * q.z,
+	    q.w);
 
 	return res;
 }
 
-TQuaternion ScaleQuaternion (ETR_DOUBLE s, const TQuaternion& q) {
-	TQuaternion res(
-		s * q.x,
-		s * q.y,
-		s * q.z,
-		s * q.w);
-
-	return res;
-}
-
-void MakeMatrixFromQuaternion (TMatrix mat, const TQuaternion& q) {
+TMatrix<4, 4> MakeMatrixFromQuaternion(const TQuaternion& q) {
+	TMatrix<4, 4> mat;
 	mat[0][0] = 1.0 - 2.0 *  (q.y * q.y + q.z * q.z);
 	mat[1][0] =       2.0 *  (q.x * q.y - q.w * q.z);
 	mat[2][0] =       2.0 *  (q.x * q.z + q.w * q.y);
@@ -378,12 +187,12 @@ void MakeMatrixFromQuaternion (TMatrix mat, const TQuaternion& q) {
 	mat[3][0] = mat[3][1] = mat[3][2] = 0.0;
 	mat[0][3] = mat[1][3] = mat[2][3] = 0.0;
 	mat[3][3] = 1.0;
+	return mat;
 }
 
-TQuaternion MakeQuaternionFromMatrix (const TMatrix m) {
+TQuaternion MakeQuaternionFromMatrix(const TMatrix<4, 4>& m) {
 	TQuaternion res;
 	ETR_DOUBLE  tr, s, q[4];
-	int    i, j, k;
 
 	static int nxt[3] = {1, 2, 0};
 
@@ -422,9 +231,9 @@ TQuaternion MakeQuaternionFromMatrix (const TMatrix m) {
 	return res;
 }
 
-TQuaternion MakeRotationQuaternion (const TVector3& s, const TVector3& t) {
-	TVector3 u = CrossProduct (s, t);
-	ETR_DOUBLE sin2phi = NormVector (u);
+TQuaternion MakeRotationQuaternion (const TVector3d& s, const TVector3d& t) {
+	TVector3d u = CrossProduct (s, t);
+	ETR_DOUBLE sin2phi = u.Norm();
 
 	if (sin2phi < EPS) {
 		return TQuaternion (0., 0., 0., 1.);
@@ -435,21 +244,15 @@ TQuaternion MakeRotationQuaternion (const TVector3& s, const TVector3& t) {
 		ETR_DOUBLE cosphi = sqrt ( (1 + cos2phi) / 2.0);
 
 		return TQuaternion(
-			sinphi * u.x,
-			sinphi * u.y,
-			sinphi * u.z,
-			cosphi);
+		           sinphi * u.x,
+		           sinphi * u.y,
+		           sinphi * u.z,
+		           cosphi);
 	}
 }
 
 TQuaternion InterpolateQuaternions (const TQuaternion& q, TQuaternion r, ETR_DOUBLE t) {
-	TQuaternion res;
-	ETR_DOUBLE cosphi;
-	ETR_DOUBLE sinphi;
-	ETR_DOUBLE phi;
-	ETR_DOUBLE scale0, scale1;
-
-	cosphi = q.x * r.x + q.y * r.y + q.z * r.z + q.w * r.w;
+	ETR_DOUBLE cosphi = q.x * r.x + q.y * r.y + q.z * r.z + q.w * r.w;
 
 	if (cosphi < 0.0) {
 		cosphi = -cosphi;
@@ -459,9 +262,10 @@ TQuaternion InterpolateQuaternions (const TQuaternion& q, TQuaternion r, ETR_DOU
 		r.w = -r.w;
 	}
 
+	ETR_DOUBLE scale0, scale1;
 	if (1.0 - cosphi > EPS) {
-		phi = acos (cosphi);
-		sinphi = sin (phi);
+		ETR_DOUBLE phi = acos (cosphi);
+		ETR_DOUBLE sinphi = sin (phi);
 		scale0 = sin (phi *  (1.0 - t)) / sinphi;
 		scale1 = sin (phi * t) / sinphi;
 	} else {
@@ -469,15 +273,10 @@ TQuaternion InterpolateQuaternions (const TQuaternion& q, TQuaternion r, ETR_DOU
 		scale1 = t;
 	}
 
-	res.x = scale0 * q.x + scale1 * r.x;
-	res.y = scale0 * q.y + scale1 * r.y;
-	res.z = scale0 * q.z + scale1 * r.z;
-	res.w = scale0 * q.w + scale1 * r.w;
-
-	return res;
+	return scale0 * q + scale1 * r;
 }
 
-TVector3 RotateVector (const TQuaternion& q, const TVector3& v) {
+TVector3d RotateVector (const TQuaternion& q, const TVector3d& v) {
 	TQuaternion p(v.x, v.y, v.z, 1.0);
 
 	TQuaternion qs(-q.x, -q.y, -q.z, q.w);
@@ -491,16 +290,16 @@ TVector3 RotateVector (const TQuaternion& q, const TVector3& v) {
 //				 Gauss
 // --------------------------------------------------------------------
 
-unsigned short order (ETR_DOUBLE *matrix, int n, int pivot);
+bool order (ETR_DOUBLE *matrix, int n, int pivot);
 void elim (ETR_DOUBLE *matrix, int n, int pivot);
 void backsb (ETR_DOUBLE *matrix, int n, ETR_DOUBLE *soln);
 
 int Gauss(ETR_DOUBLE *matrix, int n, ETR_DOUBLE *soln) {
-	int pivot=0;
-	unsigned short error=0;
+	int pivot = 0;
+	bool error = false;
 
 	while ((pivot<(n-1)) && (!error)) {
-		if(!(error = order(matrix,n,pivot))) {
+		if (!(error = order(matrix,n,pivot))) {
 			elim(matrix,n,pivot);
 			pivot++;
 		}
@@ -513,8 +312,8 @@ int Gauss(ETR_DOUBLE *matrix, int n, ETR_DOUBLE *soln) {
 	return 0;
 }
 
-unsigned short order (ETR_DOUBLE *matrix, int n, int pivot) {
-	unsigned short error=0;
+bool order (ETR_DOUBLE *matrix, int n, int pivot) {
+	bool error = false;
 
 	int rmax = pivot;
 
@@ -524,10 +323,9 @@ unsigned short order (ETR_DOUBLE *matrix, int n, int pivot) {
 	}
 
 	if (fabs(*(matrix+rmax*(n+1)+pivot)) < EPS)
-		error = 1;
+		error = true;
 	else if (rmax != pivot) {
-		for (int k=0; k<(n+1); k++)
-		{
+		for (int k=0; k<(n+1); k++) {
 			ETR_DOUBLE temp = *(matrix+rmax*(n+1)+k);
 			*(matrix+rmax*(n+1)+k) = *(matrix+pivot*(n+1)+k);
 			*(matrix+pivot*(n+1)+k) = temp;
@@ -542,7 +340,7 @@ void elim (ETR_DOUBLE *matrix, int n, int pivot) {
 		*(matrix+row*(n+1)+pivot)=0.0;
 		for (int col=pivot+1l; col<n+1; col++) {
 			*(matrix+row*(n+1)+col) = *(matrix+row*(n+1)+col) -
-				(*(matrix+pivot*(n+1)+col))*factor;
+			                          (*(matrix+pivot*(n+1)+col))*factor;
 		}
 	}
 }
@@ -552,7 +350,7 @@ void backsb (ETR_DOUBLE *matrix, int n, ETR_DOUBLE *soln) {
 	for (int row = n-1; row >=0; row--) {
 		for (int col = n-1; col >= row+1; col--) {
 			*(matrix+row*(n+1)+(n)) = *(matrix+row*(n+1)+n) -
-				(*(soln+col))*(*(matrix+row*(n+1)+col));
+			                          (*(soln+col))*(*(matrix+row*(n+1)+col));
 		}
 		*(soln+row) = (*(matrix+row*(n+1)+n))/(*(matrix+row*(n+1)+row));
 	}
@@ -561,33 +359,31 @@ void backsb (ETR_DOUBLE *matrix, int n, ETR_DOUBLE *soln) {
 // ***************************************************************************
 // ***************************************************************************
 
-bool IntersectPolygon (const TPolygon& p, TVector3 *v) {
+bool IntersectPolygon(const TPolygon& p, vector<TVector3d>& v) {
 	TRay ray;
-	ETR_DOUBLE d, s, nuDotProd, wec;
+	ETR_DOUBLE d, s, nuDotProd;
 	ETR_DOUBLE distsq;
 
-	TVector3 nml = MakeNormal (p, v);
-	ray.pt = TVector3(0., 0., 0.);
+	TVector3d nml = MakeNormal (p, &v[0]);
+	ray.pt = TVector3d(0., 0., 0.);
 	ray.vec = nml;
 
 	nuDotProd = DotProduct (nml, ray.vec);
-	if  (fabs(nuDotProd) < EPS)
+	if (fabs(nuDotProd) < EPS)
 		return false;
 
-	d = - (nml.x * v[p.vertices[0]].x +
-		nml.y * v[p.vertices[0]].y +
-		nml.z * v[p.vertices[0]].z);
+	d = - DotProduct(nml, v[p.vertices[0]]);
 
 	if (fabs (d) > 1) return false;
 
-	for (int i=0; i < p.num_vertices; i++) {
-		TVector3 *v0, *v1;
+	for (size_t i=0; i < p.vertices.size(); i++) {
+		TVector3d *v0, *v1;
 
 		v0 = &v[p.vertices[i]];
-		v1 = &v[p.vertices[ (i+1) % p.num_vertices ]];
+		v1 = &v[p.vertices[(i + 1) % p.vertices.size()]];
 
-		TVector3 edge_vec = SubtractVectors (*v1, *v0);
-		ETR_DOUBLE edge_len = NormVector (edge_vec);
+		TVector3d edge_vec = *v1 - *v0;
+		ETR_DOUBLE edge_len = edge_vec.Norm();
 
 		ETR_DOUBLE t = - DotProduct (*v0, edge_vec);
 
@@ -596,69 +392,47 @@ bool IntersectPolygon (const TPolygon& p, TVector3 *v) {
 		} else if (t > edge_len) {
 			distsq = MAG_SQD (*v1);
 		} else {
-			*v0 = AddVectors (*v0, ScaleVector (t, edge_vec));
+			*v0 += t * edge_vec;
 			distsq = MAG_SQD (*v0);
 		}
 
 		if (distsq <= 1) return true;
 	}
 
-	s = - (d + DotProduct (nml, TVector3(ray.pt.x, ray.pt.y, ray.pt.z))) / nuDotProd;
-	TVector3 pt = AddVectors (ray.pt, ScaleVector (s, ray.vec));
+	s = - (d + DotProduct (nml, ray.pt)) / nuDotProd;
+	TVector3d pt = ray.pt + s * ray.vec;
 
-	for (int i=0; i < p.num_vertices; i++) {
-		TVector3 edge_nml = CrossProduct (nml,
-			SubtractVectors (v[p.vertices[ (i+1) % p.num_vertices ]], v[p.vertices[i]]));
+	for (size_t i = 0; i < p.vertices.size(); i++) {
+		TVector3d edge_nml = CrossProduct (nml,
+		                                   v[p.vertices[(i + 1) % p.vertices.size()]] - v[p.vertices[i]]);
 
-		wec = DotProduct (SubtractVectors (pt, v[p.vertices[i]]), edge_nml);
+		ETR_DOUBLE wec = DotProduct (pt - v[p.vertices[i]], edge_nml);
 		if (wec < 0) return false;
 	}
 	return true;
 }
 
-bool IntersectPolyhedron (const TPolyhedron& p) {
+bool IntersectPolyhedron(TPolyhedron& p) {
 	bool hit = false;
-	for (size_t i=0; i<p.num_polygons; i++) {
+	for (size_t i = 0; i < p.polygons.size(); i++) {
 		hit = IntersectPolygon (p.polygons[i], p.vertices);
 		if (hit == true) break;
 	}
 	return hit;
 }
 
-TVector3 MakeNormal (const TPolygon& p, TVector3 *v) {
-	TVector3 v1 = SubtractVectors (v[p.vertices[1]], v[p.vertices[0]]);
-	TVector3 v2 = SubtractVectors (v[p.vertices[p.num_vertices-1]], v[p.vertices[0]]);
-	TVector3 normal = CrossProduct (v1, v2);
+TVector3d MakeNormal (const TPolygon& p, const TVector3d *v) {
+	TVector3d v1 = v[p.vertices[1]] - v[p.vertices[0]];
+	TVector3d v2 = v[p.vertices[p.vertices.size() - 1]] - v[p.vertices[0]];
+	TVector3d normal = CrossProduct (v1, v2);
 
-	NormVector (normal);
+	normal.Norm();
 	return normal;
 }
 
 
-TPolyhedron CopyPolyhedron (const TPolyhedron& ph) {
-	TPolyhedron newph = ph;
-	newph.vertices = new TVector3[ph.num_vertices];
-#ifdef PANDORA
-	TVector3* pnew =newph.vertices;
-	TVector3* p =ph.vertices;
-	if (ph.num_vertices > 0) {
-		*pnew++ = *p;
-		for (size_t i = 1; i < ph.num_vertices; ++i) {
-			*pnew++ = *++p;
-		}
-	}
-#else
-	copy_n(ph.vertices, ph.num_vertices, newph.vertices);
-#endif
-	return newph;
-}
-
-void FreePolyhedron (const TPolyhedron& ph) {
-	delete[] ph.vertices;
-}
-
-void TransPolyhedron (const TMatrix mat, const TPolyhedron& ph) {
-	for (size_t i=0; i<ph.num_vertices; i++)
+void TransPolyhedron (const TMatrix<4, 4>& mat, TPolyhedron& ph) {
+	for (size_t i = 0; i < ph.vertices.size(); i++)
 		ph.vertices[i] = TransformPoint (mat, ph.vertices[i]);
 }
 
@@ -716,21 +490,19 @@ ETR_DOUBLE ode23_EstimateError(TOdeData *data) {
 	return fabs(err);
 }
 
-ETR_DOUBLE ode23_TimestepExponent(){
+ETR_DOUBLE ode23_TimestepExponent() {
 	return ode23_time_step_exp;
 }
 
-TOdeSolver NewOdeSolver23() {
-	TOdeSolver s;
-	s.NumEstimates = ode23_NumEstimates;
-	s.InitOdeData = ode23_InitOdeData;
-	s.NextTime = ode23_NextTime;
-	s.NextValue = ode23_NextValue;
-	s.UpdateEstimate = ode23_UpdateEstimate;
-	s.FinalEstimate = ode23_FinalEstimate;
-	s.EstimateError = ode23_EstimateError;
-	s.TimestepExponent = ode23_TimestepExponent;
-	return s;
+TOdeSolver::TOdeSolver() {
+	NumEstimates = ode23_NumEstimates;
+	InitOdeData = ode23_InitOdeData;
+	NextTime = ode23_NextTime;
+	NextValue = ode23_NextValue;
+	UpdateEstimate = ode23_UpdateEstimate;
+	FinalEstimate = ode23_FinalEstimate;
+	EstimateError = ode23_EstimateError;
+	TimestepExponent = ode23_TimestepExponent;
 }
 
 ETR_DOUBLE LinearInterp (const ETR_DOUBLE x[], const ETR_DOUBLE y[], ETR_DOUBLE val, int n) {

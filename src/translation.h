@@ -28,7 +28,7 @@ An name convention:
 #include <vector>
 
 #define MAX_LANGUAGES 32
-#define NUM_COMMON_TEXTS 84
+#define NUM_COMMON_TEXTS 86
 #define MAX_COMMON_TEXT_LINES NUM_COMMON_TEXTS*2
 
 
@@ -41,11 +41,8 @@ class CTranslation {
 private:
 	string texts[NUM_COMMON_TEXTS];
 	map<string, size_t> LangIndex;
-	bool languages_ok;
 public:
 	vector<TLang> languages;
-
-	CTranslation ();
 
 	void LoadLanguages ();
 	size_t GetLangIdx (const string& lang) const;
