@@ -93,6 +93,46 @@ void DrawTrees() {
 		float treeHeight = treeLocs[i].height;
 		glNormal3i(0, 0, 1);
 
+#ifdef USE_GLES1
+		static const GLshort tex[] = {
+			0, 0,
+			1, 0,
+			1, 1,
+			0, 0,
+			1, 1,
+			0, 1,
+
+			0, 0,
+			1, 0,
+			1, 1,
+			0, 0,
+			1, 1,
+			0, 1
+		};
+
+		const GLfloat vtx[] = {
+			-treeRadius, 0.0,        0.0,
+			treeRadius,  0.0,        0.0,
+			treeRadius,  treeHeight, 0.0,
+			-treeRadius, 0.0,        0.0,
+			treeRadius,  treeHeight, 0.0,
+			-treeRadius, treeHeight, 0.0,
+
+			0.0,         0.0,        -treeRadius,
+			0.0,         0.0,        treeRadius,
+			0.0,         treeHeight, treeRadius,
+			0.0,         0.0,        -treeRadius,
+			0.0,         treeHeight, treeRadius,
+			0.0,         treeHeight, -treeRadius
+		};
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+		glVertexPointer(3, GL_FLOAT, 0, vtx);
+		glTexCoordPointer(2, GL_SHORT, 0, tex);
+		glDrawArrays(GL_TRIANGLES, 0, 10);
+#else
 		static const GLshort tex[] = {
 			0, 0,
 			1, 0,
@@ -121,6 +161,7 @@ void DrawTrees() {
 		glVertexPointer(3, GL_FLOAT, 0, vtx);
 		glTexCoordPointer(2, GL_SHORT, 0, tex);
 		glDrawArrays(GL_QUADS, 0, 8);
+#endif
 
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
