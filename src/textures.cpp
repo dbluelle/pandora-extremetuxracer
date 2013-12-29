@@ -355,6 +355,11 @@ bool TTexture::Load(const string& filename) {
 	if (texImage.LoadPng (filename.c_str(), true) == false)
 		return false;
 
+#ifdef USE_GLES1
+	width = texImage.nx;
+	height= texImage.ny;
+#endif
+
 	glGenTextures (1, &id);
 	Bind();
     glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
