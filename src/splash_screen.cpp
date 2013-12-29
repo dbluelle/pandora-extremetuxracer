@@ -66,8 +66,11 @@ void CSplashScreen::Loop(ETR_DOUBLE timestep) {
 	Trans.LoadLanguages ();
 	Trans.LoadTranslations (param.language); // Before first texts are being displayed
 
-
+#ifdef PANDORA
+	Tex.Draw (TEXLOGO, CENTER, 60, 0.45);
+#else
 	Tex.Draw (TEXLOGO, CENTER, 60, Winsys.scale);
+#endif
 	FT.SetColor (colDYell);
 	FT.AutoSizeN (6);
 	int top = AutoYPosN (60);	int dist = FT.AutoDistanceN (3);
