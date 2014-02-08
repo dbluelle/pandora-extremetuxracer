@@ -62,24 +62,25 @@ struct TVector3 : public TVector2<T> {
 		: TVector2<T>(_x, _y), z(_z)
 	{}
 	ETR_DOUBLE Length() const {
-		return sqrt(static_cast<ETR_DOUBLE>(this->x*this->x + this->y*this->y + this->z*this->z));
+		return sqrt(static_cast<ETR_DOUBLE>(TVector2<T>::x*TVector2<T>::x +
+											TVector2<T>::y*TVector2<T>::y + z*z));
 	}
-	double Norm();
+	ETR_DOUBLE Norm();
 	TVector3<T>& operator*=(T f) {
-		this->x *= f;
-		this->y *= f;
+		TVector2<T>::x *= f;
+		TVector2<T>::y *= f;
 		this->z *= f;
 		return *this;
 	}
 	TVector3<T>& operator+=(const TVector3<T>& v) {
-		this->x += v.x;
-		this->y += v.y;
+		TVector2<T>::x += v.x;
+		TVector2<T>::y += v.y;
 		this->z += v.z;
 		return *this;
 	}
 	TVector3<T>& operator-=(const TVector3<T>& v) {
-		this->x -= v.x;
-		this->y -= v.y;
+		TVector2<T>::x -= v.x;
+		TVector2<T>::y -= v.y;
 		this->z -= v.z;
 		return *this;
 	}
@@ -91,28 +92,30 @@ struct TVector4 : public TVector3<T> {
 	TVector4(T _x = 0.0, T _y = 0.0, T _z = 0.0, T _w = 0.0)
 		: TVector3<T>(_x, _y, _z), w(_w)
 	{}
-	double Length() const {
-		return sqrt(static_cast<double>(this->x*this->x + this->y*this->y + this->z*this->z + this->w*this->w));
+	ETR_DOUBLE Length() const {
+		return sqrt(static_cast<ETR_DOUBLE>(TVector2<T>::x*TVector2<T>::x +
+										TVector2<T>::y*TVector2<T>::y +
+										TVector3<T>::z*TVector3<T>::z + w*w));
 	}
-	double Norm();
+	ETR_DOUBLE Norm();
 	TVector4<T>& operator*=(T f) {
-		this->x *= f;
-		this->y *= f;
-		this->z *= f;
+		TVector2<T>::x *= f;
+		TVector2<T>::y *= f;
+		TVector3<T>::z *= f;
 		this->w *= f;
 		return *this;
 	}
 	TVector4<T>& operator+=(const TVector4<T>& v) {
-		this->x += v.x;
-		this->y += v.y;
-		this->z += v.z;
+		TVector2<T>::x += v.x;
+		TVector2<T>::y += v.y;
+		TVector3<T>::z += v.z;
 		this->w += v.w;
 		return *this;
 	}
 	TVector4<T>& operator-=(const TVector4<T>& v) {
-		this->x -= v.x;
-		this->y -= v.y;
-		this->z -= v.z;
+		TVector2<T>::x -= v.x;
+		TVector2<T>::y -= v.y;
+		TVector3<T>::z -= v.z;
 		this->w -= v.w;
 		return *this;
 	}
@@ -165,7 +168,7 @@ TVector4<T> operator-(const TVector4<T>& l, const TVector4<T>& r) {
 	return TVector4<T>(l.x - r.x, l.y - r.y, l.z - r.z, l.w - r.w);
 }
 
-double    DotProduct(const TVector3d& v1, const TVector3d& v2);
+ETR_DOUBLE DotProduct(const TVector3d& v1, const TVector3d& v2);
 TVector3d CrossProduct(const TVector3d& u, const TVector3d& v);
 
 

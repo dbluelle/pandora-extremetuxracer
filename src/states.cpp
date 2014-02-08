@@ -42,12 +42,7 @@ void State::Manager::Run(State& entranceState) {
 		CallLoopFunction();
 		if (param.framerate != 0) {
 			clock_t nticks = clock();
-#ifdef PANDORA
-//TODO ignore framerate setting for now
-			int32_t sleeptime = 1;
-#else
-			int32_t sleeptime = CLOCKS_PER_SEC/param.framerate - (nticks-ticks);
-#endif
+			int32_t sleeptime = (CLOCKS_PER_SEC/param.framerate - (nticks-ticks)) / 1000;
 			if (sleeptime > 0)
 				SDL_Delay(sleeptime);
 			ticks = nticks;

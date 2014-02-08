@@ -32,15 +32,15 @@ const TVector4i NullVec4i;
 
 // Instanciate only functions we actually need
 template<>
-double TVector3<ETR_DOUBLE>::Norm() {
-	double square = x*x + y*y + z*z;
+ETR_DOUBLE TVector3<ETR_DOUBLE>::Norm() {
+	ETR_DOUBLE square = x*x + y*y + z*z;
 	if (square == 0.0) return 0.0;
-	double denom = sqrt(square);
+	ETR_DOUBLE denom = sqrt(square);
 	*this *= 1.0 / denom;
 	return denom;
 }
 
-double DotProduct(const TVector3d& v1, const TVector3d& v2) {
+ETR_DOUBLE DotProduct(const TVector3d& v1, const TVector3d& v2) {
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 TVector3d CrossProduct(const TVector3d& u, const TVector3d& v) {
