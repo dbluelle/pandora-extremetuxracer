@@ -56,7 +56,11 @@ void CLoading::Loop(ETR_DOUBLE time_step) {
 		draw_ui_snow ();
 	}
 
+#ifdef PANDORA
+	Tex.Draw (TEXLOGO, CENTER, 40, 0.45);
+#else
 	Tex.Draw (TEXLOGO, CENTER, 40, 0.7);
+#endif
 	Tex.Draw (BOTTOM_LEFT, 0, hh-256, 1);
 	Tex.Draw (BOTTOM_RIGHT, ww-256, hh-256, 1);
 	Tex.Draw (TOP_LEFT, 0, 0, 1);
