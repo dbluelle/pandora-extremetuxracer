@@ -185,6 +185,21 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 	glTranslatef (Winsys.resolution.width - GAUGE_WIDTH, 0, 0);
 	Tex.BindTex (GAUGE_ENERGY);
 	ETR_DOUBLE y = ENERGY_GAUGE_BOTTOM + energy * ENERGY_GAUGE_HEIGHT;
+	
+#ifdef USE_GLES1
+	const GLfloat tex1 [] = {
+		0.0, y/GAUGE_IMG_SIZE,
+		1.0, y/GAUGE_IMG_SIZE,
+		1.0, 1.0f,
+		0.0, 1.0f
+	};
+	const GLfloat tex2 [] = {
+		0.0, 0.0f,
+		1.0, 0.0f,
+		1.0, y/GAUGE_IMG_SIZE,
+		0.0, y/GAUGE_IMG_SIZE
+	};
+#endif
 	const GLfloat vtx1 [] = {
 		0.0, y,
 		GAUGE_IMG_SIZE, y,
@@ -198,16 +213,28 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 		0.0, y
 	};
 	glEnableClientState(GL_VERTEX_ARRAY);
+#ifdef USE_GLES1
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+#endif
 
 	glColor4fv(energy_background_color);
 	glVertexPointer(2, GL_FLOAT, 0, vtx1);
+#ifdef USE_GLES1
+	glTexCoordPointer(2, GL_FLOAT, 0, tex1);
+#endif
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	glColor4fv(energy_foreground_color);
 	glVertexPointer(2, GL_FLOAT, 0, vtx2);
+#ifdef USE_GLES1
+	glTexCoordPointer(2, GL_FLOAT, 0, tex2);
+#endif
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
+#ifdef USE_GLES1
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#endif
 
 	ETR_DOUBLE speedbar_frac = 0.0;
 
@@ -238,6 +265,14 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 
 	glColor4fv (hud_white);
 	Tex.BindTex (GAUGE_OUTLINE);
+#ifdef USE_GLES1
+	static const GLshort tex3 [] = {
+		0, 0,
+		1, 0,
+		1, 1,
+		0, 1
+	};
+#endif
 	static const GLshort vtx3 [] = {
 		0, 0,
 		GAUGE_IMG_SIZE, 0,
@@ -245,11 +280,20 @@ void draw_gauge (ETR_DOUBLE speed, ETR_DOUBLE energy) {
 		0, GAUGE_IMG_SIZE
 	};
 	glEnableClientState(GL_VERTEX_ARRAY);
+#ifdef USE_GLES1
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+#endif
 
 	glVertexPointer(2, GL_SHORT, 0, vtx3);
+#ifdef USE_GLES1
+	glTexCoordPointer(2, GL_SHORT, 0, tex3);
+#endif
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
+#ifdef USE_GLES1
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#endif
 	glPopMatrix();
 }
 
