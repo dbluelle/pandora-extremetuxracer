@@ -76,7 +76,7 @@ void CReset::Loop(ETR_DOUBLE time_step) {
 		size_t last_reset = 0;
 		for (size_t i = 0; i < num_item_types; i++) {
 			if (object_types[i].reset_point == true) {
-				last_reset = first_reset + object_types[i].num_items - 1;
+				last_reset = first_reset + (object_types[i].num_items == 0 ? 0 : object_types[i].num_items - 1);
 				break;
 			} else {
 				first_reset += object_types[i].num_items;
