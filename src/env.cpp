@@ -353,6 +353,42 @@ void CEnvironment::DrawFog () {
 	ScopedRenderMode rm(FOG_PLANE);
 	glEnable (GL_FOG);
 
+#ifdef USE_GLES1
+	GLfloat vtx1[] = {
+		bottomleft.x, bottomleft.y, bottomleft.z,
+		bottomright.x, bottomright.y, bottomright.z,
+		left.x, left.y, left.z,
+		right.x, right.y, right.z,
+		topleft.x, topleft.y, topleft.z,
+		topright.x, topright.y, topright.z,
+		topleft.x+(topleft.x - left.x), topleft.y+(topleft.y - left.y), topleft.z+(topleft.z - left.z),
+		topright.x+(topright.x - right.x), topright.y+(topright.y - right.y), topright.z+(topright.z - right.z),
+		topleft.x+3.0*(topleft.x - left.x), topleft.y+3.0*(topleft.y - left.y), topleft.z+3.0*(topleft.z - left.z),
+		topright.x+3.0*(topright.x - right.x), topright.y+3.0*(topright.y - right.y), topright.z+3.0*(topright.z - right.z)
+	};
+	GLfloat col1[] = {
+		0, 0, 0, 1.0,
+		0, 0, 0, 1.0,
+		0, 0, 0, 1.0,
+		0, 0, 0, 1.0,
+		0, 0, 0, 0.9,
+		0, 0, 0, 0.9,
+		0, 0, 0, 0.3,
+		0, 0, 0, 0.3,
+		0, 0, 0, 0.0,
+		0, 0, 0, 0.0
+	};
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+ 
+	glVertexPointer(3, GL_FLOAT, 0, vtx1);
+	glColorPointer(4, GL_FLOAT, 0, col1);
+	glDrawArrays(GL_TRIANGLE_STRIP,0,10);
+ 
+	glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+#else
 	// only the alpha channel is used
 	static const GLfloat bottom_dens[4]     = {0, 0, 0, 1.0};
 	static const GLfloat top_dens[4]        = { 0, 0, 0, 0.9 };
@@ -382,6 +418,7 @@ void CEnvironment::DrawFog () {
 	vpoint = topright + 3.0 * rightvec;
 	glVertex3(vpoint);
 	glEnd();
+#endif
 }
 
 
