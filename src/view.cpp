@@ -362,8 +362,6 @@ void SetupViewFrustum (const CControl *ctrl) {
 }
 
 clip_result_t clip_aabb_to_view_frustum (const TVector3d& min, const TVector3d& max) {
-	bool intersect = false;
-
 	for (int i=0; i<6; i++) {
 		TVector3d p = min;
 		TVector3d n = max;
@@ -388,10 +386,9 @@ clip_result_t clip_aabb_to_view_frustum (const TVector3d& min, const TVector3d& 
 		}
 
 		if (DotProduct (p, frustum_planes[i].nml) + frustum_planes[i].d > 0) {
-			intersect = true;
+			return SomeClip;
 		}
 	}
-	if (intersect) return SomeClip;
 	return NoClip;
 }
 
