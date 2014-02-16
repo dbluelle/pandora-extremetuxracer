@@ -69,9 +69,9 @@ void SetConfig () {
 	if (mus_vol->GetValue() != param.music_volume ||
 			sound_vol->GetValue() != param.sound_volume ||
 			language->GetValue() != param.language ||
-			resolution->GetValue() != param.res_type
+			detail_level->GetValue() != param.perf_level
 #ifndef PANDORA
-			|| detail_level->GetValue() != param.perf_level
+			|| resolution->GetValue() != param.res_type 
 			|| fullscreen->checked != param.fullscreen
 #endif
 			)
