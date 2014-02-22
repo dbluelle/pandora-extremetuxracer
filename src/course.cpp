@@ -392,6 +392,19 @@ bool CCourse::LoadElevMap () {
 //						LoadItemList
 // ====================================================================
 
+bool sortCollidable (const TCollidable& i,const TCollidable& j)
+{
+	if (i.tree_type == j.tree_type)
+		return i.pt.z < j.pt.z;
+	return i.tree_type<j.tree_type;
+}
+bool sortItem (const TItem& i,const TItem& j)
+{
+	if (i.type == j.type)
+		return i.pt.z < j.pt.z;
+	return i.type<j.type;
+}
+
 void CCourse::LoadItemList () {
 	CSPList list (16000);
 
@@ -424,6 +437,8 @@ void CCourse::LoadItemList () {
 		else
 			NocollArr.push_back(TItem(xx, FindYCoord(xx, zz), zz, height, diam, &ObjTypes[type]));
 	}
+	std::sort(CollArr.begin(),CollArr.end(),sortCollidable);
+	std::sort(NocollArr.begin(),NocollArr.end(),sortItem);
 }
 
 // --------------------	LoadObjectMap ---------------------------------
