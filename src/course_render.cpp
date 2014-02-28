@@ -74,6 +74,12 @@ void DrawTrees() {
 	TCollidable* treeLocs = &Course.CollArr[0];
 	size_t numTrees = Course.CollArr.size();
 
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	
+	glVertexPointer(3, GL_BYTE, 5*sizeof(GLbyte), vtx);
+	glTexCoordPointer(2, GL_BYTE, 5*sizeof(GLbyte), vtx+3);
+	
 	for (size_t i = 0; i< numTrees; i++) {
 		if (clip_course) {
 			if (ctrl->viewpos.z - treeLocs[i].pt.z > fwd_clip_limit) continue;
@@ -89,85 +95,15 @@ void DrawTrees() {
 		glTranslate(treeLocs[i].pt);
 		if (param.perf_level > 1) glRotatef (1, 0, 1, 0);
 
-		float treeRadius = treeLocs[i].diam / 2.0;
-		float treeHeight = treeLocs[i].height;
-		glNormal3i(0, 0, 1);
+		float treeRadius = treeLocs[i].diam / 2.0f;
+		glNormal3f(0, 0, treeRadius);
+		glScalef(treeRadius,treeLocs[i].height,treeRadius);
 
-#ifdef USE_GLES1
-		static const GLshort tex[] = {
-			0, 0,
-			1, 0,
-			1, 1,
-			0, 0,
-			1, 1,
-			0, 1,
-
-			0, 0,
-			1, 0,
-			1, 1,
-			0, 0,
-			1, 1,
-			0, 1
-		};
-
-		const GLfloat vtx[] = {
-			-treeRadius, 0.0,        0.0,
-			treeRadius,  0.0,        0.0,
-			treeRadius,  treeHeight, 0.0,
-			-treeRadius, 0.0,        0.0,
-			treeRadius,  treeHeight, 0.0,
-			-treeRadius, treeHeight, 0.0,
-
-			0.0,         0.0,        -treeRadius,
-			0.0,         0.0,        treeRadius,
-			0.0,         treeHeight, treeRadius,
-			0.0,         0.0,        -treeRadius,
-			0.0,         treeHeight, treeRadius,
-			0.0,         treeHeight, -treeRadius
-		};
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-		glVertexPointer(3, GL_FLOAT, 0, vtx);
-		glTexCoordPointer(2, GL_SHORT, 0, tex);
-		glDrawArrays(GL_TRIANGLES, 0, 10);
-#else
-		static const GLshort tex[] = {
-			0, 0,
-			1, 0,
-			1, 1,
-			0, 1,
-			0, 0,
-			1, 0,
-			1, 1,
-			0, 1
-		};
-
-		const GLfloat vtx[] = {
-			-treeRadius, 0.0,        0.0,
-			treeRadius,  0.0,        0.0,
-			treeRadius,  treeHeight, 0.0,
-			-treeRadius, treeHeight, 0.0,
-			0.0,         0.0,        -treeRadius,
-			0.0,         0.0,        treeRadius,
-			0.0,         treeHeight, treeRadius,
-			0.0,         treeHeight, -treeRadius
-		};
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-		glVertexPointer(3, GL_FLOAT, 0, vtx);
-		glTexCoordPointer(2, GL_SHORT, 0, tex);
-		glDrawArrays(GL_QUADS, 0, 8);
-#endif
-
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_VERTEX_ARRAY);
+		glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT,VERTEX_INDEX_TREE);
 
 		glPopMatrix();
 	}
+
 
 //  items -----------------------------
 	TItem* itemLocs = &Course.NocollArr[0];
@@ -201,29 +137,12 @@ void DrawTrees() {
 		glNormal3(normal);
 		normal.y = 0.0;
 		normal.Norm();
+		glScalef(normal.z*itemRadius,itemHeight,normal.x*itemRadius);
 
-		static const GLshort tex[] = {
-			0, 0,
-			1, 0,
-			1, 1,
-			0, 1
-		};
+		glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT,VERTEX_INDEX_ITEM);
 
-		const GLfloat vtx[] = {
-			-itemRadius*normal.z, 0.0,        itemRadius*normal.x,
-			itemRadius*normal.z, 0.0,        -itemRadius*normal.x,
-			itemRadius*normal.z,  itemHeight, -itemRadius*normal.x,
-			-itemRadius*normal.z, itemHeight, itemRadius*normal.x
-		};
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-		glVertexPointer(3, GL_FLOAT, 0, vtx);
-		glTexCoordPointer(2, GL_SHORT, 0, tex);
-		glDrawArrays(GL_QUADS, 0, 4);
-
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_VERTEX_ARRAY);
 		glPopMatrix();
 	}
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
