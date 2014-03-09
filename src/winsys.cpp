@@ -187,11 +187,14 @@ void CWinsys::Init () {
 	if (SDL_Init (sdl_flags) < 0) Message ("Could not initialize SDL");
 #ifndef PANDORA
 	SDL_GL_SetAttribute (SDL_GL_DOUBLEBUFFER, 1);
-#endif
 #if defined (USE_STENCIL_BUFFER)
 	SDL_GL_SetAttribute (SDL_GL_STENCIL_SIZE, 8);
 #endif
-
+#endif
+#ifdef USE_GLES
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+	glHint(GL_LINE_SMOOTH_HINT, GL_FASTEST);
+#endif
 	SetupVideoMode (GetResolution (param.res_type));
 	Reshape (resolution.width, resolution.height);
 
