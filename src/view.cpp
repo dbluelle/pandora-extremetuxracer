@@ -317,39 +317,41 @@ void update_view (CControl *ctrl, ETR_DOUBLE dt) {
 // --------------------------------------------------------------------
 
 static TPlane frustum_planes[6];
+static TPlane frustum_planes_default[6];
 static char p_vertex_code[6];
 
-
-void SetupViewFrustum (const CControl *ctrl) {
+void InitViewFrustum () {
 	ETR_DOUBLE aspect = (ETR_DOUBLE) Winsys.resolution.width /Winsys.resolution.height;
 
 	ETR_DOUBLE near_dist = NEAR_CLIP_DIST;
 	ETR_DOUBLE far_dist = param.forward_clip_distance;
-	TVector3d origin(0., 0., 0.);
 	ETR_DOUBLE half_fov = ANGLES_TO_RADIANS (param.fov * 0.5);
 	ETR_DOUBLE half_fov_horiz = atan (tan (half_fov) * aspect);
 
-	frustum_planes[0] = TPlane(0, 0, 1, near_dist);
-	frustum_planes[1] = TPlane(0, 0, -1, -far_dist);
-	frustum_planes[2]
+	frustum_planes_default[0] = TPlane(0, 0, 1, near_dist);
+	frustum_planes_default[1] = TPlane(0, 0, -1, -far_dist);
+	frustum_planes_default[2]
 	    = TPlane(-cos(half_fov_horiz), 0, sin(half_fov_horiz), 0);
-	frustum_planes[3]
+	frustum_planes_default[3]
 	    = TPlane(cos(half_fov_horiz), 0, sin(half_fov_horiz), 0);
-	frustum_planes[4]
+	frustum_planes_default[4]
 	    = TPlane(0, cos(half_fov), sin(half_fov), 0);
-	frustum_planes[5]
+	frustum_planes_default[5]
 	    = TPlane(0, -cos(half_fov), sin(half_fov), 0);
+}
 
+void SetupViewFrustum (const CControl *ctrl) {
+	memcpy(frustum_planes,frustum_planes_default,6*sizeof(TPlane));
 	for (int i=0; i<6; i++) {
 		TVector3d pt = TransformPoint (ctrl->view_mat,
-		                               origin + -frustum_planes[i].d * frustum_planes[i].nml);
+		                               -frustum_planes[i].d * frustum_planes[i].nml);
 
 		frustum_planes[i].nml = TransformVector (
 		                            ctrl->view_mat, frustum_planes[i].nml);
 
 		frustum_planes[i].d = -DotProduct (
 		                          frustum_planes[i].nml,
-		                          pt - origin);
+		                          pt);
 	}
 
 	for (int i=0; i<6; i++) {

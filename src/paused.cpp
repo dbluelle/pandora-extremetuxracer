@@ -69,6 +69,9 @@ void CPaused::Mouse (int button, int state, int x, int y) {
 	State::manager.RequestEnterState (Racing);
 }
 
+void CPaused::Enter () {
+	InitViewFrustum ();
+}
 // ====================================================================
 
 void CPaused::Loop (ETR_DOUBLE time_step) {

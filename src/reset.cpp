@@ -47,6 +47,7 @@ static bool position_reset;
 void CReset::Enter() {
 	reset_start_time = Winsys.ClockTime ();
 	position_reset = false;
+	InitViewFrustum ();
 }
 
 void CReset::Loop(ETR_DOUBLE time_step) {

@@ -89,6 +89,7 @@ void CIntro::Enter() {
 
 	Music.PlayTheme (g_game.theme_id, MUS_RACING);
 	param.show_hud = true;
+	InitViewFrustum ();
 }
 
 void CIntro::Loop (ETR_DOUBLE time_step) {
@@ -115,7 +116,6 @@ void CIntro::Loop (ETR_DOUBLE time_step) {
 	RenderCourse ();
 	DrawTrackmarks ();
 	DrawTrees ();
-
 	UpdateWind (time_step);
 	UpdateSnow (time_step, ctrl);
 	DrawSnow (ctrl);

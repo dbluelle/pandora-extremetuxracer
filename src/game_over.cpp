@@ -189,6 +189,7 @@ void CGameOver::Enter() {
 		}
 	}
 	SetStationaryCamera (true);
+	InitViewFrustum ();
 }
 
 

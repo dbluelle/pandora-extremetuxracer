@@ -226,6 +226,7 @@ void CRacing::Enter() {
 	Music.PlayTheme (g_game.theme_id, MUS_RACING);
 
 	g_game.finish = false;
+	InitViewFrustum ();
 }
 
 // -------------------- sound -----------------------------------------
@@ -369,7 +370,6 @@ void CRacing::Loop (ETR_DOUBLE time_step) {
 	SetupViewFrustum (ctrl);
 	if (sky) Env.DrawSkybox (ctrl->viewpos);
 	if (fog) Env.DrawFog ();
-	void SetupLight ();
 	if (terr) RenderCourse ();
 	DrawTrackmarks ();
 	if (trees) DrawTrees ();

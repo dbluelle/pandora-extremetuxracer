@@ -36,6 +36,7 @@ enum clip_result_t {
 	NotVisible
 };
 
+void InitViewFrustum ();
 void SetupViewFrustum (const CControl *ctrl);
 clip_result_t clip_aabb_to_view_frustum (const TVector3d& min, const TVector3d& max);
 
