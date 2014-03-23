@@ -386,6 +386,8 @@ void update_particles (ETR_DOUBLE time_step) {
 	}
 }
 void draw_particles (const CControl *ctrl) {
+	if (particles.size() == 0)
+		return;
 	ScopedRenderMode rm(PARTICLES);
 	Tex.BindTex (SNOW_PART);
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
