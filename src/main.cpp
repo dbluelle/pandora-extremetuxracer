@@ -68,16 +68,36 @@ void InitGame (int argc, char **argv) {
 #undef main
 #endif
 
+#ifdef PANDORA
+void enable_fastmath()
+{
+	static const unsigned int x = 0x04086060;
+	static const unsigned int y = 0x03000000;
+	int r;
+	asm volatile (
+		"fmrx	%0, fpscr			\n\t"	//r0 = FPSCR
+		"and	%0, %0, %1			\n\t"	//r0 = r0 & 0x04086060
+		"orr	%0, %0, %2			\n\t"	//r0 = r0 | 0x03000000
+		"fmxr	fpscr, %0			\n\t"	//FPSCR = r0
+		: "=r"(r)
+		: "r"(x), "r"(y)
+	);
+}
+#endif
 int main( int argc, char **argv ) {
 	// ****************************************************************
 	cout << "\n----------- Extreme Tux Racer " ETR_VERSION_STRING " ----------------";
 	cout << "\n----------- (C) 2010-2013 Extreme Tuxracer Team  --------\n\n";
-
+#ifdef PANDORA
+	enable_fastmath();
+#endif
 	srand (time (NULL));
 	InitConfig (argv[0]);
 	InitGame (argc, argv);
 	Winsys.Init ();
 	InitOpenglExtensions ();
+	BuildGlobalVBO();
+
 	// for checking the joystick and the OpgenGL version (the info is
 	// written on the console):
 	//	Winsys.PrintJoystickInfo ();
@@ -105,6 +125,9 @@ int main( int argc, char **argv ) {
 	}
 
 	Winsys.Quit();
-
+	DeleteGlobalVBO();
+#ifdef USE_GLES1
+	closegles();
+#endif
 	return 0;
 }

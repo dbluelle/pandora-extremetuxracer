@@ -20,49 +20,6 @@ GNU General Public License for more details.
 
 #include "vectors.h"
 
-#define VERTEX_INDEX_TREE vertexindex
-#define VERTEX_INDEX_ITEM vertexindex+12
-static const GLbyte vtx[] = {
-	//trees
-	-1, 0,        0,
-	0, 0,
-	1,  0,        0,
-	1, 0,
-	1,  1, 0,
-	1, 1,
-	-1, 0,        0,
-	0, 0,
-	1,  1, 0,
-	1, 1,
-	-1, 1, 0,
-	0, 1,
-	
-	0,         0,        -1,
-	0, 0,
-	0,         0,        1,
-	1, 0,
-	0,         1, 1,
-	1, 1,
-	0,         0,        -1,
-	0, 0,
-	0,         1, 1,
-	1, 1,
-	0,         1, -1,
-	0, 1,
-	
-	// items
-	-1, 0,1,
-	0, 0,
-	1, 0,-1,
-	1, 0,
-	1,  1, -1,
-	1, 1,
-	-1, 1, 1,
-	0, 1
-};
-static const GLushort vertexindex[] ={0,1,2,3,4,5,6,7,8,9,10,11,
-									  12,13,14,15};
-
 enum Orientation {
 	OR_TOP = 0,			// top-orientated menu widgets
 	OR_BOTTOM = 1		// bottom-orientated

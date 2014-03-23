@@ -38,17 +38,31 @@ enum TRenderMode {
 	RM_UNINITIALIZED = -1
 };
 
+enum GlobalVBOs {
+	TREE=0,
+	ITEM=12,
+	SKYBOX_FRONT=16,
+	SKYBOX_LEFT=20,
+	SKYBOX_RIGHT=24,
+};
 
 #undef GL_EXT_compiled_vertex_array
 
-#ifndef USE_GLES1
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT_p;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT_p;
-#endif
 
 void check_gl_error();
 void InitOpenglExtensions();
+bool BuildGlobalVBO();
+void DeleteGlobalVBO();
+bool BindGlobalVBO();
+void UnbindVBO();
+void RenderGlobalVBO(GLenum mode, int indexcount, GlobalVBOs vbo);
+#ifdef USE_GLES1
+void closegles();
+#endif
 void PrintGLInfo();
+
 
 void set_material (const TColor& diffuse_colour,
                    const TColor& specular_colour,

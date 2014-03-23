@@ -25,6 +25,80 @@ GNU General Public License for more details.
 #include <GL/glu.h>
 #include <stack>
 
+#define GLOBAL_VERTEX_INDEX_SIZE 5*(12+4+12)
+
+static GLbyte global_vtx[] = {
+	//trees
+	-1, 0,        0,
+	0, 0,
+	1,  0,        0,
+	1, 0,
+	1,  1, 0,
+	1, 1,
+	-1, 0,        0,
+	0, 0,
+	1,  1, 0,
+	1, 1,
+	-1, 1, 0,
+	0, 1,
+
+	0,         0,        -1,
+	0, 0,
+	0,         0,        1,
+	1, 0,
+	0,         1, 1,
+	1, 1,
+	0,         0,        -1,
+	0, 0,
+	0,         1, 1,
+	1, 1,
+	0,         1, -1,
+	0, 1,
+
+	// items
+	-1, 0,1,
+	0, 0,
+	1, 0,-1,
+	1, 0,
+	1,  1, -1,
+	1, 1,
+	-1, 1, 1,
+	0, 1,
+
+	//skybox front
+	-1, -1, -1,
+	0,0,
+	1, -1, -1,
+	1,0,
+	1,  1, -1,
+	1,1,
+	-1,  1, -1,
+	0,1,
+	//skybox left
+	-1, -1,  1,
+	0,0,
+	-1, -1, -1,
+	1,0,
+	-1,  1, -1,
+	1,1,
+	-1,  1,  1,
+	0,1,
+	//skybox right
+	1, -1, -1,
+	0,0,
+	1, -1, 1,
+	1,0,
+	1,  1, 1,
+	1,1,
+	1,  1, -1,
+	0,1,
+
+};
+static unsigned int* GlobalVBO= 0;
+static GLushort globalvertexindex[] ={0,1,2,3,4,5,6,7,8,9,10,11,
+									  12,13,14,15,
+									  16,17,18,19,20,21,22,23,24,25,26,27};
+
 static const struct {
 	const char* name;
 	GLenum value;
@@ -53,17 +127,31 @@ void check_gl_error() {
 	}
 }
 
-#ifndef USE_GLES1
+#ifdef USE_GLES1
+#include <dlfcn.h>
+void* gles_library;
+void* glesGetProcAddress(const char* name)
+{
+	return dlsym(gles_library,name);
+}
+#endif
 PFNGLLOCKARRAYSEXTPROC glLockArraysEXT_p = NULL;
 PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT_p = NULL;
-#endif
+PFNGLGENBUFFERSARBPROC glGenBuffersARB_p = NULL;
+PFNGLBINDBUFFERARBPROC glBindBufferARB_p = NULL;
+PFNGLBUFFERDATAARBPROC glBufferDataARB_p = NULL;
+PFNGLDELETEBUFFERSARBPROC glDeleteBuffersARB_p = NULL;
+PFNGLISBUFFERARBPROC glIsBufferARB_p = NULL;
 
 typedef void (*(*get_gl_proc_fptr_t)(const GLubyte *))();
 void InitOpenglExtensions () {
-#ifndef USE_GLES1
 	get_gl_proc_fptr_t get_gl_proc;
-
+#ifdef USE_GLES1
+	gles_library= dlopen("libGLES_CM.so", RTLD_LAZY);
+	get_gl_proc = (get_gl_proc_fptr_t) glesGetProcAddress;
+#else
 	get_gl_proc = (get_gl_proc_fptr_t) SDL_GL_GetProcAddress;
+#endif
 
 	if (get_gl_proc) {
 		glLockArraysEXT_p = (PFNGLLOCKARRAYSEXTPROC) 
@@ -78,11 +166,95 @@ void InitOpenglExtensions () {
 			glLockArraysEXT_p = NULL;
 			glUnlockArraysEXT_p = NULL;
 		}
+		// check for VBO support
+#ifdef USE_GLES1
+		glGenBuffersARB_p = (PFNGLGENBUFFERSARBPROC) get_gl_proc((GLubyte*)"glGenBuffers");
+		glBindBufferARB_p = (PFNGLBINDBUFFERARBPROC) get_gl_proc((GLubyte*)"glBindBuffer");
+		glBufferDataARB_p = (PFNGLBUFFERDATAARBPROC) get_gl_proc((GLubyte*)"glBufferData");
+		glDeleteBuffersARB_p = (PFNGLDELETEBUFFERSARBPROC) get_gl_proc((GLubyte*)"glDeleteBuffers");
+		glIsBufferARB_p = (PFNGLISBUFFERARBPROC) get_gl_proc((GLubyte*)"glIsBuffer");
+#else
+		glGenBuffersARB_p = (PFNGLGENBUFFERSARBPROC) get_gl_proc((GLubyte*)"glGenBuffersARB");
+		glBindBufferARB_p = (PFNGLBINDBUFFERARBPROC) get_gl_proc((GLubyte*)"glBindBufferARB");
+		glBufferDataARB_p = (PFNGLBUFFERDATAARBPROC) get_gl_proc((GLubyte*)"glBufferDataARB");
+		glDeleteBuffersARB_p = (PFNGLDELETEBUFFERSARBPROC) get_gl_proc((GLubyte*)"glDeleteBuffersARB");
+		glIsBufferARB_p = (PFNGLISBUFFERARBPROC) get_gl_proc((GLubyte*)"glIsBufferARB");
+#endif
+		if (glGenBuffersARB_p == NULL ||
+				glBindBufferARB_p == NULL ||
+				glBufferDataARB_p == NULL ||
+				glDeleteBuffersARB_p == NULL ||
+				glIsBufferARB_p == NULL)
+		{
+			Message ("vertex buffer objects extension NOT supported", "");
+			glGenBuffersARB_p = NULL;
+			glBindBufferARB_p = NULL;
+			glBufferDataARB_p = NULL;
+			glDeleteBuffersARB_p = NULL;
+			glIsBufferARB_p = NULL;
+		}
 	} else {
 		Message ("No function available for obtaining GL proc addresses", "");
 	}
+
+}
+bool BuildGlobalVBO()
+{
+	if (glGenBuffersARB_p == NULL) return false;
+	if (glBindBufferARB_p == NULL) return false;
+	if (glBufferDataARB_p == NULL) return false;
+	if (glIsBufferARB_p == NULL) return false;
+
+	GlobalVBO = new unsigned int;
+	glGenBuffersARB_p( 1, GlobalVBO );
+	glBindBufferARB_p( GL_ARRAY_BUFFER, *GlobalVBO );
+	glBufferDataARB_p( GL_ARRAY_BUFFER,GLOBAL_VERTEX_INDEX_SIZE, global_vtx, GL_STATIC_DRAW );
+	glBindBufferARB_p( GL_ARRAY_BUFFER, 0 );
+
+	if (!glIsBufferARB_p(*GlobalVBO)) return false;
+
+	return true;
+}
+
+void DeleteGlobalVBO()
+{
+	if (glIsBufferARB_p == NULL) return;
+	if (glDeleteBuffersARB_p == NULL) return;
+
+	if (glIsBufferARB_p(*GlobalVBO)) glDeleteBuffersARB_p(1, GlobalVBO);
+}
+
+#ifdef USE_GLES1
+void closegles()
+{
+	dlclose(gles_library);
+}
 #endif
 
+bool BindGlobalVBO()
+{
+	if (glBindBufferARB_p == NULL)
+	{
+		glVertexPointer(3, GL_BYTE, 5*sizeof(GLbyte), global_vtx);
+		glTexCoordPointer(2, GL_BYTE, 5*sizeof(GLbyte), global_vtx+3);
+		return false;
+	}
+
+	glBindBufferARB_p(GL_ARRAY_BUFFER,*GlobalVBO);
+	intptr_t AddStride = 0;
+	AddStride+= 3*sizeof(GLbyte);
+	glVertexPointer(3, GL_BYTE, 5*sizeof(GLbyte), 0);
+	glTexCoordPointer(2, GL_BYTE, 5*sizeof(GLbyte), (intptr_t *)(AddStride));
+	return true;
+}
+void UnbindVBO()
+{
+	if (glBindBufferARB_p == NULL) return;
+	glBindBufferARB_p(GL_ARRAY_BUFFER,0);
+}
+void RenderGlobalVBO(GLenum mode,int indexcount, GlobalVBOs vbo)
+{
+	glDrawElements(mode, indexcount, GL_UNSIGNED_INT,globalvertexindex+vbo);
 }
 
 void PrintGLInfo () {
@@ -291,7 +463,7 @@ void set_gl_options (TRenderMode mode) {
 			glEnable (GL_LIGHTING);
 			glDisable (GL_NORMALIZE);
 			glEnable (GL_ALPHA_TEST);
-			glEnable (GL_BLEND);
+			glDisable (GL_BLEND);
 			glDisable (GL_STENCIL_TEST);
 #ifndef USE_GLES1
 			glDisable (GL_TEXTURE_GEN_S);
@@ -312,7 +484,7 @@ void set_gl_options (TRenderMode mode) {
 			glDisable (GL_LIGHTING);
 			glDisable (GL_NORMALIZE);
 			glEnable (GL_ALPHA_TEST);
-			glEnable (GL_BLEND);
+			glDisable (GL_BLEND);
 			glDisable (GL_STENCIL_TEST);
 #ifndef USE_GLES1
 			glDisable (GL_TEXTURE_GEN_S);
@@ -333,7 +505,7 @@ void set_gl_options (TRenderMode mode) {
 			glDisable (GL_LIGHTING);
 			glDisable (GL_NORMALIZE);
 			glDisable (GL_ALPHA_TEST);
-			glEnable (GL_BLEND);
+			glDisable (GL_BLEND);
 			glDisable (GL_STENCIL_TEST);
 #ifndef USE_GLES1
 			glDisable (GL_TEXTURE_GEN_S);

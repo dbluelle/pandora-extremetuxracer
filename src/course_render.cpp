@@ -76,10 +76,7 @@ void DrawTrees() {
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	
-	glVertexPointer(3, GL_BYTE, 5*sizeof(GLbyte), vtx);
-	glTexCoordPointer(2, GL_BYTE, 5*sizeof(GLbyte), vtx+3);
-	
+	BindGlobalVBO();
 	for (size_t i = 0; i< numTrees; i++) {
 		if (clip_course) {
 			if (ctrl->viewpos.z - treeLocs[i].pt.z > fwd_clip_limit) continue;
@@ -99,7 +96,7 @@ void DrawTrees() {
 		glNormal3f(0, 0, treeRadius);
 		glScalef(treeRadius,treeLocs[i].height,treeRadius);
 
-		glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT,VERTEX_INDEX_TREE);
+		RenderGlobalVBO(GL_TRIANGLES,12,TREE);
 
 		glPopMatrix();
 	}
@@ -139,10 +136,11 @@ void DrawTrees() {
 		normal.Norm();
 		glScalef(normal.z*itemRadius,itemHeight,normal.x*itemRadius);
 
-		glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT,VERTEX_INDEX_ITEM);
+		RenderGlobalVBO(GL_QUADS,4,ITEM);
 
 		glPopMatrix();
 	}
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	UnbindVBO();
 }

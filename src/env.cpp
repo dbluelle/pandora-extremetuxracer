@@ -136,7 +136,11 @@ bool CEnvironment::LoadEnvironmentList () {
 	for (size_t i=0; i<list.Count(); i++) {
 		const string& line = list.Line(i);
 		locs[i].name = SPStrN(line, "location");
+#ifdef PANDORA
+		locs[i].high_res = false; // don't use highres textures on Pandora
+#else
 		locs[i].high_res = SPBoolN(line, "high_res", false);
+#endif
 	}
 	list.MakeIndex (EnvIndex, "location");
 	return true;
@@ -205,106 +209,28 @@ void CEnvironment::LoadLight (const string& EnvDir) {
 void CEnvironment::DrawSkybox (const TVector3d& pos) {
 	ScopedRenderMode rm(SKY);
 
-#if defined (OS_LINUX)
-	static const float aa = 0.0f;
-	static const float bb = 1.0f;
-#else
-	static const float aa = 0.005f;
-	static const float bb = 0.995f;
-#endif
-
 	glColor4f (1.0, 1.0, 1.0, 1.0);
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
 	glPushMatrix();
 	glTranslate(pos);
 
-	static const GLfloat tex[] = {
-		aa, aa,
-		bb, aa,
-		bb, bb,
-		aa, bb
-	};
-
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	// front
-	static const GLshort front[] = {
-		-1, -1, -1,
-		1, -1, -1,
-		1,  1, -1,
-		-1,  1, -1
-	};
+	BindGlobalVBO();
+
 
 	Skybox[0].Bind();
-	glVertexPointer(3, GL_SHORT, 0, front);
-	glTexCoordPointer(2, GL_FLOAT, 0, tex);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	RenderGlobalVBO(GL_TRIANGLE_FAN,4,SKYBOX_FRONT);
 
-	// left
-	static const GLshort left[] = {
-		-1, -1,  1,
-		-1, -1, -1,
-		-1,  1, -1,
-		-1,  1,  1
-	};
 	Skybox[1].Bind();
-	glVertexPointer(3, GL_SHORT, 0, left);
-	glTexCoordPointer(2, GL_FLOAT, 0, tex);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	RenderGlobalVBO(GL_TRIANGLE_FAN,4,SKYBOX_LEFT);
 
-	// right
-	static const GLshort right[] = {
-		1, -1, -1,
-		1, -1, 1,
-		1,  1, 1,
-		1,  1, -1
-	};
 	Skybox[2].Bind();
-	glVertexPointer(3, GL_SHORT, 0, right);
-	glTexCoordPointer(2, GL_FLOAT, 0, tex);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	RenderGlobalVBO(GL_TRIANGLE_FAN,4,SKYBOX_RIGHT);
 
-	// normally, the following textures are unvisible
-	// see game_config.cpp (param.full_skybox)
-	if (param.full_skybox) {
-		// top
-		static const GLshort top[] = {
-			-1, 1, -1,
-			1, 1, -1,
-			1, 1,  1,
-			-1, 1,  1
-		};
-		Skybox[3].Bind();
-		glVertexPointer(3, GL_SHORT, 0, top);
-		glTexCoordPointer(2, GL_FLOAT, 0, tex);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-		// bottom
-		static const GLshort bottom[] = {
-			-1, -1,  1,
-			1, -1,  1,
-			1, -1, -1,
-			-1, -1, -1
-		};
-		Skybox[4].Bind();
-		glVertexPointer(3, GL_SHORT, 0, bottom);
-		glTexCoordPointer(2, GL_FLOAT, 0, tex);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-		// back
-		static const GLshort back[] = {
-			1, -1, 1,
-			-1, -1, 1,
-			-1,  1, 1,
-			1,  1, 1
-		};
-		Skybox[5].Bind();
-		glVertexPointer(3, GL_SHORT, 0, back);
-		glTexCoordPointer(2, GL_FLOAT, 0, tex);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	}
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	UnbindVBO();
 	glPopMatrix();
 }
 
@@ -356,34 +282,32 @@ void CEnvironment::DrawFog () {
 #ifdef USE_GLES1
 	GLfloat vtx1[] = {
 		bottomleft.x, bottomleft.y, bottomleft.z,
+		0, 0, 0, 1.0,
 		bottomright.x, bottomright.y, bottomright.z,
+		0, 0, 0, 1.0,
 		left.x, left.y, left.z,
+		0, 0, 0, 1.0,
 		right.x, right.y, right.z,
+		0, 0, 0, 1.0,
 		topleft.x, topleft.y, topleft.z,
+		0, 0, 0, 0.9,
 		topright.x, topright.y, topright.z,
+		0, 0, 0, 0.9,
 		topleft.x+(topleft.x - left.x), topleft.y+(topleft.y - left.y), topleft.z+(topleft.z - left.z),
+		0, 0, 0, 0.3,
 		topright.x+(topright.x - right.x), topright.y+(topright.y - right.y), topright.z+(topright.z - right.z),
+		0, 0, 0, 0.3,
 		topleft.x+3.0*(topleft.x - left.x), topleft.y+3.0*(topleft.y - left.y), topleft.z+3.0*(topleft.z - left.z),
-		topright.x+3.0*(topright.x - right.x), topright.y+3.0*(topright.y - right.y), topright.z+3.0*(topright.z - right.z)
-	};
-	GLfloat col1[] = {
-		0, 0, 0, 1.0,
-		0, 0, 0, 1.0,
-		0, 0, 0, 1.0,
-		0, 0, 0, 1.0,
-		0, 0, 0, 0.9,
-		0, 0, 0, 0.9,
-		0, 0, 0, 0.3,
-		0, 0, 0, 0.3,
 		0, 0, 0, 0.0,
+		topright.x+3.0*(topright.x - right.x), topright.y+3.0*(topright.y - right.y), topright.z+3.0*(topright.z - right.z),
 		0, 0, 0, 0.0
 	};
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
- 
-	glVertexPointer(3, GL_FLOAT, 0, vtx1);
-	glColorPointer(4, GL_FLOAT, 0, col1);
+
+	glVertexPointer(3, GL_FLOAT, 7*sizeof(GLfloat), vtx1);
+	glColorPointer(4, GL_FLOAT, 7*sizeof(GLfloat), vtx1+3);
 	glDrawArrays(GL_TRIANGLE_STRIP,0,10);
  
 	glDisableClientState(GL_COLOR_ARRAY);
