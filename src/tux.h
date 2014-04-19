@@ -106,7 +106,7 @@ private:
 	bool CheckCollision (const TPolyhedron& ph);
 
 	// shadow
-	void DrawShadowVertex(ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z, const TMatrix<4, 4>& mat);
+	void DrawShadowVertex(int& n, const TMatrix<4, 4>& mat);
 	void DrawShadowSphere(const TMatrix<4, 4>& mat);
 	void TraverseDagForShadow(const TCharNode *node, const TMatrix<4, 4>& mat);
 

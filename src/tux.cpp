@@ -639,97 +639,114 @@ bool CCharShape::Collision (const TVector3d& pos, const TPolyhedron& ph) {
 // --------------------------------------------------------------------
 //				shadow
 // --------------------------------------------------------------------
+bool bLoaded = false;
+ETR_DOUBLE vectors[32*3];
 
-void CCharShape::DrawShadowVertex(ETR_DOUBLE x, ETR_DOUBLE y, ETR_DOUBLE z, const TMatrix<4, 4>& mat) {
-	TVector3d pt(x, y, z);
+void CCharShape::DrawShadowVertex(int& n, const TMatrix<4, 4>& mat) {
+	TVector3d pt(vectors[n],vectors[n+1] , vectors[n+2]);
+	n += 3;
 	pt = TransformPoint (mat, pt);
 	ETR_DOUBLE old_y = pt.y;
-	TVector3d nml = Course.FindCourseNormal (pt.x, pt.z);
+	//TVector3d nml = Course.FindCourseNormal (pt.x, pt.z);
 	pt.y = Course.FindYCoord (pt.x, pt.z) + SHADOW_HEIGHT;
 	if (pt.y > old_y) pt.y = old_y;
-	glNormal3(nml);
+	//glNormal3(nml);
 	glVertex3(pt);
 }
 
 void CCharShape::DrawShadowSphere(const TMatrix<4, 4>& mat) {
-	ETR_DOUBLE theta, phi, d_theta, d_phi, eps, twopi;
-	ETR_DOUBLE x, y, z;
-	int div = param.tux_shadow_sphere_divisions;
-
-	eps = 1e-15;
-	twopi = M_PI * 2.0;
-	d_theta = d_phi = M_PI / div;
-
-	for (phi = 0.0; phi + eps < M_PI; phi += d_phi) {
-		ETR_DOUBLE cos_theta, sin_theta;
-		ETR_DOUBLE sin_phi, cos_phi;
-		ETR_DOUBLE sin_phi_d_phi, cos_phi_d_phi;
-
-		sin_phi = sin (phi);
-		cos_phi = cos (phi);
-		sin_phi_d_phi = sin (phi + d_phi);
-		cos_phi_d_phi = cos (phi + d_phi);
-
-		if (phi <= eps) {
-			glBegin (GL_TRIANGLE_FAN);
-			DrawShadowVertex (0., 0., 1., mat);
-
-			for (theta = 0.0; theta + eps < twopi; theta += d_theta) {
-				sin_theta = sin (theta);
-				cos_theta = cos (theta);
-
-				x = cos_theta * sin_phi_d_phi;
-				y = sin_theta * sin_phi_d_phi;
-				z = cos_phi_d_phi;
-				DrawShadowVertex (x, y, z, mat);
+	int vc  = 0;
+	if (!bLoaded)
+	{
+		ETR_DOUBLE theta, phi, d_theta, d_phi, eps, twopi;
+		//int div = param.tux_shadow_sphere_divisions;
+		eps = 1e-15;
+		twopi = M_PI * 2.0;
+		d_theta = d_phi = M_PI / 3;
+		for (phi = 0.0; phi + eps < M_PI; phi += d_phi) {
+			ETR_DOUBLE cos_theta, sin_theta;
+			ETR_DOUBLE sin_phi, cos_phi;
+			ETR_DOUBLE sin_phi_d_phi, cos_phi_d_phi;
+			
+			sin_phi = sin (phi);
+			cos_phi = cos (phi);
+			sin_phi_d_phi = sin (phi + d_phi);
+			cos_phi_d_phi = cos (phi + d_phi);
+			
+			if (phi <= eps) {
+				vectors[vc++] = 0.0;
+				vectors[vc++] = 0.0;
+				vectors[vc++] = 1.0;
+				for (theta = 0.0; theta + eps < twopi; theta += d_theta) {
+					sin_theta = sin (theta);
+					cos_theta = cos (theta);
+					
+					vectors[vc++] = cos_theta * sin_phi_d_phi;
+					vectors[vc++] = sin_theta * sin_phi_d_phi;
+					vectors[vc++] = cos_phi_d_phi;
+				}
+				vectors[vc++] = sin_phi_d_phi;
+				vectors[vc++] = 0.0;
+				vectors[vc++] = cos_phi_d_phi;
+			} else if (phi + d_phi + eps >= M_PI) {
+				vectors[vc++] = 0.0;
+				vectors[vc++] = 0.0;
+				vectors[vc++] = -1.0;
+				for (theta = twopi; theta - eps > 0; theta -= d_theta) {
+					sin_theta = sin (theta);
+					cos_theta = cos (theta);
+					vectors[vc++] = cos_theta * sin_phi;
+					vectors[vc++] = sin_theta * sin_phi;
+					vectors[vc++] = cos_phi;
+				}
+				vectors[vc++] = sin_phi;
+				vectors[vc++] = 0.0;
+				vectors[vc++] = cos_phi;
+			} else {
+				for (theta = 0.0; theta + eps < twopi; theta += d_theta) {
+					sin_theta = sin (theta);
+					cos_theta = cos (theta);
+					vectors[vc++] = cos_theta * sin_phi;
+					vectors[vc++] = sin_theta * sin_phi;
+					vectors[vc++] = cos_phi;
+					
+					vectors[vc++] = cos_theta * sin_phi_d_phi;
+					vectors[vc++] = sin_theta * sin_phi_d_phi;
+					vectors[vc++] = cos_phi_d_phi;
+				}
+				vectors[vc++] = sin_phi;
+				vectors[vc++] = 0.0;
+				vectors[vc++] = cos_phi;
+				vectors[vc++] = sin_phi_d_phi;
+				vectors[vc++] = 0.0;
+				vectors[vc++] = cos_phi_d_phi;
 			}
-			x = sin_phi_d_phi;
-			y = 0.0;
-			z = cos_phi_d_phi;
-			DrawShadowVertex (x, y, z, mat);
-			glEnd();
-		} else if (phi + d_phi + eps >= M_PI) {
-			glBegin (GL_TRIANGLE_FAN);
-			DrawShadowVertex (0., 0., -1., mat);
-			for (theta = twopi; theta - eps > 0; theta -= d_theta) {
-				sin_theta = sin (theta);
-				cos_theta = cos (theta);
-				x = cos_theta * sin_phi;
-				y = sin_theta * sin_phi;
-				z = cos_phi;
-				DrawShadowVertex (x, y, z, mat);
-			}
-			x = sin_phi;
-			y = 0.0;
-			z = cos_phi;
-			DrawShadowVertex (x, y, z, mat);
-			glEnd();
-		} else {
-			glBegin (GL_TRIANGLE_STRIP);
-			for (theta = 0.0; theta + eps < twopi; theta += d_theta) {
-				sin_theta = sin (theta);
-				cos_theta = cos (theta);
-				x = cos_theta * sin_phi;
-				y = sin_theta * sin_phi;
-				z = cos_phi;
-				DrawShadowVertex (x, y, z, mat);
-
-				x = cos_theta * sin_phi_d_phi;
-				y = sin_theta * sin_phi_d_phi;
-				z = cos_phi_d_phi;
-				DrawShadowVertex (x, y, z, mat);
-			}
-			x = sin_phi;
-			y = 0.0;
-			z = cos_phi;
-			DrawShadowVertex (x, y, z, mat);
-			x = sin_phi_d_phi;
-			y = 0.0;
-			z = cos_phi_d_phi;
-			DrawShadowVertex (x, y, z, mat);
-			glEnd();
 		}
+		bLoaded = true;
 	}
+	vc  = 0;
+	glBegin (GL_TRIANGLE_FAN);
+	DrawShadowVertex (vc, mat);
+	for (int x = 0;x < 7; x++) {
+		DrawShadowVertex (vc, mat);
+	}
+	DrawShadowVertex (vc, mat);
+	glEnd();
+	glBegin (GL_TRIANGLE_STRIP);
+	for (int x = 0;x < 7; x++) {
+		DrawShadowVertex (vc, mat);
+		DrawShadowVertex (vc, mat);
+	}
+	DrawShadowVertex (vc, mat);
+	DrawShadowVertex (vc, mat);
+	glEnd();
+	glBegin (GL_TRIANGLE_FAN);
+	DrawShadowVertex (vc, mat);
+	for (int x = 0;x < 6; x++) {
+		DrawShadowVertex (vc, mat);
+	}
+	DrawShadowVertex (vc, mat);
+	glEnd();
 }
 
 void CCharShape::TraverseDagForShadow(const TCharNode *node, const TMatrix<4, 4>& mat) {
