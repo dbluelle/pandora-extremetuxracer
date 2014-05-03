@@ -50,6 +50,12 @@ static const TColor shad_col(0.0, 0.0, 0.0, 0.1);
 
 static const TCharMaterial TuxDefMat = {TColor(0.5, 0.5, 0.5, 1.0), TColor(0.0, 0.0, 0.0, 1.0), 0.0};
 static const TCharMaterial Highlight = {TColor(0.8, 0.15, 0.15, 1.0), TColor(0.0, 0.0, 0.0, 1.0), 0.0};
+
+static int numpoints = 0;
+static bool bVerticesLoaded = false;
+static GLfloat charvertices[30000];
+static GLushort charvertexcount[10000];
+
 CCharShape TestChar;
 
 CCharShape::CCharShape () {
@@ -65,6 +71,31 @@ CCharShape::CCharShape () {
 	useHighlighting = false;
 	highlighted = false;
 	highlight_node = -1;
+
+	if (!bVerticesLoaded)
+	{
+		float fTheta = 32 * M_PI/180.0;
+		float fPhi = fTheta;
+		int pos = 0;
+		
+		for(float phi = -(M_PI); phi < M_PI; phi+=fPhi) 
+		{
+			for(float theta = 0.0; theta < (2*M_PI); theta+=fTheta) 
+			{
+				charvertices[pos++] = (sin(phi) * cos(theta));
+				charvertices[pos++] = (sin(phi) * sin(theta));
+				charvertices[pos++] = (cos(phi));
+				charvertexcount[numpoints] = numpoints;
+				numpoints++;
+				charvertices[pos++] = (sin(phi+fPhi) * cos(theta));
+				charvertices[pos++] = (sin(phi+fPhi) * sin(theta));
+				charvertices[pos++] = (cos(phi+fPhi));
+				charvertexcount[numpoints] = numpoints;
+				numpoints++;
+			}
+		}
+		bVerticesLoaded = true;
+	}
 }
 
 CCharShape::~CCharShape() {
@@ -364,12 +395,10 @@ void CCharShape::CreateMaterial (const string& line) {
 // --------------------------------------------------------------------
 
 void CCharShape::DrawCharSphere (int num_divisions) {
-	GLUquadricObj *qobj = gluNewQuadric();
-	gluQuadricDrawStyle (qobj, GLU_FILL);
-	gluQuadricOrientation (qobj, GLU_OUTSIDE);
-	gluQuadricNormals (qobj, GLU_SMOOTH);
-	gluSphere (qobj, 1.0, (GLint)2.0 * num_divisions, num_divisions);
-	gluDeleteQuadric (qobj);
+	if (num_divisions<1)
+		return;
+	
+	glDrawElements(GL_TRIANGLE_STRIP, numpoints, GL_UNSIGNED_INT, charvertexcount);
 }
 
 void CCharShape::DrawNodes (const TCharNode *node) {
@@ -411,7 +440,13 @@ void CCharShape::Draw () {
 	TCharNode *node = GetNode(0);
 	if (node == NULL) return;
 
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glNormalPointer(GL_FLOAT, 0,charvertices);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 0,charvertices);
 	DrawNodes (node);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisable (GL_NORMALIZE);
 	if (param.perf_level > 2 && g_game.argument == 0) DrawShadow ();
 	highlighted = false;
