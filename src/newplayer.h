@@ -23,7 +23,7 @@ GNU General Public License for more details.
 
 class CNewPlayer : public State {
 	void Enter();
-	void Loop(ETR_DOUBLE time_step);
+	void Loop();
 	void Keyb_spec(SDL_keysym sym, bool release);
 	void Mouse(int button, int state, int x, int y);
 	void Motion(int x, int y);

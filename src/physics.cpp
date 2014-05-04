@@ -468,16 +468,16 @@ ETR_DOUBLE CControl::AdjustTimeStep (ETR_DOUBLE h, const TVector3d& vel) {
 	return h;
 }
 
-void CControl::SolveOdeSystem (ETR_DOUBLE timestep) {
+void CControl::SolveOdeSystem () {
 	ETR_DOUBLE pos_err[3], vel_err[3], tot_pos_err, tot_vel_err;
 	ETR_DOUBLE err=0, tol=0;
 
 	static const TOdeSolver solver;
 	ETR_DOUBLE h = ode_time_step;
 	if (h < 0 || solver.EstimateError == NULL)
-		h = AdjustTimeStep (timestep, cvel);
+		h = AdjustTimeStep (g_game.time_step,cvel);
 	ETR_DOUBLE t = 0;
-	ETR_DOUBLE tfinal = timestep;
+	ETR_DOUBLE tfinal = g_game.time_step;
 
 	TOdeData x;
 	TOdeData y;
@@ -621,7 +621,7 @@ void CControl::SolveOdeSystem (ETR_DOUBLE timestep) {
 //				update tux position
 // --------------------------------------------------------------------
 
-void CControl::UpdatePlayerPos (ETR_DOUBLE timestep) {
+void CControl::UpdatePlayerPos (bool eps) {
 	CCharShape *shape = g_game.character->shape;
 	ETR_DOUBLE paddling_factor;
 	ETR_DOUBLE flap_factor;
@@ -637,7 +637,7 @@ void CControl::UpdatePlayerPos (ETR_DOUBLE timestep) {
 		minFrictspeed = MIN_FRICT_SPEED;
 	}
 
-	if (timestep > 2 * EPS) SolveOdeSystem (timestep);
+	if (!eps && g_game.time_step > 2 * EPS) SolveOdeSystem ();
 
 	TPlane surf_plane = Course.GetLocalCoursePlane (cpos);
 	TVector3d surf_nml = surf_plane.nml; // normal vector of terrain
@@ -647,7 +647,7 @@ void CControl::UpdatePlayerPos (ETR_DOUBLE timestep) {
 	AdjustVelocity (surf_plane);
 	AdjustPosition (surf_plane, dist_from_surface);
 	SetTuxPosition (speed);	// speed only to set finish_speed
-	shape->AdjustOrientation (this, timestep, dist_from_surface, surf_nml);
+	shape->AdjustOrientation (this, eps, dist_from_surface, surf_nml);
 
 	flap_factor = 0;
 	if (is_paddling) {

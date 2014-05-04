@@ -139,6 +139,5 @@ void State::Manager::CallLoopFunction() {
 	g_game.time_step = cur_time - clock_time;
 	if (g_game.time_step < 0.0001) g_game.time_step = 0.0001;
 	clock_time = cur_time;
-
-	current->Loop(g_game.time_step);
+	current->Loop();
 }

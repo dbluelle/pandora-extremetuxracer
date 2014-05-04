@@ -175,7 +175,7 @@ void CRaceSelect::Enter() {
 	textbuttons[1] = AddTextButton (Trans.Text(8), area.left + 50, AutoYPosN (80), siz);
 }
 
-void CRaceSelect::Loop(ETR_DOUBLE timestep) {
+void CRaceSelect::Loop() {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 	TColor col;
@@ -187,7 +187,7 @@ void CRaceSelect::Loop(ETR_DOUBLE timestep) {
 
 	Music.Update ();
 	if (param.ui_snow) {
-		update_ui_snow (timestep);
+		update_ui_snow ();
 		draw_ui_snow ();
 	}
 

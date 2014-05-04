@@ -533,7 +533,7 @@ TVector3d CCharShape::AdjustRollvector (const CControl *ctrl, const TVector3d& v
 	return TransformVector (rot_mat, zvec);
 }
 
-void CCharShape::AdjustOrientation (CControl *ctrl, ETR_DOUBLE dtime,
+void CCharShape::AdjustOrientation (CControl *ctrl, bool eps,
                                     ETR_DOUBLE dist_from_surface, const TVector3d& surf_nml) {
 	TVector3d new_y, new_z;
 	static const TVector3d minus_z_vec(0, 0, -1);
@@ -563,6 +563,7 @@ void CCharShape::AdjustOrientation (CControl *ctrl, ETR_DOUBLE dtime,
 
 	ETR_DOUBLE time_constant = dist_from_surface > 0 ? TO_AIR_TIME : TO_TIME;
 
+	float dtime = eps ? EPS : g_game.time_step;
 	ctrl->corientation = InterpolateQuaternions (
 	                         ctrl->corientation, new_orient,
 	                         min (dtime / time_constant, 1.0));

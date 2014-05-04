@@ -243,7 +243,7 @@ void CScore::Enter() {
 const string ordinals[10] =
 {"1:st", "2:nd", "3:rd", "4:th", "5:th", "6:th", "7:th", "8:th", "9:th", "10:th"};
 
-void CScore::Loop (ETR_DOUBLE timestep) {
+void CScore::Loop () {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 
@@ -254,7 +254,7 @@ void CScore::Loop (ETR_DOUBLE timestep) {
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
-		update_ui_snow (timestep);
+		update_ui_snow ();
 		draw_ui_snow();
 	}
 

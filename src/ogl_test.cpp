@@ -56,7 +56,7 @@ void COglTest::Enter() {
 	Winsys.KeyRepeat (true);
 }
 
-void COglTest::Loop(ETR_DOUBLE timestep) {
+void COglTest::Loop() {
 	check_gl_error();
 
 	// ------------- 3d scenery ---------------------------------------

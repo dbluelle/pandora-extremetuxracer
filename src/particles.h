@@ -27,7 +27,7 @@ GNU General Public License for more details.
 // --------------------------------------------------------------------
 
 void init_ui_snow ();
-void update_ui_snow (ETR_DOUBLE time_step);
+void update_ui_snow ();
 void push_ui_snow (const TVector2i& pos);
 void draw_ui_snow ();
 
@@ -36,7 +36,7 @@ void draw_ui_snow ();
 // --------------------------------------------------------------------
 
 void create_new_particles (const TVector3d& loc, const TVector3d& vel, int num);
-void update_particles (ETR_DOUBLE time_step);
+void update_particles ();
 void clear_particles ();
 void draw_particles (const CControl *ctrl);
 void generate_particles (const CControl *ctrl, ETR_DOUBLE dtime, const TVector3d& pos, ETR_DOUBLE speed);
@@ -99,7 +99,7 @@ private:
 public:
 	void Init (int grade, const CControl *ctrl);
 	void Reset ();
-	void Update (ETR_DOUBLE timestep, const CControl *ctrl);
+	void Update (const CControl *ctrl);
 	void Draw (const CControl *ctrl) const;
 };
 
@@ -147,7 +147,7 @@ struct TCurtain {
 	    int curt_texture);
 	void SetStartParams(const CControl* ctrl);
 	void Draw() const;
-	void Update(float timestep, const TVector3d& drift, const CControl* ctrl);
+	void Update(const TVector3d& drift, const CControl* ctrl);
 
 private:
 	static void CurtainVec (float angle, float zdist, float &x, float &z);
@@ -160,7 +160,7 @@ private:
 	void SetStartParams (const CControl *ctrl);
 public:
 	void Init (const CControl *ctrl);
-	void Update (float timestep, const CControl *ctrl);
+	void Update (const CControl *ctrl);
 	void Draw ();
 	void Reset ();
 };
@@ -209,7 +209,7 @@ private:
 public:
 	CWind ();
 
-	void Update (float timestep);
+	void Update ();
 	void Init (int wind_id);
 	bool Windy () const { return windy; }
 	float Angle () const { return WAngle; }
@@ -224,9 +224,9 @@ extern CWind Wind;
 // --------------------------------------------------------------------
 
 void InitSnow (const CControl *ctrl);
-void UpdateSnow (ETR_DOUBLE timestep, const CControl *ctrl);
+void UpdateSnow (const CControl *ctrl);
 void DrawSnow (const CControl *ctrl);
 void InitWind ();
-void UpdateWind (ETR_DOUBLE timestep);
+void UpdateWind ();
 
 #endif

@@ -53,8 +53,8 @@ void SetStationaryCamera (bool stat) {
 }
 
 static ETR_DOUBLE camera_distance = 4.0;
-void IncCameraDistance (ETR_DOUBLE timestep) {
-	camera_distance += timestep * CAMERA_DISTANCE_INCREMENT;
+void IncCameraDistance () {
+	camera_distance += g_game.time_step * CAMERA_DISTANCE_INCREMENT;
 }
 
 void SetCameraDistance (ETR_DOUBLE val) {camera_distance = val;}
@@ -166,13 +166,13 @@ TVector3d MakeViewVector () {
 	return camera_distance * res;
 }
 
-void update_view (CControl *ctrl, ETR_DOUBLE dt) {
+void update_view (CControl *ctrl, bool eps) {
 	if (is_stationary) {
 		glLoadIdentity();
 		glMultMatrix(stationary_matrix);
 		return;
 	}
-
+	float dt = eps ? EPS : g_game.time_step;
 	TVector3d view_pt(0,0,0);
 	TVector3d view_dir;
 

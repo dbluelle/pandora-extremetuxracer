@@ -23,7 +23,7 @@ GNU General Public License for more details.
 
 class CReset : public State {
 	void Enter();
-	void Loop(ETR_DOUBLE time_step);
+	void Loop();
 public:
 };
 

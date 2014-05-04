@@ -74,7 +74,7 @@ void CPaused::Enter () {
 }
 // ====================================================================
 
-void CPaused::Loop (ETR_DOUBLE time_step) {
+void CPaused::Loop () {
 	CControl *ctrl = g_game.player->ctrl;
 	int width = Winsys.resolution.width;
 	int height = Winsys.resolution.height;

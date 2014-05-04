@@ -40,7 +40,7 @@ void CLoading::Enter() {
 	Music.Play ("loading", -1);
 }
 
-void CLoading::Loop(ETR_DOUBLE time_step) {
+void CLoading::Loop() {
 	TCourse *CourseList = &Course.CourseList[0];
 
 	int ww = Winsys.resolution.width;
@@ -52,7 +52,7 @@ void CLoading::Loop(ETR_DOUBLE time_step) {
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
-		update_ui_snow (time_step);
+		update_ui_snow ();
 		draw_ui_snow ();
 	}
 

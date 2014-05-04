@@ -108,7 +108,7 @@ void CRegist::Enter() {
 		Winsys.Terminate(); // Characters are necessary - ETR is unusable otherwise
 }
 
-void CRegist::Loop (ETR_DOUBLE timestep) {
+void CRegist::Loop () {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 	Music.Update ();
@@ -119,7 +119,7 @@ void CRegist::Loop (ETR_DOUBLE timestep) {
 	TColor col;
 
 	if (param.ui_snow) {
-		update_ui_snow (timestep);
+		update_ui_snow ();
 		draw_ui_snow();
 	}
 

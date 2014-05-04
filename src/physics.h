@@ -101,7 +101,7 @@ private:
 	void     AdjustPosition (const TPlane& surf_plane, ETR_DOUBLE dist_from_surface);
 	void     SetTuxPosition (ETR_DOUBLE speed);
 	ETR_DOUBLE   AdjustTimeStep (ETR_DOUBLE h, const TVector3d& vel);
-	void     SolveOdeSystem (ETR_DOUBLE timestep);
+	void     SolveOdeSystem ();
 public:
 	CControl ();
 
@@ -148,7 +148,7 @@ public:
 	ETR_DOUBLE minFrictspeed;
 
 	void Init ();
-	void UpdatePlayerPos (ETR_DOUBLE timestep);
+	void UpdatePlayerPos (bool eps);
 };
 
 #endif

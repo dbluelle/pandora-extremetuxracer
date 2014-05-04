@@ -225,7 +225,7 @@ void PrintFrameParams (int ytop, TKeyframe *frame) {
 	}
 }
 
-void RenderSingleFrame (ETR_DOUBLE timestep) {
+void RenderSingleFrame () {
 	if (!must_render) return;
 	check_gl_error ();
 
@@ -238,7 +238,7 @@ void RenderSingleFrame (ETR_DOUBLE timestep) {
 
 	glPushMatrix ();
 	SetToolLight ();
-	GluCamera.Update (timestep);
+	GluCamera.Update (g_game.time_step);
 
 	TestFrame.CalcKeyframe (curr_frame, &TestChar, ref_position);
 	TestChar.Draw ();
@@ -306,13 +306,13 @@ void SequenceKeys (unsigned int key, bool special, bool release, int x, int y) {
 void SequenceMouse (int button, int state, int x, int y) {}
 void SequenceMotion (int x, int y) {}
 
-void RenderSequence (ETR_DOUBLE timestep) {
+void RenderSequence () {
 	check_gl_error();
 	ScopedRenderMode rm(TUX);
 	ClearRenderContext (colDDBackgr);
 
-	GluCamera.Update (timestep);
-	if (TestFrame.active) TestFrame.UpdateTest (timestep, &TestChar);
+	GluCamera.Update (g_game.time_step);
+	if (TestFrame.active) TestFrame.UpdateTest (g_game.time_step, &TestChar);
 	else if (keyrun) {
 		TestFrame.InitTest (NullVec3, &TestChar);
 		keyrun = false;

@@ -52,7 +52,7 @@ void CHelp::Enter() {
 	ytop = AutoYPosN (15);
 }
 
-void CHelp::Loop(ETR_DOUBLE timestep) {
+void CHelp::Loop() {
 	Music.Update ();
 	check_gl_error();
 	ClearRenderContext ();
@@ -60,7 +60,7 @@ void CHelp::Loop(ETR_DOUBLE timestep) {
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
-		update_ui_snow (timestep);
+		update_ui_snow ();
 		draw_ui_snow();
 	}
 

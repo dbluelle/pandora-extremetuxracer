@@ -323,7 +323,7 @@ void DrawActionFloat (size_t nr, const string& s, int y, float f) {
 	FT.DrawString (100, y, Float_StrN (f, 2));
 }
 
-void RenderChar (ETR_DOUBLE timestep) {
+void RenderChar () {
 	if (!must_render) return;
 	bool is_visible = false;
 	check_gl_error();

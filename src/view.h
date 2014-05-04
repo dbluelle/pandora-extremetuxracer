@@ -22,10 +22,10 @@ GNU General Public License for more details.
 #include "mathlib.h"
 
 void set_view_mode (CControl *ctrl, TViewMode mode);
-void update_view (CControl *ctrl, ETR_DOUBLE dt);
+void update_view (CControl *ctrl, bool eps);
 
 void SetStationaryCamera (bool stat); // 0 follow, 1 stationary
-void IncCameraDistance (ETR_DOUBLE timestep);
+void IncCameraDistance ();
 void SetCameraDistance (ETR_DOUBLE val);
 
 // ------------- viewfrustum ------------------------------------------

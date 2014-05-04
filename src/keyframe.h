@@ -53,7 +53,7 @@ public:
 	void Init (const TVector3d& ref_position, ETR_DOUBLE height_correction, CCharShape *shape);
 	void InitTest (const TVector3d& ref_position, CCharShape *shape);
 	void Reset ();
-	void Update (ETR_DOUBLE timestep);
+	void Update ();
 	void UpdateTest (ETR_DOUBLE timestep, CCharShape *shape);
 	bool Load (const string& dir, const string& filename);
 	void CalcKeyframe (size_t idx, CCharShape *shape, const TVector3d& refpos);

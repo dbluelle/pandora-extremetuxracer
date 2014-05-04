@@ -50,7 +50,7 @@ void CReset::Enter() {
 	InitViewFrustum ();
 }
 
-void CReset::Loop(ETR_DOUBLE time_step) {
+void CReset::Loop() {
 	CControl *ctrl = g_game.player->ctrl;
 	ETR_DOUBLE elapsed_time = Winsys.ClockTime () - reset_start_time;
 	static bool tux_visible = true;
@@ -59,8 +59,8 @@ void CReset::Loop(ETR_DOUBLE time_step) {
 	check_gl_error();
 	ClearRenderContext ();
 	Env.SetupFog ();
-	ctrl->UpdatePlayerPos (EPS);
-	update_view (ctrl, EPS);
+	ctrl->UpdatePlayerPos (true);
+	update_view (ctrl, true);
 	SetupViewFrustum (ctrl);
 	Env.DrawSkybox (ctrl->viewpos);
 	Env.DrawFog ();
@@ -124,7 +124,7 @@ void CReset::Loop(ETR_DOUBLE time_step) {
 	DrawHud (ctrl);
 	Reshape (Winsys.resolution.width, Winsys.resolution.height);
 	Winsys.SwapBuffers ();
-	g_game.time += time_step;
+	g_game.time += g_game.time_step;
 
 	if (elapsed_time > TOTAL_RESET_TIME) {
 		State::manager.RequestEnterState (Racing);

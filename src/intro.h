@@ -23,7 +23,7 @@ GNU General Public License for more details.
 
 class CIntro : public State {
 	void Enter();
-	void Loop(ETR_DOUBLE time_step);
+	void Loop();
 	void Keyb(unsigned int key, bool special, bool release, int x, int y);
 public:
 };

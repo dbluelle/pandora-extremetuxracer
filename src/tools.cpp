@@ -281,16 +281,16 @@ void CTools::Motion(int x, int y) {
 	}
 }
 
-void CTools::Loop(ETR_DOUBLE timestep) {
+void CTools::Loop() {
 	switch (tool_mode) {
 		case 0:
-			RenderChar (timestep);
+			RenderChar ();
 			break;
 		case 1:
-			RenderSingleFrame (timestep);
+			RenderSingleFrame ();
 			break;
 		case 2:
-			RenderSequence (timestep);
+			RenderSequence ();
 			break;
 	}
 }

@@ -83,7 +83,7 @@ public:
 	TTextField(int x, int y, int width, int height, const string& text_);
 	void Draw() const;
 	void Key(unsigned int key, unsigned int mod, bool released);
-	void UpdateCursor(ETR_DOUBLE timestep);
+	void UpdateCursor();
 	const string& Text() const { return text; }
 };
 TTextField* AddTextField(const string& text, int x, int y, int width, int height);

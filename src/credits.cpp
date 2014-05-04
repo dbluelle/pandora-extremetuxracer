@@ -62,11 +62,11 @@ void CCredits::LoadCreditList () {
 	}
 }
 
-void CCredits::DrawCreditsText (ETR_DOUBLE time_step) {
+void CCredits::DrawCreditsText () {
 	int w = Winsys.resolution.width;
 	int h = Winsys.resolution.height;
 	ETR_DOUBLE offs = 0.0;
-	if (moving) y_offset += time_step * 30;
+	if (moving) y_offset += g_game.time_step * 30;
 
 
 	for (list<TCredits>::const_iterator i = CreditList.begin(); i != CreditList.end(); ++i) {
@@ -138,7 +138,7 @@ void CCredits::Enter() {
 	moving = true;
 }
 
-void CCredits::Loop(ETR_DOUBLE time_step) {
+void CCredits::Loop() {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 
@@ -148,9 +148,9 @@ void CCredits::Loop(ETR_DOUBLE time_step) {
 	ScopedRenderMode rm(GUI);
 	SetupGuiDisplay ();
 
-	DrawCreditsText (time_step);
+	DrawCreditsText ();
 	if (param.ui_snow) {
-		update_ui_snow (time_step);
+		update_ui_snow ();
 		draw_ui_snow();
 	}
 	Tex.Draw (BOTTOM_LEFT, 0, hh-256, 1);

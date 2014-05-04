@@ -92,20 +92,20 @@ void CIntro::Enter() {
 	InitViewFrustum ();
 }
 
-void CIntro::Loop (ETR_DOUBLE time_step) {
+void CIntro::Loop () {
 	CControl *ctrl = g_game.player->ctrl;
 	int width = Winsys.resolution.width;
 	int height = Winsys.resolution.height;
 	check_gl_error();
 
 	if (startframe->active) {
-		startframe->Update (time_step);
+		startframe->Update ();
 	} else State::manager.RequestEnterState (Racing);
 
 	ClearRenderContext ();
 	Env.SetupFog ();
 
-	update_view (ctrl, time_step);
+	update_view (ctrl, g_game.time_step);
 	SetupViewFrustum (ctrl);
 
 	Music.Update ();
@@ -116,8 +116,8 @@ void CIntro::Loop (ETR_DOUBLE time_step) {
 	RenderCourse ();
 	DrawTrackmarks ();
 	DrawTrees ();
-	UpdateWind (time_step);
-	UpdateSnow (time_step, ctrl);
+	UpdateWind ();
+	UpdateSnow (ctrl);
 	DrawSnow (ctrl);
 
 	g_game.character->shape->Draw();
@@ -125,7 +125,6 @@ void CIntro::Loop (ETR_DOUBLE time_step) {
 
 	Reshape (width, height);
 	Winsys.SwapBuffers ();
-
 }
 // -----------------------------------------------------------------------
 

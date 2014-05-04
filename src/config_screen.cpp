@@ -190,7 +190,7 @@ void CGameConfig::Enter() {
 	Music.Play (param.config_music, -1);
 }
 
-void CGameConfig::Loop (ETR_DOUBLE time_step) {
+void CGameConfig::Loop () {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 
@@ -203,7 +203,7 @@ void CGameConfig::Loop (ETR_DOUBLE time_step) {
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
-		update_ui_snow (time_step);
+		update_ui_snow ();
 		draw_ui_snow();
 	}
 

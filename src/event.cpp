@@ -175,7 +175,7 @@ int resultlevel (size_t num, size_t numraces) {
 	return q + 1;
 }
 
-void CEvent::Loop (ETR_DOUBLE timestep) {
+void CEvent::Loop () {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 
@@ -186,7 +186,7 @@ void CEvent::Loop (ETR_DOUBLE timestep) {
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
-		update_ui_snow (timestep);
+		update_ui_snow ();
 		draw_ui_snow ();
 	}
 	Tex.Draw (T_TITLE_SMALL, CENTER, AutoYPosN (5), Winsys.scale);

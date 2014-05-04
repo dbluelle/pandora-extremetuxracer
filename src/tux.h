@@ -135,7 +135,7 @@ public:
 	void DrawShadow ();
 	bool Load (const string& dir, const string& filename, bool with_actions);
 
-	void AdjustOrientation (CControl *ctrl, ETR_DOUBLE dtime,
+	void AdjustOrientation (CControl *ctrl, bool eps,
 	                        ETR_DOUBLE dist_from_surface, const TVector3d& surf_nml);
 	void AdjustJoints (ETR_DOUBLE turnFact, bool isBraking,
 	                   ETR_DOUBLE paddling_factor, ETR_DOUBLE speed,

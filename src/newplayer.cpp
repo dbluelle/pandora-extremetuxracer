@@ -106,7 +106,7 @@ void CNewPlayer::Enter() {
 	textfield = AddTextField(emptyString, area.left, frametop, framewidth, frameheight);
 }
 
-void CNewPlayer::Loop(ETR_DOUBLE timestep) {
+void CNewPlayer::Loop() {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 	TColor col;
@@ -118,11 +118,11 @@ void CNewPlayer::Loop(ETR_DOUBLE timestep) {
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
-		update_ui_snow (timestep);
+		update_ui_snow ();
 		draw_ui_snow();
 	}
 
-	textfield->UpdateCursor(timestep);
+	textfield->UpdateCursor();
 
 //	DrawFrameX (area.left, area.top, area.right-area.left, area.bottom - area.top,
 //			0, colMBackgr, col, 0.2);

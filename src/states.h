@@ -57,7 +57,7 @@ public:
 	static Manager manager;
 
 	virtual void Enter() {}
-	virtual void Loop(ETR_DOUBLE time_step) {}
+	virtual void Loop() {}
 	virtual void Keyb(unsigned int key, bool special, bool release, int x, int y) {}
 	virtual void Mouse(int button, int state, int x, int y) {}
 	virtual void Motion(int x, int y) {}

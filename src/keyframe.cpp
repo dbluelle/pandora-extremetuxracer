@@ -260,11 +260,11 @@ void CKeyframe::CalcKeyframe (size_t idx, CCharShape *shape, const TVector3d& re
 	shape->RotateNode ("right_ankle", 3, vv);
 }
 
-void CKeyframe::Update (ETR_DOUBLE timestep) {
+void CKeyframe::Update () {
 	if (!loaded) return;
 	if (!active) return;
 
-	keytime += timestep;
+	keytime += g_game.time_step;
 	if (keytime >= frames[keyidx].val[0]) {
 		keyidx++;
 		keytime = 0;

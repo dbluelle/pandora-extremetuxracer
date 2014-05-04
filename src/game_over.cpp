@@ -193,7 +193,7 @@ void CGameOver::Enter() {
 }
 
 
-void CGameOver::Loop(ETR_DOUBLE time_step) {
+void CGameOver::Loop() {
 	CControl *ctrl = g_game.player->ctrl;
 	int width = Winsys.resolution.width;
 	int height = Winsys.resolution.height;
@@ -206,7 +206,7 @@ void CGameOver::Loop(ETR_DOUBLE time_step) {
 
 	update_view (ctrl, 0);
 
-	if (final_frame != NULL) final_frame->Update (time_step);
+	if (final_frame != NULL) final_frame->Update ();
 
 	SetupViewFrustum (ctrl);
 	Env.DrawSkybox (ctrl->viewpos);
@@ -217,8 +217,8 @@ void CGameOver::Loop(ETR_DOUBLE time_step) {
 	DrawTrackmarks ();
 	DrawTrees ();
 
-	UpdateWind (time_step);
-	UpdateSnow (time_step, ctrl);
+	UpdateWind ();
+	UpdateSnow (ctrl);
 	DrawSnow (ctrl);
 
 	g_game.character->shape->Draw();

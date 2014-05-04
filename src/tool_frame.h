@@ -24,7 +24,7 @@ void InitFrameTools ();
 void SingleFrameKeys (unsigned int key, bool special, bool release, int x, int y);
 void SingleFrameMouse (int button, int state, int x, int y);
 void SingleFrameMotion (int x, int y);
-void RenderSingleFrame (ETR_DOUBLE timestep);
+void RenderSingleFrame ();
 
 // --------------------------------------------------------------------
 //				frame sequence
@@ -33,7 +33,7 @@ void RenderSingleFrame (ETR_DOUBLE timestep);
 void SequenceKeys (unsigned int key, bool special, bool release, int x, int y);
 void SequenceMouse (int button, int state, int x, int y);
 void SequenceMotion (int x, int y);
-void RenderSequence (ETR_DOUBLE timestep);
+void RenderSequence ();
 
 #endif
 

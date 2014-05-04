@@ -59,7 +59,7 @@ struct TGuiParticle {
 
 	TGuiParticle(ETR_DOUBLE x, ETR_DOUBLE y);
 	void Draw(ETR_DOUBLE xres, ETR_DOUBLE yres) const;
-	void Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const TVector2d& push_vector);
+	void Update(ETR_DOUBLE push_timestep, const TVector2d& push_vector);
 };
 
 static list<TGuiParticle> particles_2d;
@@ -116,7 +116,7 @@ void TGuiParticle::Draw(ETR_DOUBLE xres, ETR_DOUBLE yres) const {
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-void TGuiParticle::Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const TVector2d& push_vector) {
+void TGuiParticle::Update(ETR_DOUBLE push_timestep, const TVector2d& push_vector) {
 	TVector2d f;
 
 	ETR_DOUBLE dist_from_push = (pow((pt.x - push_position.x), 2) +
@@ -132,11 +132,11 @@ void TGuiParticle::Update(ETR_DOUBLE time_step, ETR_DOUBLE push_timestep, const 
 		       size/PARTICLE_SIZE_RANGE;
 	}
 
-	vel.x +=  (f.x - vel.x * AIR_DRAG) *  time_step;
-	vel.y +=  (f.y - GRAVITY_FACTOR - vel.y * AIR_DRAG) * time_step;
+	vel.x +=  (f.x - vel.x * AIR_DRAG) * g_game.time_step;
+	vel.y +=  (f.y - GRAVITY_FACTOR - vel.y * AIR_DRAG) * g_game.time_step;
 
-	pt.x += vel.x * time_step *  (size / PARTICLE_SIZE_RANGE);
-	pt.y += vel.y * time_step *  (size / PARTICLE_SIZE_RANGE);
+	pt.x += vel.x * g_game.time_step *  (size / PARTICLE_SIZE_RANGE);
+	pt.y += vel.y * g_game.time_step *  (size / PARTICLE_SIZE_RANGE);
 
 	if (pt.x < 0) {
 		pt.x = 1;
@@ -151,7 +151,7 @@ void init_ui_snow () {
 	push_position = TVector2d(0.0, 0.0);
 }
 
-void update_ui_snow(ETR_DOUBLE time_step) {
+void update_ui_snow() {
 	ETR_DOUBLE time = Winsys.ClockTime ();
 
 	TVector2d push_vector;
@@ -166,10 +166,10 @@ void update_ui_snow(ETR_DOUBLE time_step) {
 	last_update_time = time;
 
 	for (list<TGuiParticle>::iterator p = particles_2d.begin(); p != particles_2d.end(); ++p) {
-		p->Update(time_step, push_timestep, push_vector);
+		p->Update(push_timestep, push_vector);
 	}
 
-	if (FRandom() < time_step*20.0*(MAX_num_snowparticles - particles_2d.size()) / 1000.0) {
+	if (FRandom() < g_game.time_step*20.0*(MAX_num_snowparticles - particles_2d.size()) / 1000.0) {
 		particles_2d.push_back(TGuiParticle(FRandom(), 1));
 	}
 
@@ -190,9 +190,9 @@ void update_ui_snow(ETR_DOUBLE time_step) {
 			++p;
 	}
 
-	if (time_step < PUSH_DECAY_TIME_CONSTANT) {
-		push_vector.x *= 1.0 - time_step/PUSH_DECAY_TIME_CONSTANT;
-		push_vector.y *= 1.0 - time_step/PUSH_DECAY_TIME_CONSTANT;
+	if (g_game.time_step < PUSH_DECAY_TIME_CONSTANT) {
+		push_vector.x *= 1.0 - g_game.time_step/PUSH_DECAY_TIME_CONSTANT;
+		push_vector.y *= 1.0 - g_game.time_step/PUSH_DECAY_TIME_CONSTANT;
 	} else {
 		push_vector.x = 0.0;
 		push_vector.y = 0.0;
@@ -363,15 +363,15 @@ void create_new_particles (const TVector3d& loc, const TVector3d& vel, int num) 
 		                      VARIANCE_FACTOR * (FRandom() - 0.5) * speed);
 	}
 }
-void update_particles (ETR_DOUBLE time_step) {
+void update_particles () {
 	for (list<Particle>::iterator p = particles.begin(); p != particles.end();) {
-		p->age += time_step;
+		p->age += g_game.time_step;
 		if (p->age < 0) {
 			++p;
 			continue;
 		}
 
-		p->pt += time_step * p->vel;
+		p->pt += g_game.time_step * p->vel;
 		ETR_DOUBLE ycoord = Course.FindYCoord (p->pt.x, p->pt.z);
 		if (p->pt.y < ycoord - 3) {p->age = p->death + 1;}
 		if (p->age >= p->death) {
@@ -381,7 +381,7 @@ void update_particles (ETR_DOUBLE time_step) {
 		p->alpha = (p->death - p->age) / p->death;
 		p->cur_size = NEW_PART_SIZE +
 		              (OLD_PART_SIZE - NEW_PART_SIZE) * (p->age / p->death);
-		p->vel.y += -EARTH_GRAV * time_step;
+		p->vel.y += -EARTH_GRAV * g_game.time_step;
 		++p;
 	}
 }
@@ -680,10 +680,11 @@ void CFlakes::Init (int grade, const CControl *ctrl) {
 	GenerateSnowFlakes (ctrl);
 }
 
-void CFlakes::Update (ETR_DOUBLE timestep, const CControl *ctrl) {
+void CFlakes::Update (const CControl *ctrl) {
 	if (g_game.snow_id < 1)
 		return;
 
+	float timestep = g_game.time_step;
 	UpdateAreas (ctrl);
 
 	float zdiff = ctrl->cpos.z - snow_lastpos.z;
@@ -737,14 +738,14 @@ void InitChanges () {
 	}
 }
 
-void UpdateChanges (ETR_DOUBLE timestep) {
+void UpdateChanges () {
 	for (int i=0; i<NUM_CHANGES; i++) {
 		TChange* ch = &changes[i];
 		if (ch->forward) {
-			ch->curr += ch->step * timestep;
+			ch->curr += ch->step * g_game.time_step;
 			if (ch->curr > ch->max) ch->forward = false;
 		} else {
-			ch->curr -= ch->step * timestep;
+			ch->curr -= ch->step * g_game.time_step;
 			if (ch->curr < ch->min) ch->forward = true;
 		}
 	}
@@ -828,14 +829,14 @@ void TCurtain::Draw() const {
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void TCurtain::Update(float timestep, const TVector3d& drift, const CControl* ctrl) {
+void TCurtain::Update(const TVector3d& drift, const CControl* ctrl) {
 	for (unsigned int co=0; co<numCols; co++) {
 		for (unsigned int row=0; row<numRows; row++) {
 			TCurtainElement* curt = &curtains[co][row];
 
-			curt->angle += changes[chg[row]].curr * timestep * CHANGE_DRIFT;
-			curt->angle += drift.x * timestep * CURTAIN_WINDDRIFT;
-			curt->height -= speed * timestep;
+			curt->angle += changes[chg[row]].curr * g_game.time_step * CHANGE_DRIFT;
+			curt->angle += drift.x * g_game.time_step * CURTAIN_WINDDRIFT;
+			curt->height -= speed * g_game.time_step;
 
 			if (curt->angle > lastangle + angledist) curt->angle = startangle;
 			if (curt->angle < startangle - angledist) curt->angle = lastangle;
@@ -871,13 +872,13 @@ void CCurtain::Draw () {
 	}
 }
 
-void CCurtain::Update (float timestep, const CControl *ctrl) {
+void CCurtain::Update (const CControl *ctrl) {
 	if (g_game.snow_id < 1) return;
 	const TVector3d& drift = Wind.WindDrift ();
 
-	UpdateChanges (timestep);
+	UpdateChanges ();
 	for (size_t i=0; i<curtains.size(); i++) {
-		curtains[i].Update(timestep, drift, ctrl);
+		curtains[i].Update(drift, ctrl);
 	}
 	//Draw ();
 }
@@ -1075,11 +1076,11 @@ void CWind::CalcDestAngle () {
 	else AngleMode = 0;
 }
 
-void CWind::Update (float timestep) {
+void CWind::Update () {
 	if (!windy) return;
 
 	// the wind needn't be updated in each frame
-	CurrTime = CurrTime + timestep;
+	CurrTime = CurrTime + g_game.time_step;
 	if (CurrTime > UPDATE_TIME) {
 		CurrTime = 0.0;
 
@@ -1145,10 +1146,10 @@ void InitSnow (const CControl *ctrl) {
 	Curtain.Init (ctrl);
 }
 
- void UpdateSnow (ETR_DOUBLE timestep, const CControl *ctrl) {
+ void UpdateSnow (const CControl *ctrl) {
 	if (g_game.snow_id < 1 || g_game.snow_id > 3) return;
-	Flakes.Update (timestep, ctrl);
-	Curtain.Update (timestep, ctrl);
+	Flakes.Update (ctrl);
+	Curtain.Update (ctrl);
 }
 
 void DrawSnow (const CControl *ctrl) {
@@ -1161,6 +1162,6 @@ void InitWind () {
 	Wind.Init (g_game.wind_id);
 }
 
-void UpdateWind (ETR_DOUBLE timestep) {
-	Wind.Update (timestep);
+void UpdateWind () {
+	Wind.Update ();
 }

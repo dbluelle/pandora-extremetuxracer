@@ -176,8 +176,8 @@ void TTextField::Key(unsigned int key, unsigned int mod, bool released) {
 	}
 }
 
-void TTextField::UpdateCursor(ETR_DOUBLE timestep) {
-	time += timestep;
+void TTextField::UpdateCursor() {
+	time += g_game.time_step;
 	if (time > CRSR_PERIODE) {
 		time = 0;
 		cursor = !cursor;

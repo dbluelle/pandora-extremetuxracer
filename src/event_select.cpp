@@ -112,7 +112,7 @@ void CEventSelect::Enter () {
 	Music.Play (param.menu_music, -1);
 }
 
-void CEventSelect::Loop (ETR_DOUBLE timestep) {
+void CEventSelect::Loop () {
 	int ww = Winsys.resolution.width;
 	int hh = Winsys.resolution.height;
 	TColor col;
@@ -124,7 +124,7 @@ void CEventSelect::Loop (ETR_DOUBLE timestep) {
 	SetupGuiDisplay ();
 
 	if (param.ui_snow) {
-		update_ui_snow (timestep);
+		update_ui_snow ();
 		draw_ui_snow ();
 	}
 

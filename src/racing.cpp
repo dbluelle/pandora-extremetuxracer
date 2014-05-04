@@ -171,7 +171,7 @@ void CRacing::Jbutt (int button, int state) {
 	}
 }
 
-void CalcJumpEnergy (ETR_DOUBLE time_step) {
+void CalcJumpEnergy () {
 	CControl *ctrl = g_game.player->ctrl;
 
 	if (ctrl->jump_charging) {
@@ -256,20 +256,20 @@ void PlayTerrainSound (CControl *ctrl, bool airborne) {
 }
 
 // ----------------------- controls -----------------------------------
-void CalcSteeringControls (CControl *ctrl, ETR_DOUBLE time_step) {
+void CalcSteeringControls (CControl *ctrl) {
 	if (stick_turn) {
 		ctrl->turn_fact = stick_turnfact;
-		ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
+		ctrl->turn_animation += ctrl->turn_fact * 2 * g_game.time_step;
 		ctrl->turn_animation = clamp (-1.0, ctrl->turn_animation, 1.0);
 	} else if (left_turn ^ right_turn) {
 		if (left_turn) ctrl->turn_fact = -1.0;
 		else ctrl->turn_fact = 1.0;
-		ctrl->turn_animation += ctrl->turn_fact * 2 * time_step;
+		ctrl->turn_animation += ctrl->turn_fact * 2 * g_game.time_step;
 		ctrl->turn_animation = clamp (-1.0, ctrl->turn_animation, 1.0);
 	} else {
 		ctrl->turn_fact = 0.0;
-		if (time_step < ROLL_DECAY) {
-			ctrl->turn_animation *= 1.0 - time_step / ROLL_DECAY;
+		if (g_game.time_step < ROLL_DECAY) {
+			ctrl->turn_animation *= 1.0 - g_game.time_step / ROLL_DECAY;
 		} else {
 			ctrl->turn_animation = 0.0;
 		}
@@ -286,7 +286,7 @@ void CalcSteeringControls (CControl *ctrl, ETR_DOUBLE time_step) {
 
 	bool charge = key_charging || stick_charging;
 	bool invcharge = !key_charging && !stick_charging;
-	CalcJumpEnergy (time_step);
+	CalcJumpEnergy ();
 	if ((charge) && !ctrl->jump_charging && !ctrl->jumping) {
 		ctrl->jump_charging = true;
 		charge_start_time = g_game.time;
@@ -297,7 +297,7 @@ void CalcSteeringControls (CControl *ctrl, ETR_DOUBLE time_step) {
 	}
 }
 
-void CalcFinishControls (CControl *ctrl, ETR_DOUBLE timestep, bool airborne) {
+void CalcFinishControls (CControl *ctrl, bool airborne) {
 	ETR_DOUBLE speed = ctrl->cvel.Length();
 	ETR_DOUBLE dir_angle = RADIANS_TO_ANGLES(atan(ctrl->cvel.x / ctrl->cvel.z));
 
@@ -305,18 +305,18 @@ void CalcFinishControls (CControl *ctrl, ETR_DOUBLE timestep, bool airborne) {
 		ctrl->turn_fact = dir_angle / 20;
 		if (ctrl->turn_fact < -1) ctrl->turn_fact = -1;
 		if (ctrl->turn_fact > 1) ctrl->turn_fact = 1;
-		ctrl->turn_animation += ctrl->turn_fact * 2 * timestep;
+		ctrl->turn_animation += ctrl->turn_fact * 2 * g_game.time_step;
 	} else {
 		ctrl->turn_fact = 0;
-		if (timestep < ROLL_DECAY) {
-			ctrl->turn_animation *= 1.0 - timestep / ROLL_DECAY;
+		if (g_game.time_step < ROLL_DECAY) {
+			ctrl->turn_animation *= 1.0 - g_game.time_step / ROLL_DECAY;
 		} else ctrl->turn_animation = 0.0;
 	}
 }
 
 // ----------------------- trick --------------------------------------
 
-void CalcTrickControls (CControl *ctrl, ETR_DOUBLE time_step, bool airborne) {
+void CalcTrickControls (CControl *ctrl, bool airborne) {
 	if (airborne && trick_modifier) {
 		if (left_turn) ctrl->roll_left = true;
 		if (right_turn) ctrl->roll_right = true;
@@ -325,14 +325,14 @@ void CalcTrickControls (CControl *ctrl, ETR_DOUBLE time_step, bool airborne) {
 	}
 
 	if (ctrl->roll_left || ctrl->roll_right) {
-		ctrl->roll_factor += (ctrl->roll_left ? -1 : 1) * 0.15 * time_step / 0.05;
+		ctrl->roll_factor += (ctrl->roll_left ? -1 : 1) * 0.15 * g_game.time_step / 0.05;
 		if (ctrl->roll_factor  > 1 || ctrl->roll_factor < -1) {
 			ctrl->roll_factor = 0;
 			ctrl->roll_left = ctrl->roll_right = false;
 		}
 	}
 	if (ctrl->front_flip || ctrl->back_flip) {
-		ctrl->flip_factor += (ctrl->back_flip ? -1 : 1) * 0.15 * time_step / 0.05;
+		ctrl->flip_factor += (ctrl->back_flip ? -1 : 1) * 0.15 * g_game.time_step / 0.05;
 		if (ctrl->flip_factor > 1 || ctrl->flip_factor < -1) {
 			ctrl->flip_factor = 0;
 			ctrl->front_flip = ctrl->back_flip = false;
@@ -344,7 +344,7 @@ void CalcTrickControls (CControl *ctrl, ETR_DOUBLE time_step, bool airborne) {
 //					loop
 // ====================================================================
 
-void CRacing::Loop (ETR_DOUBLE time_step) {
+void CRacing::Loop () {
 	CControl *ctrl = g_game.player->ctrl;
 	ETR_DOUBLE ycoord = Course.FindYCoord (ctrl->cpos.x, ctrl->cpos.z);
 	bool airborne = (bool) (ctrl->cpos.y > (ycoord + JUMP_MAX_START_HEIGHT));
@@ -353,18 +353,17 @@ void CRacing::Loop (ETR_DOUBLE time_step) {
 	ClearRenderContext ();
 	Env.SetupFog ();
 	Music.Update ();
-	CalcTrickControls (ctrl, time_step, airborne);
+	CalcTrickControls (ctrl, airborne);
 
-	if (!g_game.finish) CalcSteeringControls (ctrl, time_step);
-	else CalcFinishControls (ctrl, time_step, airborne);
+	if (!g_game.finish) CalcSteeringControls (ctrl);
+	else CalcFinishControls (ctrl, airborne);
 	PlayTerrainSound (ctrl, airborne);
-
 //  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-	ctrl->UpdatePlayerPos (time_step);
+	ctrl->UpdatePlayerPos (false);
 //  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-	if (g_game.finish) IncCameraDistance (time_step);
-	update_view (ctrl, time_step);
+	if (g_game.finish) IncCameraDistance ();
+	update_view (ctrl, g_game.time_step);
 	UpdateTrackmarks (ctrl);
 
 	SetupViewFrustum (ctrl);
@@ -374,18 +373,18 @@ void CRacing::Loop (ETR_DOUBLE time_step) {
 	DrawTrackmarks ();
 	if (trees) DrawTrees ();
 	if (param.perf_level > 2) {
-		update_particles (time_step);
+		update_particles ();
 		draw_particles (ctrl);
 	}
 	g_game.character->shape->Draw();
-	UpdateWind (time_step);
-	UpdateSnow (time_step, ctrl);
+	UpdateWind ();
+	UpdateSnow (ctrl);
 	DrawSnow (ctrl);
 	DrawHud (ctrl);
 
 	Reshape (Winsys.resolution.width, Winsys.resolution.height);
 	Winsys.SwapBuffers ();
-	if (g_game.finish == false) g_game.time += time_step;
+	if (g_game.finish == false) g_game.time += g_game.time_step;
 }
 // ---------------------------------- term ------------------
 void CRacing::Exit() {

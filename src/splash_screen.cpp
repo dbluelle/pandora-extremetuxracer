@@ -57,7 +57,7 @@ void CSplashScreen::Enter() {
 	Music.Play (param.menu_music, -1);
 }
 
-void CSplashScreen::Loop(ETR_DOUBLE timestep) {
+void CSplashScreen::Loop() {
 	Music.Update ();
 	check_gl_error();
 	ClearRenderContext ();
